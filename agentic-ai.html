@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic AI System Design — 10 Real-World AI Agent Architectures</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Agentic AI specific tag badges */
+    .tag-most-likely {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+    .tag-confirmed {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+    .tag-experience {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+    }
+    .tag-jd {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--orange);
+    }
+    .tag-ml-staff {
+      background: rgba(139, 92, 246, 0.15);
+      color: var(--purple);
+    }
+    .tag-cody {
+      background: rgba(139, 92, 246, 0.15);
+      color: var(--purple);
+    }
+
+    /* Difficulty badge */
+    .difficulty-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .badge-staff {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+    .badge-senior {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--orange);
+    }
+
+    /* Multiple tags support */
+    .card-tags {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .card-tags .card-tag {
+      position: static;
+    }
+
+    /* Deep dive sections */
+    .deep-dive {
+      margin-bottom: 16px;
+    }
+    .deep-dive h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent-light);
+      margin-bottom: 8px;
+    }
+    .deep-dive ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-left: 0;
+    }
+    .deep-dive li {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      padding-left: 20px;
+      position: relative;
+      line-height: 1.6;
+    }
+    .deep-dive li::before {
+      content: '\2192';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .deep-dive li strong {
+      color: var(--text-primary);
+    }
+
+    /* Estimation box */
+    .estimation-box {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    .estimation-box h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--orange);
+      margin-bottom: 8px;
+    }
+    .estimation-box p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* Scaling & ML boxes */
+    .scaling-box, .ml-box {
+      padding: 16px 20px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+    }
+    .scaling-box {
+      background: rgba(16, 185, 129, 0.06);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    .ml-box {
+      background: rgba(139, 92, 246, 0.06);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+    .scaling-box h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--green);
+      margin-bottom: 8px;
+    }
+    .ml-box h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--purple);
+      margin-bottom: 8px;
+    }
+    .scaling-box ul, .ml-box ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-left: 0;
+    }
+    .scaling-box li, .ml-box li {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      padding-left: 20px;
+      position: relative;
+      line-height: 1.6;
+    }
+    .scaling-box li::before {
+      content: '\2192';
+      position: absolute;
+      left: 0;
+      color: var(--green);
+      font-weight: 700;
+    }
+    .ml-box li::before {
+      content: '\2192';
+      position: absolute;
+      left: 0;
+      color: var(--purple);
+      font-weight: 700;
+    }
+    .scaling-box li strong, .ml-box li strong {
+      color: var(--text-primary);
+    }
+
+    /* Problem statement */
+    .problem-statement {
+      background: rgba(239, 68, 68, 0.06);
+      border-left: 3px solid var(--red);
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .problem-statement p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin: 0;
+      font-style: italic;
+    }
+
+    /* Allow larger expanded content */
+    .concept-card.expanded .card-content {
+      max-height: 8000px;
+    }
+
+    /* Full-width grid for detailed cards */
+    .concepts-grid.full-width {
+      grid-template-columns: 1fr;
+    }
+
+    /* Back link styling */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent-light);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    .back-link:hover {
+      color: var(--accent);
+    }
+    /* Read Full Article button */
+    .read-full-article {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      color: #fff !important;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .read-full-article:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">&#x26A1;</span>
+        <span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span>
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="index.html">&#x2190; Back to Main</a>
+        <a href="#orchestration">Orchestration</a>
+        <a href="#search">Search</a>
+        <a href="#triage">Triage</a>
+        <a href="#all-designs">All 10 Designs</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-badge">&#x1F916; Agentic AI System Design</div>
+      <h1>Master Agentic AI<br><span class="gradient-text">System Design</span></h1>
+      <p class="hero-subtitle">10 real-world AI agent architectures covering orchestration, RAG, memory, sandboxed execution, knowledge graphs, and latency optimization — built for Staff-level interviews.</p>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-number">10</span>
+          <span class="stat-label">AI Agent Designs</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">Staff</span>
+          <span class="stat-label">Interview Level</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">45min</span>
+          <span class="stat-label">Deep Dives</span>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <a href="#all-designs" class="btn btn-primary">Explore Designs &#x2193;</a>
+        <a href="index.html" class="btn btn-secondary">&#x2190; System Design Fundamentals</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- All 10 Designs Section -->
+  <section class="section" id="all-designs">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">&#x1F916; Agentic AI</span>
+        <h2>10 AI Agent Architectures</h2>
+        <p>Enterprise-grade designs covering the full spectrum of agentic AI systems — from orchestration to optimization.</p>
+      </div>
+
+      <div class="concepts-grid full-width">
+
+        <!-- 1. AI Agent Orchestration Platform -->
+        <div class="concept-card" id="orchestration" data-topic="orchestration">
+          <div class="card-tags">
+            <span class="card-tag tag-most-likely">Most Likely</span>
+            <span class="card-tag badge-staff">Staff Level</span>
+          </div>
+          <div class="card-icon">&#x1F916;</div>
+          <h3>AI Agent Orchestration Platform <span class="difficulty-badge badge-staff">45 min</span></h3>
+          <p>Core Product — Design a platform where an AI agent receives natural language requests and executes multi-step workflows across enterprise systems.</p>
+          <div class="card-content">
+
+            <div class="problem-statement">
+              <p>"Design a platform where an AI agent receives natural language requests from employees (via Slack/Teams), reasons about what actions to take, executes multi-step workflows across enterprise systems (ServiceNow, Jira, Salesforce, Okta), and returns results. Multi-tenant, reliable, &lt;5 seconds."</p>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Clarifying Questions</h4>
+              <ul>
+                <li><strong>Scope:</strong> Focus on reasoning/LLM layer AND execution infrastructure</li>
+                <li><strong>Latency:</strong> Conversational latency &lt;5s</li>
+                <li><strong>Connectors:</strong> 5-20 connectors per customer</li>
+                <li><strong>Multi-tenant:</strong> Different configs per tenant</li>
+                <li><strong>Permissions:</strong> Agent acts as user (user-level permissions)</li>
+              </ul>
+            </div>
+
+            <div class="estimation-box">
+              <h4>&#x1F4CA; Back-of-Envelope Estimation</h4>
+              <p>350+ customers &times; 15K employees = ~5M users. 10% DAU = 500K/day. 3 requests each = 1.5M req/day. Peak QPS ~50. Per request: 1 LLM planning (1-3s) + 2-3 tool calls (200ms-2s) + 1 LLM response. Storage: 10TB/year.</p>
+            </div>
+
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+User (Slack/Teams)
+  &#x2192; API Gateway (Auth, Rate Limit, WebSocket)
+    &#x2192; Session Manager (Redis: context, history, user profile)
+      &#x2192; REASONING ENGINE
+         &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+         &#x2502; Planning (LLM)&#x2502; &#x2192; Decompose request into steps
+         &#x2502; Execution Eng &#x2502; &#x2192; Run tool calls with retry/CB
+         &#x2502; Observation   &#x2502; &#x2192; Evaluate, re-plan if needed
+         &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+      &#x2192; Tool Registry (per tenant)
+      &#x2192; State Manager (Redis + PG)
+        &#x2192; ServiceNow, Jira, Salesforce, Okta</pre>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 1 — Reasoning Engine (ReAct Pattern)</h4>
+              <ul>
+                <li><strong>ReAct Pattern:</strong> Plan &#x2192; Execute &#x2192; Observe loop</li>
+                <li><strong>Model Routing:</strong> Fast model for simple queries, powerful model for complex reasoning</li>
+                <li><strong>Plugin Calls:</strong> Wrapped with timeout, retry (exponential backoff), circuit breaker, idempotency</li>
+                <li><strong>Parallel Execution:</strong> Independent steps run concurrently</li>
+                <li><strong>DLQ:</strong> Dead letter queue for failed executions with alerting</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 2 — Plugin Registry</h4>
+              <ul>
+                <li><strong>Plugin Definition:</strong> name + description + API endpoint + auth + schema</li>
+                <li><strong>Per-Tenant Instances:</strong> Each customer gets their own connector instances</li>
+                <li><strong>Credentials:</strong> Stored in HashiCorp Vault with auto-rotation</li>
+                <li><strong>Self-Service UI:</strong> Admins configure and manage their own connectors</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 3 — State Manager</h4>
+              <ul>
+                <li><strong>Hot State (Redis):</strong> Active conversations, intermediate results</li>
+                <li><strong>Cold Storage (PostgreSQL):</strong> Audit trail, compliance logs</li>
+                <li><strong>Resume on Failure:</strong> Checkpoint-based recovery for multi-step workflows</li>
+                <li><strong>Debugging:</strong> Full execution trace for every request</li>
+              </ul>
+            </div>
+
+            <div class="scaling-box">
+              <h4>&#x1F680; Scaling Strategies</h4>
+              <ul>
+                <li><strong>Parallel tool calls:</strong> 50% speedup on multi-step workflows</li>
+                <li><strong>Stream LLM tokens:</strong> Perceived latency drops to first-token time</li>
+                <li><strong>Cache user profiles in Redis:</strong> Eliminate DB lookups per request</li>
+                <li><strong>Model routing:</strong> 70% cheap model = 70% cost savings</li>
+                <li><strong>Circuit breaker per connector:</strong> Prevent cascade failures</li>
+                <li><strong>OpenTelemetry tracing:</strong> End-to-end observability</li>
+              </ul>
+            </div>
+
+            <div class="ml-box">
+              <h4>&#x1F9E0; ML Integration</h4>
+              <ul>
+                <li><strong>Multiple models:</strong> NLU classifier, LLM planning, cross-encoder re-ranking</li>
+                <li><strong>Model gateway:</strong> A/B testing with statistical significance</li>
+                <li><strong>Canary deployment:</strong> 5% &#x2192; 25% &#x2192; 100% progressive rollout</li>
+                <li><strong>Data flywheel:</strong> User feedback &#x2192; fine-tuning &#x2192; better predictions</li>
+              </ul>
+            </div>
+
+            <div class="key-points">
+              <h4>Key Numbers</h4>
+              <ul>
+                <li><strong>5M users,</strong> 500K DAU</li>
+                <li><strong>1.5M req/day,</strong> ~50 peak QPS</li>
+                <li><strong>&lt;5s latency</strong> end-to-end</li>
+                <li><strong>10 TB/year</strong> storage</li>
+              </ul>
+            </div>
+            <a href="design-01-agent-orchestration.html" class="read-full-article">Read Full Article →</a>
+          </div>
+        </div>
+
+        <!-- 2. Enterprise Search (Agentic RAG) -->
+        <div class="concept-card" id="search" data-topic="search">
+          <div class="card-tags">
+            <span class="card-tag tag-confirmed">Confirmed Asked</span>
+            <span class="card-tag badge-staff">Staff Level</span>
+          </div>
+          <div class="card-icon">&#x1F50D;</div>
+          <h3>Enterprise Search (Agentic RAG) <span class="difficulty-badge badge-staff">45 min</span></h3>
+          <p>Confirmed Asked — Design a search system indexing Confluence, SharePoint, Slack, and Google Drive with natural language queries and per-user access permissions.</p>
+          <div class="card-content">
+
+            <div class="problem-statement">
+              <p>"Design a search system that indexes documents from Confluence, SharePoint, Slack, Google Drive, and ServiceNow KB. Employees search with natural language. Results must respect per-user access permissions. Multi-tenant, &lt;500ms latency."</p>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Clarifying Questions</h4>
+              <ul>
+                <li><strong>Scale:</strong> 100K-10M docs/customer</li>
+                <li><strong>Freshness:</strong> New docs searchable within minutes</li>
+                <li><strong>Permissions:</strong> From source systems (ACL-based)</li>
+                <li><strong>Isolation:</strong> Strict data isolation between tenants</li>
+                <li><strong>Output:</strong> Generate answers with source citations</li>
+              </ul>
+            </div>
+
+            <div class="estimation-box">
+              <h4>&#x1F4CA; Back-of-Envelope Estimation</h4>
+              <p>350 customers &times; 1M docs = 350M documents. Avg doc = 5 chunks &times; 500 tokens. Embeddings: 350M &times; 5 &times; 1536 dims &times; 4 bytes &#x2248; 1TB vector storage. Search QPS ~30. &lt;500ms retrieval, &lt;3s answer.</p>
+            </div>
+
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+INGESTION PIPELINE:
+  Sources &#x2192; Connectors &#x2192; Extract Text &#x2192; Chunk &#x2192; Embed &#x2192; Store
+  (Confluence, Slack, SharePoint)  (500-1K tokens)  (Vector DB + Elasticsearch)
+
+QUERY PIPELINE:
+  User Query &#x2192; NLU &#x2192; Query Expansion &#x2192; Hybrid Retrieval &#x2192; Permission &#x2192; Re-rank &#x2192; Answer Gen
+              (intent) (synonyms)     (Vector + BM25)    Filter     (Cross-encoder) (LLM + citations)</pre>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 1 — Ingestion Pipeline</h4>
+              <ul>
+                <li><strong>Connectors:</strong> REST/Graph API per source with webhooks + polling</li>
+                <li><strong>Chunking:</strong> 500-1000 tokens, paragraph boundaries, 100-token overlap</li>
+                <li><strong>Metadata per chunk:</strong> text, source URL, author, timestamp, ACL metadata</li>
+                <li><strong>Embedding model:</strong> ada-002 or custom fine-tuned model</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 2 — Hybrid Search</h4>
+              <ul>
+                <li><strong>Vector search (cosine):</strong> Catches semantic matches ("password reset" &#x2248; "credential recovery")</li>
+                <li><strong>BM25 keyword:</strong> Catches exact matches ("VPN-2847")</li>
+                <li><strong>Reciprocal Rank Fusion:</strong> score = 1/(k+rank_vector) + 1/(k+rank_keyword)</li>
+                <li><strong>Cross-encoder:</strong> Re-ranks top-50 candidates for precision</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 3 — Permission-Aware Filtering (CRITICAL)</h4>
+              <ul>
+                <li><strong>ACL per chunk:</strong> Each chunk stores access control list from source</li>
+                <li><strong>Query-time filter:</strong> Retrieve top-200, filter by user's groups, return top-10</li>
+                <li><strong>Permission cache:</strong> Redis with TTL 5min for group memberships</li>
+                <li><strong>Fallback:</strong> Check source system directly if cache miss</li>
+              </ul>
+            </div>
+
+            <div class="scaling-box">
+              <h4>&#x1F680; Scaling Strategies</h4>
+              <ul>
+                <li><strong>Shard vector index by tenant_id</strong> for isolation and performance</li>
+                <li><strong>Cache frequent queries:</strong> Popular searches served instantly</li>
+                <li><strong>Incremental updates:</strong> Only re-embed changed chunks</li>
+                <li><strong>Multi-model embeddings:</strong> Different models for different content types</li>
+              </ul>
+            </div>
+
+            <div class="ml-box">
+              <h4>&#x1F9E0; ML Integration</h4>
+              <ul>
+                <li><strong>Fine-tune embedding</strong> on enterprise vocabulary for better recall</li>
+                <li><strong>Cross-encoder from click data:</strong> Learn what users actually find relevant</li>
+                <li><strong>LLM answer gen with attribution:</strong> Generate answers citing specific sources</li>
+                <li><strong>Quality eval:</strong> MRR, NDCG, click-through rate</li>
+              </ul>
+            </div>
+
+            <div class="key-points">
+              <h4>Key Numbers</h4>
+              <ul>
+                <li><strong>350M documents,</strong> 1.75B chunks</li>
+                <li><strong>~1TB vector storage</strong></li>
+                <li><strong>QPS ~30,</strong> &lt;500ms retrieval, &lt;3s answer</li>
+                <li><strong>Permission filter</strong> on every query</li>
+              </ul>
+            </div>
+            <a href="design-02-enterprise-search.html" class="read-full-article">Read Full Article →</a>
+          </div>
+        </div>
+
+        <!-- 3. AI Ticket Triage System -->
+        <div class="concept-card" id="triage" data-topic="triage">
+          <div class="card-tags">
+            <span class="card-tag tag-cody">Cody's Expertise</span>
+            <span class="card-tag badge-senior">Senior Level</span>
+          </div>
+          <div class="card-icon">&#x1F3AB;</div>
+          <h3>AI Ticket Triage System <span class="difficulty-badge badge-senior">35 min</span></h3>
+          <p>Cody's Expertise — Automatically route IT support tickets to the correct assignment group with &gt;95% accuracy using collective learning.</p>
+          <div class="card-content">
+
+            <div class="problem-statement">
+              <p>"Design a system that automatically routes incoming IT support tickets to the correct assignment group (out of hundreds) with &gt;95% accuracy. Must handle small data per customer and learn across organizations."</p>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Clarifying Questions</h4>
+              <ul>
+                <li><strong>Groups:</strong> 50-500 assignment groups per org</li>
+                <li><strong>Volume:</strong> 100-10K tickets/day/org</li>
+                <li><strong>Collective Learning:</strong> Yes — shared model across tenants</li>
+                <li><strong>Fields:</strong> Short desc, full desc, category, priority, user info</li>
+                <li><strong>Low confidence:</strong> Route to human triage queue</li>
+              </ul>
+            </div>
+
+            <div class="estimation-box">
+              <h4>&#x1F4CA; Back-of-Envelope Estimation</h4>
+              <p>350 customers &times; 1K tickets/day = 350K tickets/day. Peak ~15/sec. Inference &lt;100ms (classification, not generation). Nightly batch retraining.</p>
+            </div>
+
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+Ticket Created (ServiceNow/Jira)
+      &#x2502;
+ Feature Extraction (ALL fields, not just short desc)
+      &#x2502;
+ &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x25BC;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+ &#x2502;  BERT   &#x2502; Fine-tuned multi-class classifier
+ &#x2502; Encoder &#x2502; Input: concatenated ticket fields
+ &#x2502;         &#x2502; Output: probability per assignment group
+ &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+      &#x2502;
+ Confidence Router
+ &#x251C;&#x2500;&#x2500; High (&gt;0.95): Auto-route &#x2713;
+ &#x251C;&#x2500;&#x2500; Medium (0.7-0.95): Route + flag for review
+ &#x2514;&#x2500;&#x2500; Low (&lt;0.7): Human triage queue
+      &#x2502;
+ Feedback Loop &#x2192; Correct labels &#x2192; Retrain</pre>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 1 — Feature Engineering</h4>
+              <ul>
+                <li><strong>Use ALL fields,</strong> not just short description</li>
+                <li><strong>Concatenate:</strong> short_desc + description + category + subcategory + user_department + user_location + time_of_day</li>
+                <li><strong>Context matters:</strong> Same "Cannot connect to VPN" routes differently — Engineering/Remote &#x2192; Network Security vs Sales/London &#x2192; EMEA Desktop Support</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 2 — Collective Learning</h4>
+              <ul>
+                <li><strong>Problem:</strong> Single org has too few tickets for good model</li>
+                <li><strong>Solution:</strong> Pre-train BERT on ALL customers (learn universal patterns)</li>
+                <li><strong>Fine-tune per customer</strong> with THEIR specific assignment groups</li>
+                <li><strong>Transfer learning:</strong> New customers with 0 tickets get good predictions</li>
+                <li><strong>Privacy:</strong> Share model weights, NOT raw ticket data</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 3 — Confidence Routing</h4>
+              <ul>
+                <li><strong>High (&gt;0.95):</strong> Auto-route — no human needed</li>
+                <li><strong>Medium (0.7-0.95):</strong> Route + flag for review</li>
+                <li><strong>Low (&lt;0.7):</strong> Manual triage queue</li>
+                <li><strong>Thresholds tuned per customer</strong> based on their accuracy requirements</li>
+                <li><strong>Result:</strong> 96% accuracy on routine tickets</li>
+              </ul>
+            </div>
+
+            <div class="scaling-box">
+              <h4>&#x1F680; Scaling Strategies</h4>
+              <ul>
+                <li><strong>Hybrid model:</strong> Shared base + per-customer fine-tuning head</li>
+                <li><strong>TensorFlow Serving / Triton:</strong> &lt;100ms inference</li>
+                <li><strong>Nightly retraining</strong> with latest labeled tickets</li>
+                <li><strong>A/B testing:</strong> Compare model versions per customer</li>
+                <li><strong>Monitor:</strong> Accuracy, misroute rate, override rate per group</li>
+              </ul>
+            </div>
+
+            <div class="ml-box">
+              <h4>&#x1F9E0; ML Integration</h4>
+              <ul>
+                <li><strong>Pre-train BERT on IT ticket corpus</strong> (domain-specific language)</li>
+                <li><strong>Per-customer fine-tune:</strong> Small dataset per org, shared base weights</li>
+                <li><strong>Metrics:</strong> Precision/Recall/F1 per assignment group</li>
+                <li><strong>Data flywheel:</strong> More tickets &#x2192; better model &#x2192; more auto-routes &#x2192; more feedback</li>
+              </ul>
+            </div>
+
+            <div class="key-points">
+              <h4>Key Numbers</h4>
+              <ul>
+                <li><strong>350K tickets/day,</strong> peak ~15/sec</li>
+                <li><strong>&lt;100ms inference</strong> (classification)</li>
+                <li><strong>&gt;95% accuracy</strong> target, 96% achieved on routine</li>
+                <li><strong>Nightly retraining</strong> cycle</li>
+              </ul>
+            </div>
+            <a href="design-03-ticket-triage.html" class="read-full-article">Read Full Article →</a>
+          </div>
+        </div>
+
+        <!-- 4. Real-Time Notification & Approval System -->
+        <div class="concept-card" data-topic="notifications">
+          <div class="card-tags">
+            <span class="card-tag tag-experience">Your Experience</span>
+            <span class="card-tag badge-senior">Senior Level</span>
+          </div>
+          <div class="card-icon">&#x1F514;</div>
+          <h3>Real-Time Notification &amp; Approval System <span class="difficulty-badge badge-senior">35 min</span></h3>
+          <p>Your LinkedIn Experience — Design a system where AI agents request approvals from humans, with configurable chains, SLA escalation, and multi-channel delivery.</p>
+          <div class="card-content">
+
+            <div class="problem-statement">
+              <p>"Design a system where AI agents can request approvals from humans. Determine approval chain, notify approvers in real-time, track state, escalate overdue approvals, integrate with Slack/Email/Teams."</p>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Clarifying Questions</h4>
+              <ul>
+                <li><strong>Rules:</strong> Admins configure rules per request type</li>
+                <li><strong>Levels:</strong> 1-5 approval levels per chain</li>
+                <li><strong>Channels:</strong> Slack/Email/Teams/in-app</li>
+                <li><strong>SLA:</strong> Configurable (4hrs access, 24hrs procurement)</li>
+                <li><strong>OOO:</strong> Delegate to backup approver</li>
+              </ul>
+            </div>
+
+            <div class="estimation-box">
+              <h4>&#x1F4CA; Back-of-Envelope Estimation</h4>
+              <p>100K approval requests/day. Avg 2.5 approvers/chain = 250K notifications/day. Delivery &lt;1s. State changes ~500K/day.</p>
+            </div>
+
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+Agent Request &#x2192; Rules Engine &#x2192; Approval Chain Builder &#x2192; Kafka Queue
+                (determine         (ordered list            &#x2502;
+                 approval           of approvers)      &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+                 chain)                                 &#x25BC;    &#x25BC;    &#x25BC;
+                                                    Slack  Email Teams
+                                                    Worker Worker Worker
+                                                        &#x2502;
+                                                  State Tracker (Redis + PG)
+                                                        &#x2502;
+                                                  Escalation Scheduler
+                                                  (check SLA, notify manager)</pre>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 1 — Rules Engine</h4>
+              <ul>
+                <li><strong>Configurable rules:</strong> IF request_type='db_access' AND level='production' THEN require VP approval</li>
+                <li><strong>Storage:</strong> Rules in PostgreSQL, cached in Redis per tenant</li>
+                <li><strong>Evaluation:</strong> Fast rule matching with priority ordering</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 2 — Async Notification Pipeline</h4>
+              <ul>
+                <li><strong>Kafka topic per channel:</strong> Slack, Email, Teams each have dedicated topics</li>
+                <li><strong>Dedicated worker pool per channel:</strong> Independent scaling</li>
+                <li><strong>Idempotent delivery:</strong> Unique notification ID prevents duplicates</li>
+                <li><strong>Delivery tracking:</strong> sent &#x2192; delivered &#x2192; read &#x2192; acted-upon</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 3 — Escalation Scheduler</h4>
+              <ul>
+                <li><strong>Check pending every 5 min:</strong> Cron job scans for overdue approvals</li>
+                <li><strong>Past SLA:</strong> Notify manager or delegate to backup</li>
+                <li><strong>Configurable chain:</strong> remind &#x2192; escalate &#x2192; auto-approve/reject</li>
+                <li><strong>State machine:</strong> submitted &#x2192; pending &#x2192; approved/rejected/escalated/expired</li>
+              </ul>
+            </div>
+
+            <div class="scaling-box">
+              <h4>&#x1F680; Scaling Strategies</h4>
+              <ul>
+                <li><strong>Kafka partitioned by customer</strong> for ordered processing</li>
+                <li><strong>Worker auto-scaling on queue depth</strong></li>
+                <li><strong>Redis hot state, PG audit trail</strong></li>
+                <li><strong>Exactly-once via idempotency keys</strong></li>
+              </ul>
+            </div>
+
+            <div class="ml-box">
+              <h4>&#x1F9E0; ML Integration</h4>
+              <ul>
+                <li><strong>Smart routing:</strong> Predict optimal approver based on past patterns</li>
+                <li><strong>SLA prediction:</strong> Flag likely-to-breach approvals early</li>
+                <li><strong>Auto-categorization:</strong> Classify request type from natural language</li>
+              </ul>
+            </div>
+
+            <div class="key-points">
+              <h4>Key Numbers</h4>
+              <ul>
+                <li><strong>100K approvals/day,</strong> 250K notifications</li>
+                <li><strong>&lt;1s delivery</strong> latency</li>
+                <li><strong>500K state changes/day</strong></li>
+                <li><strong>Configurable SLA</strong> per request type</li>
+              </ul>
+            </div>
+            <a href="design-04-notification-approval.html" class="read-full-article">Read Full Article →</a>
+          </div>
+        </div>
+
+        <!-- 5. Multi-Tenant Plugin/Connector Platform -->
+        <div class="concept-card" data-topic="connectors">
+          <div class="card-tags">
+            <span class="card-tag tag-experience">Your Experience</span>
+            <span class="card-tag badge-staff">Staff Level</span>
+          </div>
+          <div class="card-icon">&#x1F50C;</div>
+          <h3>Multi-Tenant Plugin/Connector Platform <span class="difficulty-badge badge-staff">40 min</span></h3>
+          <p>Stryker Experience (MuleSoft/Integration) — Design an extensible platform connecting enterprise systems with different APIs, auth methods, and rate limits.</p>
+          <div class="card-content">
+
+            <div class="problem-statement">
+              <p>"Design a platform that lets enterprise customers connect their business systems (ServiceNow, Salesforce, Workday, SAP, Okta) to an AI agent. Different systems, API versions, auth methods. Extensible, reliable, secure."</p>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Clarifying Questions</h4>
+              <ul>
+                <li><strong>Connectors:</strong> 100+ pre-built, custom via SDK</li>
+                <li><strong>Auth:</strong> OAuth2, API Key, SAML, Basic, mTLS</li>
+                <li><strong>Rate limits:</strong> Own rate limits per external system</li>
+                <li><strong>Data residency:</strong> Regional deployment requirements</li>
+                <li><strong>Self-service UI:</strong> Admins configure without engineering</li>
+              </ul>
+            </div>
+
+            <div class="estimation-box">
+              <h4>&#x1F4CA; Back-of-Envelope Estimation</h4>
+              <p>350 customers &times; 10 connectors = 3,500 instances. 100 API calls/day each = 350K external calls/day. ~1K credential rotations/day. ~50 schema updates/day.</p>
+            </div>
+
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+AI AGENT / PLATFORM CORE
+  &#x2192; CONNECTOR GATEWAY (Tenant Resolver, Request Validator, Routing)
+    &#x2192; CONNECTOR RUNTIME ENGINE
+       MIDDLEWARE CHAIN: Auth &#x2192; Rate Limit &#x2192; Transform &#x2192; Execute &#x2192; Retry &#x2192; Log
+    &#x2192; CONNECTOR REGISTRY (PostgreSQL): Templates, Versions, Schemas
+    &#x2192; CONFIG STORE (PostgreSQL): Per-tenant configs, Field mappings
+    &#x2192; CREDENTIAL VAULT (HashiCorp Vault): OAuth tokens, API keys, mTLS certs
+    &#x2192; EXTERNAL SYSTEMS: ServiceNow, Salesforce, Workday, SAP, Okta
+    &#x2192; CROSS-CUTTING: Rate Limiter (Redis), Circuit Breaker, Metrics (OTel), Audit Log</pre>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 1 — Connector Template vs Instance</h4>
+              <ul>
+                <li><strong>Template = class definition:</strong> API spec, auth type, actions, schema</li>
+                <li><strong>Instance = customer-specific:</strong> Their URL, credentials, field mappings</li>
+                <li><strong>Analogy:</strong> Like Docker Image vs Container</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 2 — Middleware Chain (Chain of Responsibility)</h4>
+              <ul>
+                <li><strong>Auth MW:</strong> Inject credentials from vault</li>
+                <li><strong>Rate Limit MW:</strong> Sliding window per tenant+connector</li>
+                <li><strong>Transform MW:</strong> Map platform schema &#x2192; vendor schema</li>
+                <li><strong>Execute MW:</strong> Make actual API call</li>
+                <li><strong>Retry MW:</strong> Exponential backoff, max 3 attempts</li>
+                <li><strong>Log MW:</strong> Audit trail for every operation</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 3 — Credential Management</h4>
+              <ul>
+                <li><strong>HashiCorp Vault:</strong> Enterprise-grade secrets management</li>
+                <li><strong>Auto-rotation:</strong> OAuth2 token refresh before expiry</li>
+                <li><strong>Per-tenant isolation:</strong> Separate vault namespaces</li>
+                <li><strong>Zero-trust:</strong> Authenticate per request, never cache creds in memory</li>
+              </ul>
+            </div>
+
+            <div class="scaling-box">
+              <h4>&#x1F680; Scaling Strategies</h4>
+              <ul>
+                <li><strong>Stateless workers behind LB:</strong> Horizontal scaling</li>
+                <li><strong>Rate limiter per (tenant, connector):</strong> Redis sliding window</li>
+                <li><strong>Schema caching:</strong> Avoid repeated registry lookups</li>
+                <li><strong>Regional deploy:</strong> Data residency compliance</li>
+              </ul>
+            </div>
+
+            <div class="ml-box">
+              <h4>&#x1F9E0; ML Integration</h4>
+              <ul>
+                <li><strong>Auto-mapping:</strong> LLM suggests field mappings between schemas</li>
+                <li><strong>Health prediction:</strong> ML predicts failures from error patterns</li>
+                <li><strong>Usage analytics:</strong> Optimize connector configurations</li>
+              </ul>
+            </div>
+
+            <div class="key-points">
+              <h4>Key Numbers</h4>
+              <ul>
+                <li><strong>3,500 connector instances</strong></li>
+                <li><strong>350K external calls/day</strong></li>
+                <li><strong>~1K credential rotations/day</strong></li>
+                <li><strong>100+ pre-built connectors</strong></li>
+              </ul>
+            </div>
+            <a href="design-05-plugin-platform.html" class="read-full-article">Read Full Article →</a>
+          </div>
+        </div>
+
+        <!-- 6. LLM Model Serving & Evaluation Pipeline -->
+        <div class="concept-card" data-topic="model-serving">
+          <div class="card-tags">
+            <span class="card-tag tag-ml-staff">ML Staff</span>
+            <span class="card-tag badge-staff">Staff Level</span>
+          </div>
+          <div class="card-icon">&#x1F9E0;</div>
+          <h3>LLM Model Serving &amp; Evaluation Pipeline <span class="difficulty-badge badge-staff">40 min</span></h3>
+          <p>For ML Staff — Design a system serving multiple LLM models with routing, A/B testing, canary deployments, evaluation, and automatic rollback.</p>
+          <div class="card-content">
+
+            <div class="problem-statement">
+              <p>"Design a system that serves multiple LLM models (GPT-4, Claude, open-source) for an enterprise AI agent platform. Support model routing, A/B testing, canary deployments, evaluation, and automatic rollback."</p>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Clarifying Questions</h4>
+              <ul>
+                <li><strong>Models:</strong> 5-10 active models simultaneously</li>
+                <li><strong>Latency:</strong> &lt;2s first token, &lt;5s full response</li>
+                <li><strong>Eval metrics:</strong> Accuracy, latency, cost, hallucination, satisfaction</li>
+                <li><strong>Pipeline:</strong> Automated with human approval gate</li>
+                <li><strong>Cost sensitive:</strong> Major budget consideration</li>
+              </ul>
+            </div>
+
+            <div class="estimation-box">
+              <h4>&#x1F4CA; Back-of-Envelope Estimation</h4>
+              <p>1.5M req/day &times; 2 LLM calls = 3M calls/day. Avg 700 tokens/call = 2.1B tokens/day. Simple (70%) at $0.002/1K = $2,940/day. Complex (30%) at $0.03/1K = $18,900/day. Total WITH routing: $21,840/day vs WITHOUT: $63,000/day. Savings: $41,160/day (65%).</p>
+            </div>
+
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+Agent Request &#x2192; Model Router &#x2192; Model Gateway &#x2192; LLM Provider
+                (simple/complex)    &#x2502;            (OpenAI/Anthropic/Self-hosted)
+                              &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x25BC;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+                              &#x2502; A/B Testing &#x2502;
+                              &#x2502; Framework   &#x2502;
+                              &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+                              &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x25BC;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+                              &#x2502; Evaluation  &#x2502;
+                              &#x2502; Pipeline    &#x2502;
+                              &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+                              Metrics + Alerts &#x2192; Auto-rollback
+
+3-Tier Model Routing:
+  Fast Tier (Llama-3, Mistral):      ~70% traffic
+  Mid Tier (Claude Haiku):           ~10% traffic
+  Power Tier (GPT-4, Claude Opus):   ~20% traffic</pre>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 1 — Model Router</h4>
+              <ul>
+                <li><strong>Classify complexity:</strong> Lightweight classifier (&lt;50ms overhead)</li>
+                <li><strong>Simple (FAQ, password reset):</strong> Fast model &#x2192; low cost</li>
+                <li><strong>Complex (multi-step, ambiguous):</strong> Powerful model &#x2192; high accuracy</li>
+                <li><strong>Fallback:</strong> Fast model uncertain &#x2192; escalate to powerful</li>
+                <li><strong>Impact:</strong> 70% simple &#x2192; 70% cost reduction</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 2 — A/B Testing &amp; Canary</h4>
+              <ul>
+                <li><strong>Progressive rollout:</strong> 5% &#x2192; 25% &#x2192; 100%</li>
+                <li><strong>Monitor:</strong> Accuracy, latency, satisfaction per variant</li>
+                <li><strong>Auto-rollback:</strong> On threshold breach for any metric</li>
+                <li><strong>Statistical significance:</strong> Testing before promotion</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 3 — Evaluation Pipeline</h4>
+              <ul>
+                <li><strong>Offline eval:</strong> 1000+ labeled queries, accuracy, hallucination rate, latency P50/P95/P99, token usage, cost</li>
+                <li><strong>Online eval:</strong> Success rate, escalation rate, thumbs up/down</li>
+                <li><strong>Error analysis:</strong> Categorization and root cause per failure mode</li>
+              </ul>
+            </div>
+
+            <div class="scaling-box">
+              <h4>&#x1F680; Scaling Strategies</h4>
+              <ul>
+                <li><strong>Response caching:</strong> Redis with TTL 1hr for deterministic answers</li>
+                <li><strong>Prompt compression:</strong> Reduce token count without losing quality</li>
+                <li><strong>Batching:</strong> Group non-urgent requests for throughput</li>
+                <li><strong>Multi-provider distribution:</strong> Spread load across providers</li>
+              </ul>
+            </div>
+
+            <div class="ml-box">
+              <h4>&#x1F9E0; ML Integration</h4>
+              <ul>
+                <li><strong>Prompt optimization per model version</strong></li>
+                <li><strong>Token budget management per customer</strong></li>
+                <li><strong>Customer-specific fine-tuning</strong></li>
+                <li><strong>Model distillation:</strong> Train smaller models on common queries</li>
+              </ul>
+            </div>
+
+            <div class="key-points">
+              <h4>Key Numbers</h4>
+              <ul>
+                <li><strong>3M LLM calls/day,</strong> 2.1B tokens/day</li>
+                <li><strong>$21,840/day with routing</strong> vs $63,000 without</li>
+                <li><strong>65% cost savings</strong> from model routing</li>
+                <li><strong>&lt;2s first token,</strong> &lt;5s full response</li>
+              </ul>
+            </div>
+            <a href="design-06-llm-serving.html" class="read-full-article">Read Full Article →</a>
+          </div>
+        </div>
+
+        <!-- 7. Conversation Memory & Context System -->
+        <div class="concept-card" data-topic="memory">
+          <div class="card-tags">
+            <span class="card-tag tag-jd">In JD</span>
+            <span class="card-tag badge-senior">Senior Level</span>
+          </div>
+          <div class="card-icon">&#x1F4BE;</div>
+          <h3>Conversation Memory &amp; Context System <span class="difficulty-badge badge-senior">35 min</span></h3>
+          <p>In JD: 'Agent Memory' — Design a memory system with short-term, working, and long-term memory for an AI agent. Fast, scalable, privacy-compliant.</p>
+          <div class="card-content">
+
+            <div class="problem-statement">
+              <p>"Design a memory system for an AI agent that maintains short-term memory (conversation), working memory (intermediate results), and long-term memory (preferences, past interactions, learned patterns). Fast, scalable, privacy-compliant."</p>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Clarifying Questions</h4>
+              <ul>
+                <li><strong>Short-term:</strong> Session scope (minutes-hours)</li>
+                <li><strong>Long-term:</strong> Months-years retention</li>
+                <li><strong>Privacy:</strong> Consent-based with retention policies</li>
+                <li><strong>Cross-session recall:</strong> Remember past interactions</li>
+                <li><strong>Isolation:</strong> User memory private, org patterns shareable</li>
+              </ul>
+            </div>
+
+            <div class="estimation-box">
+              <h4>&#x1F4CA; Back-of-Envelope Estimation</h4>
+              <p>500K DAU &times; 3 conversations &times; 10 messages = 15M messages/day. 500K active sessions at peak. 5M users &times; 100 entries = 500M memory records. ~50 req/sec working memory writes. Redis: 24.8 GB. PostgreSQL: 0.93 TB text. Vector DB: 2.85 TB.</p>
+            </div>
+
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+&#x2502;               MEMORY SYSTEM              &#x2502;
+&#x2502;  &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;  &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;  &#x2502;
+&#x2502;  &#x2502; Short-term  &#x2502;  &#x2502; Working Memory   &#x2502;  &#x2502;
+&#x2502;  &#x2502; (Redis)     &#x2502;  &#x2502; (Redis)          &#x2502;  &#x2502;
+&#x2502;  &#x2502; Session ctx &#x2502;  &#x2502; Task state,      &#x2502;  &#x2502;
+&#x2502;  &#x2502; TTL: 24hr   &#x2502;  &#x2502; intermediate     &#x2502;  &#x2502;
+&#x2502;  &#x2502;             &#x2502;  &#x2502; results TTL: 1hr &#x2502;  &#x2502;
+&#x2502;  &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;  &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;  &#x2502;
+&#x2502;  &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;   &#x2502;
+&#x2502;  &#x2502; Long-term Memory (PostgreSQL +   &#x2502;   &#x2502;
+&#x2502;  &#x2502; pgvector)                        &#x2502;   &#x2502;
+&#x2502;  &#x2502; &#x2022; User preferences               &#x2502;   &#x2502;
+&#x2502;  &#x2502; &#x2022; Past interaction summaries      &#x2502;   &#x2502;
+&#x2502;  &#x2502; &#x2022; Learned patterns                &#x2502;   &#x2502;
+&#x2502;  &#x2502; &#x2022; Semantic search via embeddings  &#x2502;   &#x2502;
+&#x2502;  &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;   &#x2502;
+&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;</pre>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 1 — Short-Term Memory</h4>
+              <ul>
+                <li><strong>Full conversation in Redis:</strong> {session_id: {messages, user_context, created_at}}</li>
+                <li><strong>TTL 24hr:</strong> Auto-expire inactive sessions</li>
+                <li><strong>Context window management:</strong> Summarize older messages if exceeds LLM token limit</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 2 — Working Memory</h4>
+              <ul>
+                <li><strong>Intermediate results:</strong> During multi-step execution</li>
+                <li><strong>Example:</strong> Step 1 returns user's manager &#x2192; stored &#x2192; Step 2 uses for approval</li>
+                <li><strong>Redis TTL 1hr:</strong> Short-lived, task-scoped</li>
+                <li><strong>Enables re-planning:</strong> On failure, retry with intermediate state preserved</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 3 — Long-Term Memory</h4>
+              <ul>
+                <li><strong>PostgreSQL for structured:</strong> Preferences, history, feedback</li>
+                <li><strong>pgvector for semantic recall:</strong> Embed past interactions, retrieve by similarity</li>
+                <li><strong>Store summaries not raw conversations:</strong> Space-efficient and privacy-friendly</li>
+                <li><strong>Privacy:</strong> Encryption at rest, retention policies, right-to-delete</li>
+              </ul>
+            </div>
+
+            <div class="scaling-box">
+              <h4>&#x1F680; Scaling Strategies</h4>
+              <ul>
+                <li><strong>Redis cluster sharded by session_id</strong></li>
+                <li><strong>PostgreSQL partitioned by user_id</strong></li>
+                <li><strong>Vector DB sharded by tenant</strong></li>
+                <li><strong>Background summarization job:</strong> Async compress conversations to entries</li>
+              </ul>
+            </div>
+
+            <div class="ml-box">
+              <h4>&#x1F9E0; ML Integration</h4>
+              <ul>
+                <li><strong>Embed query &#x2192; find relevant past interactions</strong> (cosine similarity)</li>
+                <li><strong>LLM summarizes conversations</strong> to structured entries</li>
+                <li><strong>Pattern detection:</strong> Proactive suggestions from learned behaviors</li>
+                <li><strong>Memory decay:</strong> Reduce relevance score over time</li>
+              </ul>
+            </div>
+
+            <div class="key-points">
+              <h4>Key Numbers</h4>
+              <ul>
+                <li><strong>15M messages/day,</strong> 500K concurrent sessions</li>
+                <li><strong>500M long-term memory records</strong></li>
+                <li><strong>Redis: 24.8 GB,</strong> PG: 0.93 TB, Vector: 2.85 TB</li>
+                <li><strong>~50 req/sec</strong> working memory writes</li>
+              </ul>
+            </div>
+            <a href="design-07-conversation-memory.html" class="read-full-article">Read Full Article →</a>
+          </div>
+        </div>
+
+        <!-- 8. Sandboxed Code Execution Environment -->
+        <div class="concept-card" data-topic="sandbox">
+          <div class="card-tags">
+            <span class="card-tag tag-jd">In JD</span>
+            <span class="card-tag badge-staff">Staff Level</span>
+          </div>
+          <div class="card-icon">&#x1F4E6;</div>
+          <h3>Sandboxed Code Execution Environment <span class="difficulty-badge badge-staff">35 min</span></h3>
+          <p>In JD: 'Sandboxed Code Execution' — Design a system where an AI agent generates and executes code on behalf of enterprise users. Sandboxed, time-limited, auditable.</p>
+          <div class="card-content">
+
+            <div class="problem-statement">
+              <p>"Design a system where an AI agent can generate and execute code (Python, SQL, shell) on behalf of enterprise users. Sandboxed (can't access other users' data or host), time-limited, auditable."</p>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Clarifying Questions</h4>
+              <ul>
+                <li><strong>Languages:</strong> Python, SQL, shell primarily</li>
+                <li><strong>Data access:</strong> Within user's permissions only</li>
+                <li><strong>Timeout:</strong> 30s interactive, 5min background</li>
+                <li><strong>Output:</strong> Text, tables, charts, files</li>
+                <li><strong>Isolation:</strong> Strict multi-tenant isolation</li>
+              </ul>
+            </div>
+
+            <div class="estimation-box">
+              <h4>&#x1F4CA; Back-of-Envelope Estimation</h4>
+              <p>50K executions/day. Avg 5s execution. Peak concurrent: 200 sandboxes. Storage: ~50MB/day. Container spin-up target: &lt;2s.</p>
+            </div>
+
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+Agent generates code &#x2192; Code Validator &#x2192; Sandbox Pool &#x2192; Execute &#x2192; Return Output
+                       (security scan)   (pre-warmed     (timeout    (text/table/
+                                          containers)    enforced)    chart/file)</pre>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 1 — Code Validator</h4>
+              <ul>
+                <li><strong>Static analysis:</strong> Block os.system, subprocess, external network calls</li>
+                <li><strong>Whitelist:</strong> pandas, numpy, matplotlib (not requests, socket)</li>
+                <li><strong>SQL injection prevention:</strong> Parameterized queries only</li>
+                <li><strong>LLM-based review:</strong> Second LLM checks code safety before execution</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 2 — Sandbox Pool</h4>
+              <ul>
+                <li><strong>Pre-warmed containers:</strong> gVisor or Firecracker microVMs</li>
+                <li><strong>Fresh container per execution:</strong> Destroyed after use</li>
+                <li><strong>Resource limits:</strong> 1 CPU, 512MB RAM, 100MB disk, internal-only network</li>
+                <li><strong>SIGKILL after timeout:</strong> Hard enforcement</li>
+                <li><strong>tmpfs mount:</strong> Ephemeral filesystem, nothing persists</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 3 — Data Access Layer</h4>
+              <ul>
+                <li><strong>Proxy between sandbox and enterprise data:</strong> No direct access</li>
+                <li><strong>Enforces user permissions:</strong> Row-level security</li>
+                <li><strong>SQL:</strong> Read-only replica with user's scope</li>
+                <li><strong>Never expose raw credentials:</strong> Proxy handles auth</li>
+                <li><strong>Audit log:</strong> Every data access recorded</li>
+              </ul>
+            </div>
+
+            <div class="scaling-box">
+              <h4>&#x1F680; Scaling Strategies</h4>
+              <ul>
+                <li><strong>Container pool auto-scales on queue depth</strong></li>
+                <li><strong>Warm pool:</strong> 50 pre-initialized containers (&lt;2s cold start)</li>
+                <li><strong>Kafka execution queue:</strong> Priority by customer tier</li>
+                <li><strong>Regional execution:</strong> Data compliance requirements</li>
+              </ul>
+            </div>
+
+            <div class="ml-box">
+              <h4>&#x1F9E0; ML Integration</h4>
+              <ul>
+                <li><strong>Code quality eval:</strong> Against test cases</li>
+                <li><strong>Error recovery:</strong> LLM analyzes error &#x2192; generates fix</li>
+                <li><strong>Learning:</strong> Track successful patterns &#x2192; improve code generation prompts</li>
+              </ul>
+            </div>
+
+            <div class="key-points">
+              <h4>Key Numbers</h4>
+              <ul>
+                <li><strong>50K executions/day</strong></li>
+                <li><strong>Peak concurrent: 200</strong> sandboxes</li>
+                <li><strong>&lt;2s container spin-up</strong></li>
+                <li><strong>30s interactive / 5min background</strong> timeout</li>
+              </ul>
+            </div>
+            <a href="design-08-sandboxed-code.html" class="read-full-article">Read Full Article →</a>
+          </div>
+        </div>
+
+        <!-- 9. Enterprise Knowledge Graph -->
+        <div class="concept-card" data-topic="knowledge-graph">
+          <div class="card-tags">
+            <span class="card-tag tag-jd">In JD</span>
+            <span class="card-tag badge-staff">Staff Level</span>
+          </div>
+          <div class="card-icon">&#x1F578;&#xFE0F;</div>
+          <h3>Enterprise Knowledge Graph <span class="difficulty-badge badge-staff">40 min</span></h3>
+          <p>In JD: 'Knowledge Graphs' — Design a knowledge graph of org structure, systems, and relationships that the AI agent uses for decision-making.</p>
+          <div class="card-content">
+
+            <div class="problem-statement">
+              <p>"Design a knowledge graph representing org structure (people, teams, roles), systems (apps, permissions, data), and relationships. AI agent uses this graph for decisions."</p>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Clarifying Questions</h4>
+              <ul>
+                <li><strong>Sources:</strong> AD, Workday, ServiceNow CMDB, Okta</li>
+                <li><strong>Scale:</strong> 10K-100K nodes, 100K-1M edges per customer</li>
+                <li><strong>Queries:</strong> "Who is John's manager?", "Who can approve?", "What apps does sales use?"</li>
+                <li><strong>Freshness:</strong> Updated within 15 minutes</li>
+                <li><strong>Isolation:</strong> Separate graphs per customer</li>
+              </ul>
+            </div>
+
+            <div class="estimation-box">
+              <h4>&#x1F4CA; Back-of-Envelope Estimation</h4>
+              <p>350 customers &times; 50K nodes = 17.5M total nodes. 10 edges/node = 175M edges. 1M graph queries/day (agent lookups). &lt;50ms for 2-hop traversals.</p>
+            </div>
+
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+Data Sources &#x2192; Sync Pipeline &#x2192; Graph Store &#x2192; Query Engine &#x2192; Agent
+(AD, Workday,   (CDC/webhooks   (Neo4j or     (Cypher/     (Context for
+ Okta, CMDB)     + batch sync)   Neptune)      GraphQL)      reasoning)
+
+Example Graph:
+  (John)&#x2500;[MANAGES]&#x2192;(Alice)&#x2500;[HAS_ACCESS_TO]&#x2192;(Salesforce)&#x2500;[OWNED_BY]&#x2192;(Sales Team)</pre>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 1 — Graph Schema</h4>
+              <ul>
+                <li><strong>Node types:</strong> Person, Team, Role, Application, Permission, Document, Ticket</li>
+                <li><strong>Edge types:</strong> MANAGES, MEMBER_OF, HAS_ROLE, HAS_ACCESS_TO, OWNS, CREATED_BY</li>
+                <li><strong>Example:</strong> (John)-[MANAGES]-&gt;(Alice)-[HAS_ACCESS_TO]-&gt;(Salesforce)-[OWNED_BY]-&gt;(Sales Team)</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 2 — Sync Pipeline</h4>
+              <ul>
+                <li><strong>Real-time webhooks:</strong> From Workday/Okta/AD for immediate updates</li>
+                <li><strong>Nightly batch full sync:</strong> Reconciliation to catch missed events</li>
+                <li><strong>Conflict resolution:</strong> Source system is truth, last-write-wins with source priority</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 3 — Agent Integration</h4>
+              <ul>
+                <li><strong>Context queries:</strong> Agent queries for user, team, manager, access</li>
+                <li><strong>Approval routing:</strong> Traverse MANAGES edge to find approver chain</li>
+                <li><strong>Permission checking:</strong> Traverse HAS_ACCESS_TO for authorization</li>
+                <li><strong>Smart suggestions:</strong> "Others on your team use X for this"</li>
+              </ul>
+            </div>
+
+            <div class="scaling-box">
+              <h4>&#x1F680; Scaling Strategies</h4>
+              <ul>
+                <li><strong>Graph partitioned by tenant</strong></li>
+                <li><strong>Cache frequent subgraphs:</strong> Org hierarchy in Redis</li>
+                <li><strong>Read replicas for queries</strong></li>
+                <li><strong>Index on:</strong> email, team_name, app_name</li>
+              </ul>
+            </div>
+
+            <div class="ml-box">
+              <h4>&#x1F9E0; ML Integration</h4>
+              <ul>
+                <li><strong>Graph embeddings:</strong> For similarity and prediction</li>
+                <li><strong>Link prediction:</strong> Predict permissions for new employees</li>
+                <li><strong>Anomaly detection:</strong> Unusual permission patterns</li>
+                <li><strong>Community detection:</strong> Cross-org implicit teams</li>
+              </ul>
+            </div>
+
+            <div class="key-points">
+              <h4>Key Numbers</h4>
+              <ul>
+                <li><strong>17.5M nodes,</strong> 175M edges</li>
+                <li><strong>1M graph queries/day</strong></li>
+                <li><strong>&lt;50ms</strong> for 2-hop traversals</li>
+                <li><strong>15-minute freshness</strong> target</li>
+              </ul>
+            </div>
+            <a href="design-09-knowledge-graph.html" class="read-full-article">Read Full Article →</a>
+          </div>
+        </div>
+
+        <!-- 10. Agent Latency Optimization System -->
+        <div class="concept-card" data-topic="latency-optimization">
+          <div class="card-tags">
+            <span class="card-tag tag-jd">In JD</span>
+            <span class="card-tag badge-staff">Staff Level</span>
+          </div>
+          <div class="card-icon">&#x26A1;</div>
+          <h3>Agent Latency Optimization System <span class="difficulty-badge badge-staff">35 min</span></h3>
+          <p>In JD: 'Latency Optimization' — Reduce AI agent response time from 8-15s to under 3s while maintaining accuracy through caching, parallelism, and model routing.</p>
+          <div class="card-content">
+
+            <div class="problem-statement">
+              <p>"The AI agent takes 8-15s to respond. Design a system to reduce to under 3s while maintaining accuracy. Bottlenecks: LLM inference (2-4s), enterprise API calls (1-3s each), cold start for infrequent connectors."</p>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Clarifying Questions</h4>
+              <ul>
+                <li><strong>Current:</strong> LLM planning (2-4s) + tool calls (1-3s &times; 2-3 steps) + LLM response (1-2s)</li>
+                <li><strong>Cannot sacrifice correctness</strong></li>
+                <li><strong>Can cache deterministic answers</strong></li>
+                <li><strong>Can pre-compute common patterns</strong></li>
+                <li><strong>Streaming acceptable</strong> for perceived latency</li>
+              </ul>
+            </div>
+
+            <div class="estimation-box">
+              <h4>&#x1F4CA; Back-of-Envelope Estimation</h4>
+              <p>Current: 5-12s. Target: &lt;3s for 80%, &lt;5s for 95%. 1.5M req/day, 70% common patterns.</p>
+            </div>
+
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+Request &#x2192; Query Classifier &#x2192; Cache Hit? &#x2500;&#x2500;Yes&#x2500;&#x2500;&#x2192; Instant Response (&lt;100ms)
+                &#x2502;                  &#x2502;
+                No                 &#x2502;
+                &#x2502;                  &#x2502;
+         Model Router &#x2192; Fast Model (simple) &#x2192; Single Tool Call &#x2192; Stream Response (&lt;2s)
+                &#x2502;
+         Powerful Model (complex) &#x2192; Parallel Tool Calls + Speculative Execution &#x2192; Stream (&lt;4s)</pre>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 1 — Response Caching</h4>
+              <ul>
+                <li><strong>Cache common queries:</strong> "How do I reset my password?"</li>
+                <li><strong>Cache key:</strong> Normalized query + user context hash</li>
+                <li><strong>TTL:</strong> 5min dynamic content, 1hr static content</li>
+                <li><strong>Hit rate target:</strong> 30-40% of all queries</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 2 — Parallel Execution + Streaming</h4>
+              <ul>
+                <li><strong>Independent steps run simultaneously:</strong> asyncio.gather</li>
+                <li><strong>Stream LLM tokens:</strong> Word-by-word for perceived speed</li>
+                <li><strong>Speculative execution:</strong> Start likely next step before current completes</li>
+                <li><strong>Connection pooling:</strong> Avoid TCP handshake overhead</li>
+              </ul>
+            </div>
+
+            <div class="deep-dive">
+              <h4>Deep Dive 3 — Model Routing for Speed</h4>
+              <ul>
+                <li><strong>70% simple &#x2192; fast model:</strong> 500ms inference</li>
+                <li><strong>30% complex &#x2192; powerful:</strong> 2-3s inference</li>
+                <li><strong>Classifier overhead:</strong> &lt;50ms</li>
+                <li><strong>Low confidence &#x2192; escalate</strong> to powerful model</li>
+                <li><strong>Net effect:</strong> 70%&times;500ms + 30%&times;2500ms = 1.1s avg (vs 3s before)</li>
+              </ul>
+            </div>
+
+            <div class="scaling-box">
+              <h4>&#x1F680; Scaling Strategies</h4>
+              <ul>
+                <li><strong>Pre-warm connector pools</strong> for top-20 enterprise systems</li>
+                <li><strong>Edge caching:</strong> Enterprise data closer to compute</li>
+                <li><strong>Prompt compression:</strong> Reduce tokens while maintaining quality</li>
+                <li><strong>Queue priority:</strong> Interactive requests over background tasks</li>
+              </ul>
+            </div>
+
+            <div class="ml-box">
+              <h4>&#x1F9E0; ML Integration</h4>
+              <ul>
+                <li><strong>Query pattern clustering:</strong> Identify cacheable categories</li>
+                <li><strong>Latency prediction ML model:</strong> Estimate response time upfront</li>
+                <li><strong>Prompt compression training:</strong> Reduce tokens intelligently</li>
+                <li><strong>Pre-fetching:</strong> Predict needed tools &#x2192; pre-warm connections</li>
+              </ul>
+            </div>
+
+            <div class="key-points">
+              <h4>Key Numbers</h4>
+              <ul>
+                <li><strong>Target: &lt;3s for 80%,</strong> &lt;5s for 95%</li>
+                <li><strong>1.5M req/day,</strong> 70% common patterns</li>
+                <li><strong>30-40% cache hit rate</strong></li>
+                <li><strong>1.1s avg inference</strong> with model routing (vs 3s)</li>
+              </ul>
+            </div>
+            <a href="design-10-latency-optimization.html" class="read-full-article">Read Full Article →</a>
+          </div>
+        </div>
+
+      </div><!-- /concepts-grid -->
+    </div><!-- /container -->
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <a href="index.html" class="logo">
+            <span class="logo-icon">&#x26A1;</span>
+            <span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span>
+          </a>
+          <p>Agentic AI System Design — 10 architectures for Staff-level interviews</p>
+        </div>
+        <div class="footer-links">
+          <a href="index.html">System Design Fundamentals</a>
+          <a href="#all-designs">All 10 Designs</a>
+          <a href="#orchestration">Orchestration</a>
+          <a href="#search">Enterprise Search</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Built for interview preparation. Inspired by ByteByteGo.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

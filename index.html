@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Design Mastery — Visual Guide to Distributed Systems</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#" class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span>
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="#fundamentals">Fundamentals</a>
+        <a href="#building-blocks">Building Blocks</a>
+        <a href="#patterns">Patterns</a>
+        <a href="#real-world">Real-World Designs</a>
+        <a href="agentic-ai.html" style="color: var(--accent-light); font-weight: 700;">Agentic AI (10)</a>
+        <a href="#cheatsheet">Cheat Sheet</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">☰</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-badge">🚀 The Visual Guide to System Design</div>
+      <h1>Master System Design<br><span class="gradient-text">One Concept at a Time</span></h1>
+      <p class="hero-subtitle">Visual explanations of distributed systems, scalability patterns, and real-world architectures. Everything you need to ace your system design interview.</p>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-number">25+</span><span class="stat-label">Core Concepts</span></div>
+        <div class="stat"><span class="stat-number">10+</span><span class="stat-label">Real Designs</span></div>
+        <div class="stat"><span class="stat-number">50+</span><span class="stat-label">Diagrams</span></div>
+      </div>
+      <div class="hero-actions">
+        <a href="#fundamentals" class="btn btn-primary">Start Learning →</a>
+        <a href="agentic-ai.html" class="btn btn-primary" style="background: #8b5cf6; box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);">Agentic AI Designs (10) →</a>
+        <a href="#cheatsheet" class="btn btn-secondary">Quick Cheat Sheet</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Fundamentals Section -->
+  <section class="section" id="fundamentals">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">📐 Foundation</span>
+        <h2>System Design Fundamentals</h2>
+        <p>Core concepts every engineer must understand before designing large-scale systems.</p>
+      </div>
+
+      <div class="concepts-grid">
+        <!-- Scalability -->
+        <div class="concept-card" data-topic="scalability">
+          <div class="card-icon">📈</div>
+          <h3>Scalability</h3>
+          <p>How systems handle growing amounts of work by adding resources.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+┌─────────────────────────────────────────┐
+│         VERTICAL SCALING (Scale Up)      │
+│  ┌──────┐     ┌──────────────┐          │
+│  │ 4 CPU│ ──→ │  32 CPU      │          │
+│  │ 8 GB │     │  256 GB RAM  │          │
+│  └──────┘     └──────────────┘          │
+│  Simpler but has hardware limits        │
+├─────────────────────────────────────────┤
+│        HORIZONTAL SCALING (Scale Out)    │
+│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐  │
+│  │Server│ │Server│ │Server│ │Server│   │
+│  │  1   │ │  2   │ │  3   │ │  N   │   │
+│  └──────┘ └──────┘ └──────┘ └──────┘   │
+│  Complex but virtually unlimited        │
+└─────────────────────────────────────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Vertical Scaling:</strong> Add more power (CPU, RAM) to existing machine. Simple but limited.</li>
+                <li><strong>Horizontal Scaling:</strong> Add more machines. Complex (need load balancing, data sync) but unlimited.</li>
+                <li><strong>Elasticity:</strong> Auto-scale based on demand (AWS Auto Scaling, K8s HPA).</li>
+                <li><strong>Rule of thumb:</strong> Design for 10x current load, plan for 100x.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Core</span>
+        </div>
+
+        <!-- Latency vs Throughput -->
+        <div class="concept-card" data-topic="latency">
+          <div class="card-icon">⏱️</div>
+          <h3>Latency vs Throughput</h3>
+          <p>Understanding time-per-request vs requests-per-second trade-offs.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+┌─────────────────────────────────────────┐
+│          LATENCY NUMBERS (2024)          │
+├─────────────────────────────────────────┤
+│  L1 cache ref .............. 1 ns       │
+│  L2 cache ref .............. 4 ns       │
+│  Main memory ref .......... 100 ns      │
+│  SSD random read .......... 16 μs       │
+│  HDD random read .......... 2 ms        │
+│  Same datacenter RTT ...... 0.5 ms      │
+│  Cross-continent RTT ...... 150 ms      │
+├─────────────────────────────────────────┤
+│  THROUGHPUT = Requests / Second          │
+│                                          │
+│  Single server:    ~1K-10K RPS          │
+│  With caching:     ~50K-100K RPS        │
+│  CDN edge:         ~1M+ RPS            │
+└─────────────────────────────────────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Latency:</strong> Time to complete one operation. Measured in ms/μs.</li>
+                <li><strong>Throughput:</strong> Number of operations per unit time (QPS/RPS).</li>
+                <li><strong>P99 Latency:</strong> 99th percentile — worst 1% of requests. More important than average.</li>
+                <li><strong>Trade-off:</strong> Batching increases throughput but adds latency.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Core</span>
+        </div>
+
+        <!-- CAP Theorem -->
+        <div class="concept-card" data-topic="cap">
+          <div class="card-icon">🔺</div>
+          <h3>CAP Theorem</h3>
+          <p>In a distributed system, you can only guarantee two of three properties.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+            Consistency (C)
+                 ╱╲
+                ╱  ╲
+               ╱    ╲
+         CP   ╱  Pick ╲   CA
+             ╱   Two!   ╲
+            ╱            ╲
+           ╱──────────────╲
+   Availability (A) ── Partition
+                        Tolerance (P)
+                   AP
+
+┌──────────┬──────────────────────────┐
+│    CP    │ MongoDB, HBase, Redis    │
+│          │ Consistent but may be    │
+│          │ unavailable during split │
+├──────────┼──────────────────────────┤
+│    AP    │ Cassandra, DynamoDB,     │
+│          │ CouchDB — Always         │
+│          │ available, eventually    │
+│          │ consistent               │
+├──────────┼──────────────────────────┤
+│    CA    │ Traditional RDBMS        │
+│          │ (single node only)       │
+└──────────┴──────────────────────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Consistency:</strong> Every read receives the most recent write.</li>
+                <li><strong>Availability:</strong> Every request receives a response (no errors).</li>
+                <li><strong>Partition Tolerance:</strong> System works despite network failures between nodes.</li>
+                <li><strong>Reality:</strong> Network partitions DO happen, so you really choose between CP and AP.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Core</span>
+        </div>
+
+        <!-- Consistency Patterns -->
+        <div class="concept-card" data-topic="consistency">
+          <div class="card-icon">🔄</div>
+          <h3>Consistency Patterns</h3>
+          <p>Strong, eventual, and causal consistency — when to use which.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+STRONG CONSISTENCY (Linearizable):
+  Client ──write(x=5)──→ DB ──→ All replicas
+  Client ──read(x)────→ DB ──→ Always returns 5
+  ✅ Banking, inventory  ⚠️ High latency
+
+EVENTUAL CONSISTENCY:
+  Client ──write(x=5)──→ Primary
+  Client ──read(x)────→ Replica ──→ May return old value
+  Eventually all replicas converge
+  ✅ Social feeds, DNS  ⚡ Low latency
+
+CAUSAL CONSISTENCY:
+  If A causes B, everyone sees A before B
+  But concurrent events can be in any order
+  ✅ Chat apps, collaborative editing</pre>
+            </div>
+            <div class="key-points">
+              <h4>When to Use</h4>
+              <ul>
+                <li><strong>Strong:</strong> Financial transactions, inventory counts, booking systems.</li>
+                <li><strong>Eventual:</strong> Social media feeds, analytics, DNS updates.</li>
+                <li><strong>Causal:</strong> Chat messages, document collaboration.</li>
+                <li><strong>Read-your-writes:</strong> User always sees their own updates immediately.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Core</span>
+        </div>
+
+        <!-- Back-of-Envelope Estimation -->
+        <div class="concept-card" data-topic="estimation">
+          <div class="card-icon">🧮</div>
+          <h3>Back-of-Envelope Estimation</h3>
+          <p>Quick calculations to estimate system capacity and requirements.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+┌─────────────────────────────────────────┐
+│         POWER OF TWO CHEAT SHEET        │
+├─────────────────────────────────────────┤
+│  2^10 = 1 Thousand (1 KB)              │
+│  2^20 = 1 Million   (1 MB)              │
+│  2^30 = 1 Billion   (1 GB)              │
+│  2^40 = 1 Trillion  (1 TB)              │
+├─────────────────────────────────────────┤
+│         TIME CONVERSIONS                │
+│  1 day  = 86,400 sec ≈ 100K sec        │
+│  1 month = 2.6M sec  ≈ 2.5M sec        │
+│  1 year  = 31.5M sec ≈ 30M sec         │
+├─────────────────────────────────────────┤
+│         COMMON ESTIMATES                │
+│  Daily active users → QPS:              │
+│  QPS = DAU × queries/day / 86400       │
+│  Peak QPS = QPS × 2-3                  │
+│                                          │
+│  Storage:                               │
+│  = users × data_per_user × retention   │
+│                                          │
+│  Bandwidth:                             │
+│  = QPS × avg_request_size              │
+└─────────────────────────────────────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Estimation Framework</h4>
+              <ul>
+                <li><strong>Step 1:</strong> Estimate DAU from total users (typically 10-30% DAU ratio).</li>
+                <li><strong>Step 2:</strong> QPS = DAU × avg actions / 86,400 seconds.</li>
+                <li><strong>Step 3:</strong> Storage = QPS × data per request × retention period.</li>
+                <li><strong>Step 4:</strong> Peak QPS = Average QPS × 2-3x for burst traffic.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Interview</span>
+        </div>
+
+        <!-- Availability & Reliability -->
+        <div class="concept-card" data-topic="availability">
+          <div class="card-icon">🛡️</div>
+          <h3>Availability & Reliability</h3>
+          <p>Nines of availability and how to achieve high uptime.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+┌──────────┬────────────┬───────────────┐
+│  Level   │  Uptime %  │  Downtime/yr  │
+├──────────┼────────────┼───────────────┤
+│ 2 nines  │  99%       │  3.65 days    │
+│ 3 nines  │  99.9%     │  8.77 hours   │
+│ 4 nines  │  99.99%    │  52.6 min     │
+│ 5 nines  │  99.999%   │  5.26 min     │
+└──────────┴────────────┴───────────────┘
+
+ACHIEVING HIGH AVAILABILITY:
+┌─────────────────────────────────────────┐
+│  Redundancy    → No single point of     │
+│                  failure (SPOF)          │
+│  Replication   → Data across regions    │
+│  Failover      → Auto switch on failure │
+│  Health Checks → Detect failures fast   │
+│  Graceful      → Degrade, don't crash   │
+│  Degradation                             │
+└─────────────────────────────────────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Strategies</h4>
+              <ul>
+                <li><strong>Active-Passive:</strong> Standby takes over on primary failure (simple, slight downtime).</li>
+                <li><strong>Active-Active:</strong> All nodes serve traffic (no downtime, complex sync).</li>
+                <li><strong>SLA:</strong> Service Level Agreement — contractual uptime guarantee.</li>
+                <li><strong>MTTR:</strong> Mean Time To Recovery — how fast you can fix failures.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Core</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Building Blocks Section -->
+  <section class="section section-alt" id="building-blocks">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">🧱 Components</span>
+        <h2>Building Blocks of System Design</h2>
+        <p>The essential components used to build any large-scale distributed system.</p>
+      </div>
+
+      <div class="concepts-grid">
+        <!-- Load Balancer -->
+        <div class="concept-card" data-topic="load-balancer">
+          <div class="card-icon">⚖️</div>
+          <h3>Load Balancer</h3>
+          <p>Distributes incoming traffic across multiple servers for reliability and performance.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+         ┌──────────┐
+         │  Clients │
+         └────┬─────┘
+              │
+       ┌──────▼──────┐
+       │    LOAD      │
+       │  BALANCER    │
+       │  (L4 / L7)  │
+       └──┬───┬───┬──┘
+          │   │   │
+     ┌────▼┐ ┌▼──┐ ┌▼────┐
+     │ Srv │ │Srv│ │ Srv │
+     │  1  │ │ 2 │ │  3  │
+     └─────┘ └───┘ └─────┘
+
+ALGORITHMS:
+  Round Robin ─── Equal distribution
+  Weighted RR ─── Based on server capacity
+  Least Conn ─── Route to least busy
+  IP Hash ────── Session affinity
+  Consistent ─── Minimize remapping
+    Hash           on server changes</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>L4 (Transport):</strong> Routes based on IP/port. Fast, no content inspection. (HAProxy, NLB)</li>
+                <li><strong>L7 (Application):</strong> Routes based on URL, headers, cookies. Smart but slower. (Nginx, ALB)</li>
+                <li><strong>Health Checks:</strong> Periodically ping servers, remove unhealthy ones from pool.</li>
+                <li><strong>Global LB:</strong> DNS-based, routes to nearest datacenter (Cloudflare, Route53).</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Infrastructure</span>
+        </div>
+
+        <!-- Caching -->
+        <div class="concept-card" data-topic="caching">
+          <div class="card-icon">💾</div>
+          <h3>Caching</h3>
+          <p>Store frequently accessed data in fast storage to reduce latency and database load.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+CACHE-ASIDE (Lazy Loading):
+  App ──read──→ Cache ──miss──→ DB
+                  │               │
+                  │    ┌──────────┘
+                  │    │ load into cache
+                  ◀────┘
+
+WRITE-THROUGH:
+  App ──write──→ Cache ──write──→ DB
+  (Consistent but higher write latency)
+
+WRITE-BEHIND (Write-Back):
+  App ──write──→ Cache ──async──→ DB
+  (Fast writes but risk of data loss)
+
+CACHE HIERARCHY:
+  ┌─────────┐ < 1ms  ┌───────┐
+  │ L1: App │────────→│Browser│
+  │  Memory │         │ Cache │
+  └────┬────┘         └───────┘
+       │ 1-5ms
+  ┌────▼────┐         ┌───────┐
+  │L2: Redis│────────→│  CDN  │
+  │Memcached│         │ Edge  │
+  └────┬────┘         └───────┘
+       │ 5-50ms
+  ┌────▼────┐
+  │L3: DB   │
+  │  Query  │
+  │  Cache  │
+  └─────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>TTL:</strong> Time-to-live — auto-expire stale data. Balance freshness vs hit rate.</li>
+                <li><strong>Eviction:</strong> LRU (Least Recently Used), LFU (Least Frequently Used), FIFO.</li>
+                <li><strong>Cache Stampede:</strong> Many requests hit DB when cache expires. Fix: lock or stagger TTL.</li>
+                <li><strong>Invalidation:</strong> Hardest problem! Event-driven invalidation > TTL-based.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Performance</span>
+        </div>
+
+        <!-- CDN -->
+        <div class="concept-card" data-topic="cdn">
+          <div class="card-icon">🌐</div>
+          <h3>Content Delivery Network (CDN)</h3>
+          <p>Geographically distributed servers that cache content close to end users.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+Without CDN:
+  User (Tokyo) ───────500ms──────→ Origin (US)
+
+With CDN:
+  User (Tokyo) ──20ms──→ CDN Edge (Tokyo)
+                              │ cache miss
+                              ▼
+                         Origin (US)
+                              │
+                    CDN caches response
+                              │
+  Next User ────20ms───→ CDN Edge ✓ (cached!)
+
+PUSH CDN vs PULL CDN:
+┌──────────┬──────────────────────────────┐
+│   PUSH   │ You upload to CDN upfront    │
+│          │ Best for static, known content│
+├──────────┼──────────────────────────────┤
+│   PULL   │ CDN fetches on first request │
+│          │ Best for dynamic content     │
+│          │ Risk: slow first request     │
+└──────────┴──────────────────────────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Edge Locations:</strong> 200+ PoPs worldwide (Cloudflare, CloudFront, Akamai).</li>
+                <li><strong>Static Content:</strong> Images, CSS, JS, videos — perfect for CDN.</li>
+                <li><strong>Dynamic Content:</strong> API responses with short TTL or edge computing.</li>
+                <li><strong>Cache Invalidation:</strong> Purge by URL, tag, or wildcard when content updates.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Infrastructure</span>
+        </div>
+
+        <!-- Database -->
+        <div class="concept-card" data-topic="database">
+          <div class="card-icon">🗄️</div>
+          <h3>Database Selection</h3>
+          <p>Choosing the right database for your use case — SQL vs NoSQL and beyond.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+┌──────────────────────────────────────────┐
+│          DATABASE DECISION TREE           │
+├──────────────────────────────────────────┤
+│                                           │
+│  Need ACID transactions?                 │
+│    YES → SQL (PostgreSQL, MySQL)         │
+│    NO  ↓                                 │
+│                                           │
+│  Need flexible schema?                   │
+│    YES → Document DB (MongoDB)           │
+│    NO  ↓                                 │
+│                                           │
+│  Key-value lookups at massive scale?     │
+│    YES → DynamoDB, Redis, Cassandra      │
+│    NO  ↓                                 │
+│                                           │
+│  Complex relationships / graph queries?  │
+│    YES → Neo4j, Neptune                  │
+│    NO  ↓                                 │
+│                                           │
+│  Time-series / IoT data?                 │
+│    YES → InfluxDB, TimescaleDB           │
+│    NO  ↓                                 │
+│                                           │
+│  Full-text search?                       │
+│    YES → Elasticsearch, OpenSearch       │
+│                                           │
+│  Vector similarity (AI/ML)?              │
+│    YES → Pinecone, pgvector, Milvus     │
+└──────────────────────────────────────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>SQL:</strong> Strong consistency, ACID, complex queries. Scale with read replicas + sharding.</li>
+                <li><strong>NoSQL:</strong> Flexible schema, horizontal scaling, eventual consistency. Types: document, key-value, wide-column, graph.</li>
+                <li><strong>NewSQL:</strong> Best of both — CockroachDB, Spanner, TiDB. Distributed SQL.</li>
+                <li><strong>Polyglot Persistence:</strong> Use different DBs for different parts of the system.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Data</span>
+        </div>
+
+        <!-- Database Scaling -->
+        <div class="concept-card" data-topic="db-scaling">
+          <div class="card-icon">📊</div>
+          <h3>Database Sharding & Replication</h3>
+          <p>Scaling databases horizontally through partitioning and replication strategies.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+REPLICATION (Read Scaling):
+  ┌────────┐   sync/async   ┌─────────┐
+  │Primary │──────────────→  │ Replica │ ← reads
+  │(writes)│──────────────→  │ Replica │ ← reads
+  └────────┘                 └─────────┘
+
+SHARDING (Write Scaling):
+  ┌────────────────────────────────┐
+  │        Shard Router            │
+  └───┬────────┬────────┬──────┘
+      │        │        │
+  ┌───▼──┐ ┌──▼───┐ ┌──▼───┐
+  │Shard 1│ │Shard 2│ │Shard 3│
+  │ A-H   │ │ I-P   │ │ Q-Z   │
+  └───────┘ └───────┘ └───────┘
+
+SHARDING STRATEGIES:
+  Range-based  → user_id 1-1M, 1M-2M
+  Hash-based   → hash(user_id) % N
+  Geo-based    → by region/country
+  Directory    → lookup table maps key→shard</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Hotspot:</strong> One shard gets disproportionate traffic. Fix: better partition key or consistent hashing.</li>
+                <li><strong>Cross-shard queries:</strong> Expensive! Design schema to avoid them.</li>
+                <li><strong>Rebalancing:</strong> Adding/removing shards. Consistent hashing minimizes data movement.</li>
+                <li><strong>Vitess:</strong> MySQL sharding middleware (used by YouTube, Slack).</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Data</span>
+        </div>
+
+        <!-- Message Queues -->
+        <div class="concept-card" data-topic="message-queue">
+          <div class="card-icon">📨</div>
+          <h3>Message Queues & Event Streaming</h3>
+          <p>Decouple services with asynchronous communication for reliability and scalability.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+MESSAGE QUEUE (Point-to-Point):
+  Producer ──→ ┌──────────┐ ──→ Consumer
+               │  Queue   │
+  Producer ──→ │ ┌──┬──┐  │ ──→ Consumer
+               │ │m3│m2│m1│
+               └──────────┘
+
+EVENT STREAMING (Pub/Sub):
+  Publisher ──→ ┌──────────────┐
+               │  Topic        │
+               │  ┌──┬──┬──┐  │──→ Consumer Group A
+               │  │e3│e2│e1│  │──→ Consumer Group B
+               └──────────────┘──→ Consumer Group C
+
+WHEN TO USE WHAT:
+┌─────────────┬──────────────────────────┐
+│ RabbitMQ    │ Task queues, RPC, routing│
+│ Kafka       │ Event streaming, logs,   │
+│             │ CDC, high throughput     │
+│ SQS         │ Simple cloud queues      │
+│ Redis Pub/  │ Real-time notifications  │
+│   Sub       │ (no persistence)         │
+└─────────────┴──────────────────────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>At-least-once:</strong> Messages may be delivered multiple times. Consumers must be idempotent.</li>
+                <li><strong>Exactly-once:</strong> Hard to achieve. Kafka supports with transactions.</li>
+                <li><strong>Dead Letter Queue:</strong> Failed messages go to DLQ for investigation.</li>
+                <li><strong>Backpressure:</strong> Slow consumer? Queue grows. Solution: scale consumers or rate limit producers.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Infrastructure</span>
+        </div>
+
+        <!-- API Design -->
+        <div class="concept-card" data-topic="api-design">
+          <div class="card-icon">🔌</div>
+          <h3>API Design</h3>
+          <p>REST, GraphQL, gRPC — choosing the right API paradigm for your system.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+┌──────────┬──────────┬──────────┬──────────┐
+│          │   REST   │ GraphQL  │  gRPC    │
+├──────────┼──────────┼──────────┼──────────┤
+│ Protocol │  HTTP    │  HTTP    │ HTTP/2   │
+│ Format   │  JSON    │  JSON    │ Protobuf │
+│ Contract │  Loose   │  Schema  │ Strict   │
+│ Caching  │  Easy    │  Hard    │  Hard    │
+│ Learning │  Easy    │  Medium  │  Hard    │
+│ Speed    │  Good    │  Good    │  Fastest │
+├──────────┼──────────┼──────────┼──────────┤
+│ Best For │ Public   │ Flexible │ Internal │
+│          │ APIs,    │ frontend │ micro-   │
+│          │ CRUD     │ queries  │ services │
+└──────────┴──────────┴──────────┴──────────┘
+
+REST Example:
+  GET  /api/users/123
+  POST /api/users     { "name": "Alex" }
+  PUT  /api/users/123 { "name": "Alex B" }
+
+gRPC: 10x faster for service-to-service</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Versioning:</strong> URL (/v2/users) or header (Accept: v2). Never break clients.</li>
+                <li><strong>Rate Limiting:</strong> Token bucket or sliding window. Return 429 when exceeded.</li>
+                <li><strong>Pagination:</strong> Cursor-based > offset-based for large datasets.</li>
+                <li><strong>Idempotency:</strong> PUT/DELETE should be idempotent. Use idempotency keys for POST.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Design</span>
+        </div>
+
+        <!-- Consistent Hashing -->
+        <div class="concept-card" data-topic="consistent-hashing">
+          <div class="card-icon">🔗</div>
+          <h3>Consistent Hashing</h3>
+          <p>Distribute data across nodes with minimal redistribution when nodes change.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+HASH RING:
+              Node A
+               ╱╲
+              ╱  ╲
+         ○  ╱    ╲  ○ ← keys
+           ╱      ╲
+    Node D ────────── Node B
+           ╲      ╱
+         ○  ╲    ╱  ○
+              ╲  ╱
+               ╲╱
+             Node C
+
+Traditional Hashing:
+  hash(key) % N → Add/remove node =
+  ALL keys remapped! ❌
+
+Consistent Hashing:
+  Keys mapped to ring position
+  Only K/N keys remapped when
+  nodes change ✅
+
+VIRTUAL NODES:
+  Each physical node → 100-200 virtual nodes
+  Ensures even distribution
+  Node A: A-1, A-2, ... A-150 on ring</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Problem:</strong> hash(key) % N breaks when N changes — all data reshuffled.</li>
+                <li><strong>Solution:</strong> Hash ring where only neighbors are affected by node changes.</li>
+                <li><strong>Virtual Nodes:</strong> Each server gets multiple points on ring for better balance.</li>
+                <li><strong>Used by:</strong> DynamoDB, Cassandra, Memcached, CDN routing.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Algorithm</span>
+        </div>
+
+        <!-- Proxy & Reverse Proxy -->
+        <div class="concept-card" data-topic="proxy">
+          <div class="card-icon">🔀</div>
+          <h3>Proxy & API Gateway</h3>
+          <p>Forward proxy, reverse proxy, and API gateway patterns for routing and security.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+FORWARD PROXY (client-side):
+  Client ──→ Proxy ──→ Internet ──→ Server
+  (VPN, anonymity, content filtering)
+
+REVERSE PROXY (server-side):
+  Client ──→ Reverse ──→ Server 1
+              Proxy  ──→ Server 2
+                     ──→ Server 3
+  (Load balancing, SSL, caching, security)
+
+API GATEWAY:
+  ┌─────────────────────────────────┐
+  │         API GATEWAY             │
+  │  ┌─────┬──────┬──────┬──────┐  │
+  │  │Auth │Rate  │Route │Trans-│  │
+  │  │     │Limit │ing   │form  │  │
+  │  └──┬──┴──┬───┴──┬───┴──┬───┘  │
+  │     │     │      │      │      │
+  └─────┼─────┼──────┼──────┼──────┘
+        ▼     ▼      ▼      ▼
+     User  Order  Payment  Notif
+     Svc    Svc    Svc     Svc</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Nginx:</strong> Most popular reverse proxy. Also serves static files, SSL termination.</li>
+                <li><strong>API Gateway:</strong> Kong, AWS API Gateway — auth, rate limiting, monitoring in one place.</li>
+                <li><strong>Service Mesh:</strong> Istio/Envoy — proxy sidecar per service for observability.</li>
+                <li><strong>BFF:</strong> Backend-for-Frontend — separate gateway per client type (web, mobile).</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Infrastructure</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Patterns Section -->
+  <section class="section" id="patterns">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">🏗️ Architecture</span>
+        <h2>Design Patterns & Architectures</h2>
+        <p>Battle-tested patterns for building reliable, scalable distributed systems.</p>
+      </div>
+
+      <div class="concepts-grid">
+        <!-- Microservices -->
+        <div class="concept-card" data-topic="microservices">
+          <div class="card-icon">🔲</div>
+          <h3>Microservices Architecture</h3>
+          <p>Breaking a monolith into independently deployable services.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+MONOLITH:                  MICROSERVICES:
+┌──────────────┐     ┌─────┐ ┌─────┐ ┌─────┐
+│   All Code   │     │User │ │Order│ │Pay  │
+│   One Deploy │ ──→ │ Svc │ │ Svc │ │ Svc │
+│   One DB     │     └──┬──┘ └──┬──┘ └──┬──┘
+└──────────────┘        │      │      │
+                     ┌──▼──┐┌──▼──┐┌──▼──┐
+                     │Users││Order││Pay  │
+                     │ DB  ││ DB  ││ DB  │
+                     └─────┘└─────┘└─────┘
+
+COMMUNICATION:
+  Synchronous:  REST / gRPC (request-response)
+  Asynchronous: Kafka / RabbitMQ (events)
+
+SERVICE DISCOVERY:
+  Client ──→ Service Registry ──→ Instance
+  (Consul, Eureka, K8s DNS)</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Principles</h4>
+              <ul>
+                <li><strong>Single Responsibility:</strong> Each service owns one business capability.</li>
+                <li><strong>Database per Service:</strong> No shared databases — communicate via APIs/events.</li>
+                <li><strong>Independent Deploy:</strong> Change one service without affecting others.</li>
+                <li><strong>Trade-off:</strong> Operational complexity (networking, monitoring, debugging) increases significantly.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Architecture</span>
+        </div>
+
+        <!-- Event-Driven Architecture -->
+        <div class="concept-card" data-topic="event-driven">
+          <div class="card-icon">⚡</div>
+          <h3>Event-Driven Architecture</h3>
+          <p>Services communicate through events for loose coupling and real-time processing.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+EVENT SOURCING:
+  Commands ──→ Event Store ──→ Projections
+                  │
+  OrderCreated    │──→ Read Model (SQL)
+  ItemAdded       │──→ Analytics
+  OrderPaid       │──→ Notifications
+  OrderShipped    │──→ Search Index
+
+CQRS (Command Query Separation):
+  ┌─────────┐         ┌─────────────┐
+  │ COMMAND │──write──→│ Write Model │
+  │  API    │         │ (Event Store)│
+  └─────────┘         └──────┬──────┘
+                             │ events
+  ┌─────────┐         ┌──────▼──────┐
+  │  QUERY  │◀──read──│ Read Model  │
+  │  API    │         │(Materialized)│
+  └─────────┘         └─────────────┘
+
+SAGA PATTERN (Distributed Transactions):
+  Order → Payment → Inventory → Shipping
+    │        │          │
+    ◀── Compensate ◀── Rollback (on failure)</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Event Sourcing:</strong> Store events, not state. Replay to rebuild any point in time.</li>
+                <li><strong>CQRS:</strong> Separate read and write models. Optimize each independently.</li>
+                <li><strong>Saga:</strong> Coordinate distributed transactions with compensating actions.</li>
+                <li><strong>Choreography vs Orchestration:</strong> Events react (loose) vs central coordinator (controlled).</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Architecture</span>
+        </div>
+
+        <!-- Rate Limiting -->
+        <div class="concept-card" data-topic="rate-limiting">
+          <div class="card-icon">🚦</div>
+          <h3>Rate Limiting</h3>
+          <p>Protect your system from abuse and ensure fair usage across clients.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+TOKEN BUCKET:
+  ┌──────────────────────┐
+  │  Bucket (max: 10)    │
+  │  ●●●●●●●○○○          │ ← refill 1/sec
+  │                      │
+  │  Request arrives:    │
+  │    Token available?  │
+  │    YES → Process ✅  │
+  │    NO  → Reject 429 ❌│
+  └──────────────────────┘
+
+SLIDING WINDOW LOG:
+  |──────── 1 minute window ────────|
+  |  req  req  req  req  req  req   |
+  |  ↑                          ↑   |
+  timestamp              timestamp  |
+  Count requests in window.
+  Reject if count > limit.
+
+DISTRIBUTED RATE LIMITING:
+  Client ──→ API Gateway ──→ Redis
+              │                │
+              │  INCR key     │
+              │  EXPIRE 60s   │
+              │  if count > N │
+              │    → 429      │</pre>
+            </div>
+            <div class="key-points">
+              <h4>Algorithms</h4>
+              <ul>
+                <li><strong>Token Bucket:</strong> Allows bursts, smooth rate. Used by AWS, Stripe.</li>
+                <li><strong>Sliding Window:</strong> Precise counting, memory intensive for high traffic.</li>
+                <li><strong>Fixed Window:</strong> Simple but allows 2x burst at window boundaries.</li>
+                <li><strong>Leaky Bucket:</strong> Processes at fixed rate, queues excess. Good for smoothing.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Reliability</span>
+        </div>
+
+        <!-- Circuit Breaker -->
+        <div class="concept-card" data-topic="circuit-breaker">
+          <div class="card-icon">🔌</div>
+          <h3>Circuit Breaker & Resilience</h3>
+          <p>Prevent cascading failures across services with fault tolerance patterns.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+CIRCUIT BREAKER STATES:
+  ┌────────┐  failures > threshold  ┌──────┐
+  │ CLOSED │ ─────────────────────→ │ OPEN │
+  │(normal)│                        │(fail │
+  └────────┘                        │fast) │
+       ▲                            └──┬───┘
+       │                               │
+       │    success                    │ timeout
+       │                               │
+  ┌────┴─────┐                    ┌───▼──────┐
+  │  CLOSED  │ ◀── success ───── │HALF-OPEN │
+  └──────────┘                    │(test one)│
+                   failure ──→    └──────────┘
+                   back to OPEN
+
+RESILIENCE PATTERNS:
+┌────────────────┬──────────────────────┐
+│ Retry          │ Exp backoff + jitter │
+│ Timeout        │ Don't wait forever   │
+│ Bulkhead       │ Isolate failures     │
+│ Fallback       │ Cached/default value │
+│ Circuit Breaker│ Fail fast on errors  │
+└────────────────┴──────────────────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Cascading Failure:</strong> Service A → B → C. If C is slow, A and B pile up and crash.</li>
+                <li><strong>Bulkhead:</strong> Isolate thread pools per dependency. One failure doesn't exhaust all resources.</li>
+                <li><strong>Retry with Jitter:</strong> Exponential backoff + random jitter prevents thundering herd.</li>
+                <li><strong>Libraries:</strong> Resilience4j (Java), Polly (.NET), Hystrix (deprecated).</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Reliability</span>
+        </div>
+
+        <!-- Distributed Systems -->
+        <div class="concept-card" data-topic="distributed">
+          <div class="card-icon">🌍</div>
+          <h3>Distributed Consensus</h3>
+          <p>How distributed nodes agree on state — Paxos, Raft, and leader election.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+RAFT CONSENSUS:
+  ┌────────┐   vote request   ┌────────┐
+  │Follower│ ◀──────────────  │Candidate│
+  └────┬───┘                  └────┬───┘
+       │                           │
+       │   majority votes          │
+       │                      ┌────▼───┐
+       │  ◀── heartbeat ───── │ Leader │
+       │                      └────────┘
+       │
+  Leader sends log entries to followers
+  Committed when majority acknowledge
+
+LEADER ELECTION:
+  1. Follower timeout → becomes Candidate
+  2. Requests votes from all nodes
+  3. Majority votes → becomes Leader
+  4. Sends heartbeats to maintain leadership
+
+SPLIT BRAIN:
+  Network split → two leaders!
+  Solution: Quorum (majority) required
+  5 nodes → need 3 to agree (survives 2 failures)</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Raft:</strong> Understandable consensus. Used in etcd, CockroachDB, TiKV.</li>
+                <li><strong>Quorum:</strong> Majority agreement. W + R > N for strong consistency.</li>
+                <li><strong>Vector Clocks:</strong> Track causality across distributed nodes.</li>
+                <li><strong>Gossip Protocol:</strong> Nodes share state via random peer communication (Cassandra).</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Distributed</span>
+        </div>
+
+        <!-- Bloom Filter & Data Structures -->
+        <div class="concept-card" data-topic="bloom-filter">
+          <div class="card-icon">🎯</div>
+          <h3>Probabilistic Data Structures</h3>
+          <p>Space-efficient structures for approximate membership, counting, and cardinality.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+BLOOM FILTER:
+  "Is X in the set?"
+  ┌─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐
+  │0│1│0│1│0│0│1│0│1│0│0│1│  bit array
+  └─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘
+    ↑   ↑       ↑       ↑
+    h1  h2      h3      h1 (hash functions)
+
+  "Maybe in set" → could be false positive
+  "Definitely not" → NEVER false negative
+
+  Use case: Check if username taken before
+  hitting database. 10M users in 12MB!
+
+COUNT-MIN SKETCH:
+  "Approximately how many times did X occur?"
+  Used for: top-K, frequency estimation
+
+HYPERLOGLOG:
+  "How many unique items?" (cardinality)
+  Count 1 BILLION unique items in 12 KB!
+  Used by: Redis PFCOUNT, analytics</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Bloom Filter:</strong> Fast membership test. Used in databases (skip disk reads), CDNs, spam filters.</li>
+                <li><strong>HyperLogLog:</strong> Count unique visitors with 0.81% error in 12KB. Redis built-in.</li>
+                <li><strong>Count-Min Sketch:</strong> Frequency estimation in streaming data. Overestimates, never under.</li>
+                <li><strong>Trade-off:</strong> Accuracy for space/time. Perfect when approximate is good enough.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag">Algorithm</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Real-World Designs Section -->
+  <section class="section section-alt" id="real-world">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">🏢 Real World</span>
+        <h2>Real-World System Designs</h2>
+        <p>End-to-end designs of popular systems you'll encounter in interviews.</p>
+      </div>
+
+      <div class="concepts-grid">
+        <!-- URL Shortener -->
+        <div class="concept-card" data-topic="url-shortener">
+          <div class="card-icon">🔗</div>
+          <h3>Design URL Shortener</h3>
+          <p>Like bit.ly — convert long URLs to short ones with analytics.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+┌──────┐    POST /shorten     ┌───────────┐
+│Client│ ──────────────────→  │ API Server│
+└──────┘  {"url":"long..."}   └─────┬─────┘
+                                    │
+    1. Generate short ID (Base62)   │
+    2. Store mapping                │
+                              ┌─────▼─────┐
+                              │ Database   │
+                              │ short→long │
+                              │ + metadata │
+                              └─────┬─────┘
+                                    │
+┌──────┐    GET /abc123       ┌─────▼─────┐
+│Client│ ──────────────────→  │ Cache      │
+└──────┘    301 Redirect      │ (Redis)    │
+                              └───────────┘
+
+ID GENERATION:
+  Base62: [a-zA-Z0-9] → 62^7 = 3.5 trillion
+  Snowflake ID → timestamp + machine + seq
+  MD5/SHA → hash + take first 7 chars</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Decisions</h4>
+              <ul>
+                <li><strong>301 vs 302:</strong> 301 (permanent) = cached by browser. 302 (temp) = always hits server (better for analytics).</li>
+                <li><strong>Read-heavy:</strong> 100:1 read/write ratio. Cache aggressively in Redis.</li>
+                <li><strong>Custom aliases:</strong> Check uniqueness, reserve words blacklist.</li>
+                <li><strong>Analytics:</strong> Log click events to Kafka → aggregate in analytics pipeline.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag tag-interview">Interview Classic</span>
+        </div>
+
+        <!-- Chat System -->
+        <div class="concept-card" data-topic="chat-system">
+          <div class="card-icon">💬</div>
+          <h3>Design Chat System</h3>
+          <p>Like WhatsApp/Slack — real-time messaging with groups, media, and presence.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+┌──────┐  WebSocket  ┌──────────────────┐
+│User A│ ◀────────→  │  Chat Server     │
+└──────┘             │  (WS Gateway)    │
+                     └────────┬─────────┘
+┌──────┐  WebSocket          │
+│User B│ ◀────────→  ┌───────▼──────┐
+└──────┘             │ Message Queue │
+                     │   (Kafka)     │
+                     └───────┬──────┘
+                             │
+              ┌──────────────┼──────────┐
+              ▼              ▼          ▼
+        ┌──────────┐  ┌──────────┐ ┌────────┐
+        │ Message  │  │ Presence │ │  Push   │
+        │   DB     │  │  Service │ │Notific. │
+        │(Cassandra│  │ (Redis)  │ │ (FCM/   │
+        │  / HBase)│  └──────────┘ │  APNS)  │
+        └──────────┘               └────────┘
+
+MESSAGE FLOW:
+  1. User A sends via WebSocket
+  2. Server publishes to Kafka topic
+  3. Recipient's chat server consumes
+  4. If online → deliver via WebSocket
+  5. If offline → push notification + store</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Decisions</h4>
+              <ul>
+                <li><strong>WebSocket:</strong> Full-duplex, persistent connection for real-time. Fallback: long polling.</li>
+                <li><strong>Message ordering:</strong> Sequence IDs per conversation. Cassandra: partition by chat_id, cluster by timestamp.</li>
+                <li><strong>Group chat:</strong> Fan-out on write (small groups) vs fan-out on read (large channels).</li>
+                <li><strong>E2E Encryption:</strong> Signal Protocol — keys on devices, server can't read messages.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag tag-interview">Interview Classic</span>
+        </div>
+
+        <!-- News Feed -->
+        <div class="concept-card" data-topic="news-feed">
+          <div class="card-icon">📱</div>
+          <h3>Design News Feed</h3>
+          <p>Like Twitter/Instagram — generate and serve personalized content feeds.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+FAN-OUT ON WRITE (Push Model):
+  User posts ──→ Write to all followers' feeds
+  ┌──────┐
+  │Post  │──→ Feed cache (follower 1)
+  │      │──→ Feed cache (follower 2)
+  │      │──→ Feed cache (follower N)
+  └──────┘
+  ✅ Fast reads  ❌ Celebrity problem (millions)
+
+FAN-OUT ON READ (Pull Model):
+  User opens app ──→ Query all followed users
+  ┌──────┐
+  │Reader│──→ Get posts from user A, B, C...
+  │      │──→ Merge + Sort + Return top N
+  └──────┘
+  ✅ No celebrity problem  ❌ Slow reads
+
+HYBRID (Twitter's approach):
+  Regular users → fan-out on write
+  Celebrities (>10K followers) → fan-out on read
+  Merge both at read time</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Decisions</h4>
+              <ul>
+                <li><strong>Feed Storage:</strong> Pre-computed in Redis (user_id → list of post_ids). Limit to 800 items.</li>
+                <li><strong>Ranking:</strong> ML model scores posts by relevance, recency, engagement, relationship.</li>
+                <li><strong>Cache:</strong> Feed cache + content cache + social graph cache.</li>
+                <li><strong>Pagination:</strong> Cursor-based (last_seen_id) to handle real-time insertions.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag tag-interview">Interview Classic</span>
+        </div>
+
+        <!-- Notification System -->
+        <div class="concept-card" data-topic="notification">
+          <div class="card-icon">🔔</div>
+          <h3>Design Notification System</h3>
+          <p>Multi-channel notifications — push, SMS, email at scale with preferences.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+┌──────────┐     ┌───────────────────────┐
+│ Services │────→│  Notification Service │
+│(triggers)│     └───────────┬───────────┘
+└──────────┘                 │
+                    ┌────────▼────────┐
+                    │  Message Queue  │
+                    │    (Kafka)      │
+                    └──┬─────┬─────┬──┘
+                       │     │     │
+                  ┌────▼┐ ┌─▼──┐ ┌▼────┐
+                  │Push │ │SMS │ │Email│
+                  │Worker│ │Wrkr│ │Wrkr │
+                  └──┬──┘ └─┬──┘ └──┬──┘
+                     │      │       │
+                  ┌──▼──┐┌──▼──┐┌───▼───┐
+                  │APNS/│ │Twil│ │SES/   │
+                  │FCM  │ │io  │ │Sendgrd│
+                  └─────┘ └────┘ └───────┘
+
+FEATURES:
+  ✓ User preferences (channel, frequency)
+  ✓ Rate limiting (max 3 push/hour)
+  ✓ Template engine (personalization)
+  ✓ Analytics (delivered, opened, clicked)
+  ✓ Retry with exponential backoff</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Decisions</h4>
+              <ul>
+                <li><strong>Priority Queue:</strong> Urgent (OTP, security) → high priority. Marketing → low priority.</li>
+                <li><strong>Deduplication:</strong> Idempotency key prevents duplicate notifications.</li>
+                <li><strong>User Preferences:</strong> Channel preferences, quiet hours, frequency caps.</li>
+                <li><strong>Delivery Tracking:</strong> Sent → Delivered → Opened → Clicked funnel.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag tag-interview">Interview Classic</span>
+        </div>
+
+        <!-- Search System -->
+        <div class="concept-card" data-topic="search">
+          <div class="card-icon">🔍</div>
+          <h3>Design Search System</h3>
+          <p>Full-text search with autocomplete, ranking, and real-time indexing.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+INDEXING PIPELINE:
+  Data Source ──→ Crawler/CDC ──→ Processor
+                                     │
+                              ┌──────▼──────┐
+                              │  Tokenize   │
+                              │  Normalize  │
+                              │  Stem/Lemma │
+                              └──────┬──────┘
+                                     │
+                              ┌──────▼──────┐
+                              │ Inverted    │
+                              │ Index       │
+                              │ (Elastic-   │
+                              │  search)    │
+                              └─────────────┘
+
+INVERTED INDEX:
+  "distributed" → [doc1, doc5, doc9]
+  "system"      → [doc1, doc3, doc5]
+  "design"      → [doc1, doc2, doc7]
+
+  Search "distributed system":
+  → Intersection: [doc1, doc5] ← results!
+
+SEARCH FLOW:
+  Query → Parse → Search Index → Rank → Return
+           │                       │
+        Spell     TF-IDF, BM25, PageRank,
+        correct   personalization, freshness</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Concepts</h4>
+              <ul>
+                <li><strong>Inverted Index:</strong> Maps terms to documents. Core of all search engines.</li>
+                <li><strong>BM25:</strong> Industry-standard ranking algorithm. Considers term frequency and document length.</li>
+                <li><strong>Autocomplete:</strong> Trie data structure + top-K queries by frequency.</li>
+                <li><strong>Typeahead:</strong> Prefix search on pre-computed suggestions, cached aggressively.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag tag-interview">Interview Classic</span>
+        </div>
+
+        <!-- AI Agent Platform -->
+        <div class="concept-card" data-topic="ai-agent">
+          <div class="card-icon">🤖</div>
+          <h3>Design AI Agent Platform</h3>
+          <p>Multi-tenant AI agent orchestration — reasoning, planning, and tool execution.</p>
+          <div class="card-content">
+            <div class="diagram-box">
+              <pre class="architecture-diagram">
+┌─────────────┐
+│ Slack/Teams  │──→ API Gateway (Auth, Rate Limit)
+└──────┬──────┘          │
+       │          Session Manager (Redis)
+       │                 │
+       │       ┌─────────▼──────────┐
+       │       │  REASONING ENGINE   │
+       │       │  ┌───────────────┐  │
+       │       │  │ Planning (LLM)│  │→ Decompose
+       │       │  │ Execution Eng │  │→ Run tools
+       │       │  │ Observation   │  │→ Evaluate
+       │       │  └───────────────┘  │
+       │       └────┬──────────┬─────┘
+       │            │          │
+       │   ┌────────▼──┐  ┌───▼────────┐
+       │   │Tool Registry│  │State Manager│
+       │   │(per tenant) │  │(Redis + PG) │
+       │   └────┬───────┘  └────────────┘
+       │        │
+       │  ┌─────┼──────┬──────────┐
+       │  ▼     ▼      ▼          ▼
+       │ SNOW  Jira  Salesforce  Okta
+       └──────────────────────────────┘</pre>
+            </div>
+            <div class="key-points">
+              <h4>Key Decisions</h4>
+              <ul>
+                <li><strong>ReAct Pattern:</strong> Reason → Act → Observe → loop until done.</li>
+                <li><strong>Plugin System:</strong> Each tenant configures their own connectors with isolated credentials.</li>
+                <li><strong>Model Routing:</strong> Fast model for simple tasks, powerful model for complex reasoning.</li>
+                <li><strong>Guardrails:</strong> Permission enforcement, output validation, cost controls per tenant.</li>
+              </ul>
+            </div>
+          </div>
+          <span class="card-tag tag-hot">Hot Topic 🔥</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cheat Sheet Section -->
+  <section class="section" id="cheatsheet">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">📋 Quick Reference</span>
+        <h2>System Design Cheat Sheet</h2>
+        <p>Everything you need at a glance — the ultimate quick reference.</p>
+      </div>
+
+      <!-- Interview Framework -->
+      <div class="cheatsheet-block">
+        <h3>🎯 System Design Interview Framework (RESHADED)</h3>
+        <div class="framework-grid">
+          <div class="framework-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h4>Requirements</h4>
+              <p>Functional & non-functional. Ask clarifying questions. Scope the problem. Don't assume.</p>
+            </div>
+          </div>
+          <div class="framework-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h4>Estimation</h4>
+              <p>DAU, QPS, storage, bandwidth. Back-of-envelope math. Know your powers of 2.</p>
+            </div>
+          </div>
+          <div class="framework-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h4>Storage Schema</h4>
+              <p>Data model, SQL vs NoSQL choice, key entities and relationships.</p>
+            </div>
+          </div>
+          <div class="framework-step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h4>High-Level Design</h4>
+              <p>Draw the architecture. Main components, data flow, APIs. Keep it simple first.</p>
+            </div>
+          </div>
+          <div class="framework-step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+              <h4>API Design</h4>
+              <p>Define key API endpoints. REST/gRPC. Request/response schemas.</p>
+            </div>
+          </div>
+          <div class="framework-step">
+            <div class="step-number">6</div>
+            <div class="step-content">
+              <h4>Deep Dive</h4>
+              <p>Pick 2-3 interesting components. Discuss trade-offs, alternatives, edge cases.</p>
+            </div>
+          </div>
+          <div class="framework-step">
+            <div class="step-number">7</div>
+            <div class="step-content">
+              <h4>Evaluate</h4>
+              <p>Bottlenecks, single points of failure, scaling strategies, monitoring.</p>
+            </div>
+          </div>
+          <div class="framework-step">
+            <div class="step-number">8</div>
+            <div class="step-content">
+              <h4>Discuss Trade-offs</h4>
+              <p>Every decision has trade-offs. Show you understand the "why" behind choices.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Reference Tables -->
+      <div class="cheatsheet-tables">
+        <div class="cheat-table">
+          <h4>🗄️ Database Quick Pick</h4>
+          <table>
+            <thead><tr><th>Need</th><th>Choose</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td>ACID Transactions</td><td>PostgreSQL</td><td>Payments, Orders</td></tr>
+              <tr><td>High Write Throughput</td><td>Cassandra</td><td>IoT, Time-series</td></tr>
+              <tr><td>Flexible Schema</td><td>MongoDB</td><td>CMS, Catalogs</td></tr>
+              <tr><td>Cache / Sessions</td><td>Redis</td><td>Sessions, Leaderboards</td></tr>
+              <tr><td>Full-Text Search</td><td>Elasticsearch</td><td>Product Search</td></tr>
+              <tr><td>Graph Queries</td><td>Neo4j</td><td>Social Networks</td></tr>
+              <tr><td>Global Scale SQL</td><td>Spanner/CockroachDB</td><td>Multi-region apps</td></tr>
+              <tr><td>Vector Search (AI)</td><td>Pinecone/pgvector</td><td>RAG, Similarity</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="cheat-table">
+          <h4>⚡ Scaling Strategies</h4>
+          <table>
+            <thead><tr><th>Problem</th><th>Solution</th></tr></thead>
+            <tbody>
+              <tr><td>Too many reads</td><td>Cache (Redis) + CDN + Read replicas</td></tr>
+              <tr><td>Too many writes</td><td>Sharding + Message queue + Batch writes</td></tr>
+              <tr><td>Single point of failure</td><td>Redundancy + Failover + Multi-AZ</td></tr>
+              <tr><td>Slow API responses</td><td>Async processing + Pagination + Compression</td></tr>
+              <tr><td>Data growing too fast</td><td>Data partitioning + Archival + TTL</td></tr>
+              <tr><td>Cross-region latency</td><td>Multi-region deploy + CDN + Edge computing</td></tr>
+              <tr><td>Thundering herd</td><td>Rate limiting + Circuit breaker + Backpressure</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Numbers to Know -->
+      <div class="cheatsheet-block">
+        <h3>🔢 Numbers Every Engineer Should Know</h3>
+        <div class="numbers-grid">
+          <div class="number-card">
+            <span class="number">~1ms</span>
+            <span class="number-label">Redis GET</span>
+          </div>
+          <div class="number-card">
+            <span class="number">~5ms</span>
+            <span class="number-label">SQL Simple Query</span>
+          </div>
+          <div class="number-card">
+            <span class="number">~50ms</span>
+            <span class="number-label">SSD Random Read</span>
+          </div>
+          <div class="number-card">
+            <span class="number">~150ms</span>
+            <span class="number-label">Cross-continent RTT</span>
+          </div>
+          <div class="number-card">
+            <span class="number">~1-3s</span>
+            <span class="number-label">LLM Response</span>
+          </div>
+          <div class="number-card">
+            <span class="number">1M+</span>
+            <span class="number-label">Redis Ops/sec</span>
+          </div>
+          <div class="number-card">
+            <span class="number">10K</span>
+            <span class="number-label">Single Server RPS</span>
+          </div>
+          <div class="number-card">
+            <span class="number">86,400</span>
+            <span class="number-label">Seconds in a Day</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <span class="logo-icon">⚡</span>
+          <span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span>
+          <p>Master distributed systems, one concept at a time.</p>
+        </div>
+        <div class="footer-links">
+          <a href="#fundamentals">Fundamentals</a>
+          <a href="#building-blocks">Building Blocks</a>
+          <a href="#patterns">Patterns</a>
+          <a href="#real-world">Real-World Designs</a>
+          <a href="#cheatsheet">Cheat Sheet</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Built with passion for engineering excellence.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

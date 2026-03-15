@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Notification & Approval System — System Design Mastery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 900px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.8rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; white-space: pre; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x26A1;</span><span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All 10 Designs</a>
+        <a href="#rules-engine">Rules Engine</a>
+        <a href="#async-notification">Notifications</a>
+        <a href="#escalation">Escalation</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <div class="article-header">
+      <h1>Real-Time Notification & Approval System</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-green">YOUR LINKEDIN EXPERIENCE</span>
+        <span class="meta-tag meta-blue">Senior Level</span>
+        <span class="meta-tag meta-purple">35 min</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">"Design a system where AI agents request approvals from humans. Determine the approval chain, notify in real-time, track state, escalate overdue requests, and integrate with Slack, Email, and Microsoft Teams."</strong>
+      </p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#clarify">Clarifying Questions & Scope</a></li>
+        <li><a href="#estimation">Back-of-Envelope Estimation</a></li>
+        <li><a href="#architecture">High-Level Architecture</a></li>
+        <li><a href="#rules-engine">Deep Dive 1: Rules Engine & Chain Builder</a></li>
+        <li><a href="#async-notification">Deep Dive 2: Async Notification Delivery</a></li>
+        <li><a href="#escalation">Deep Dive 3: Escalation Scheduler</a></li>
+        <li><a href="#scaling">Scaling & ML</a></li>
+        <li><a href="#cheatsheet">Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- Section 1: Clarify -->
+    <div class="article-section" id="clarify">
+      <h2><span class="step-badge">1</span> Clarifying Questions & Scope</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Clarification</th>
+            <th>Assumption</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Approval Types</td>
+            <td>What kinds of approvals?</td>
+            <td>Discount, access, expense, change management, escalations</td>
+          </tr>
+          <tr>
+            <td>Chain Complexity</td>
+            <td>Single or multi-level?</td>
+            <td>Multi-level: sequential, parallel, or conditional chains</td>
+          </tr>
+          <tr>
+            <td>Channels</td>
+            <td>Which notification channels?</td>
+            <td>Slack, Email, Microsoft Teams (with action buttons)</td>
+          </tr>
+          <tr>
+            <td>SLA</td>
+            <td>Escalation rules?</td>
+            <td>Remind at 75% SLA, escalate at 100%, auto-action at 150%</td>
+          </tr>
+          <tr>
+            <td>Delivery Guarantee</td>
+            <td>Can we lose notifications?</td>
+            <td>At-least-once delivery, idempotent processing</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 2: Estimation -->
+    <div class="article-section" id="estimation">
+      <h2><span class="step-badge">2</span> Back-of-Envelope Estimation</h2>
+
+      <div class="highlight-box">
+        <h4>Scale Numbers</h4>
+        <ul>
+          <li><strong>100K approval requests/day across all tenants</strong></li>
+          <li><strong>250K notifications/day (each approval triggers ~2.5 notifications avg)</strong></li>
+          <li><strong>&lt;1 second notification delivery latency</strong></li>
+          <li><strong>500K state changes/day (submitted, pending, reminded, approved, etc.)</strong></li>
+          <li><strong>Peak: ~1,200 approvals/hour during business hours</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 3: Architecture -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">3</span> High-Level Architecture</h2>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  NOTIFICATION & APPROVAL SYSTEM
+  ═══════════════════════════════════════════════════════════════════
+
+  ┌──────────┐    ┌──────────────┐    ┌──────────────┐    ┌─────────────┐
+  │ Approval │───>│ Rules Engine │───>│ Chain Builder │───>│    Kafka    │
+  │ Request  │    │ (who needs   │    │ (sequential/  │    │   Topics   │
+  │ from AI  │    │  to approve) │    │  parallel)    │    │            │
+  └──────────┘    └──────────────┘    └──────────────┘    └──────┬──────┘
+                                                                │
+                         ┌──────────────────────────────────────┘
+                         │
+            ┌────────────┼────────────┬────────────────┐
+            v            v            v                v
+     ┌────────────┐ ┌──────────┐ ┌──────────┐  ┌────────────┐
+     │ Slack      │ │ Email    │ │ Teams    │  │ Escalation │
+     │ Worker     │ │ Worker   │ │ Worker   │  │ Scheduler  │
+     │ (Bot API)  │ │ (SES)    │ │(Graph API│  │ (5-min     │
+     │            │ │          │ │ + Webhook│  │  sweeps)   │
+     └─────┬──────┘ └────┬─────┘ └────┬─────┘  └─────┬──────┘
+           │              │            │              │
+           └──────────────┴────────────┴──────────────┘
+                                │
+                    ┌───────────v───────────┐
+                    │   State Tracker       │
+                    │   Redis (hot state)   │
+                    │   + PostgreSQL (log)  │
+                    └───────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- Section 4: Deep Dive 1 - Rules Engine -->
+    <div class="article-section" id="rules-engine">
+      <h2><span class="step-badge">4</span> Deep Dive 1: Rules Engine & Chain Builder</h2>
+
+      <h3>Configurable Approval Rules</h3>
+      <p>The Rules Engine determines WHO needs to approve and in what ORDER. Rules are configurable per tenant and per approval type.</p>
+
+      <h3>Example: Discount Approval Tiers</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  DISCOUNT APPROVAL RULES (SaaS Sales)
+  ═══════════════════════════════════════════
+
+  Discount 0-10%   → Sales Rep auto-approved
+  Discount 10-20%  → Sales Manager approval
+  Discount 20-30%  → Sales Director + Finance Manager (parallel)
+  Discount 30%+    → VP Sales + CFO (sequential)
+
+  DB ACCESS APPROVAL RULES (IT)
+  ═══════════════════════════════════════════
+
+  Read-only access  → Team Lead approval
+  Read-write access → Team Lead → DB Admin (sequential)
+  Admin access      → Team Lead → DB Admin → CISO (sequential)
+  Production access → Team Lead → DB Admin → CISO → CTO (sequential)
+</pre>
+      </div>
+
+      <h3>Rule Storage</h3>
+      <ul>
+        <li><strong>PostgreSQL:</strong> Rules table with conditions (JSON), approval chain definition, SLA config. Versioned — changes create new version, old approvals use old rules.</li>
+        <li><strong>Redis cache:</strong> Hot rules cached with TTL 5 minutes. Cache key: tenant_id + approval_type. Invalidated on rule update.</li>
+        <li><strong>Chain types:</strong> Sequential (A then B then C), Parallel (A and B simultaneously), Conditional (if amount > X, add C).</li>
+      </ul>
+
+      <h3>Chain Builder Output</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  Example Chain for "30% discount on $50K deal":
+
+  Step 1: VP Sales (Sarah)      ──sequential──>
+  Step 2: CFO (Mike)            ──sequential──>
+  Step 3: Legal Review (auto)   ──parallel with──>
+  Step 3: Revenue Ops (Janet)
+
+  Chain stored as ordered list of approval steps.
+  Each step: approver_id, type (sequential/parallel), SLA_hours, escalation_to
+</pre>
+      </div>
+    </div>
+
+    <!-- Section 5: Deep Dive 2 - Async Notification -->
+    <div class="article-section" id="async-notification">
+      <h2><span class="step-badge">5</span> Deep Dive 2: Async Notification Delivery</h2>
+
+      <h3>Kafka Topic Per Channel</h3>
+      <ul>
+        <li><strong>Topic: notifications.slack</strong> — Consumed by Slack worker pods. Uses Slack Bot API to send rich messages with Approve/Reject buttons.</li>
+        <li><strong>Topic: notifications.email</strong> — Consumed by Email worker pods. Uses AWS SES. HTML templates with one-click action links (tokenized URLs).</li>
+        <li><strong>Topic: notifications.teams</strong> — Consumed by Teams worker pods. Uses Microsoft Graph API + Adaptive Cards with action buttons.</li>
+      </ul>
+
+      <h3>Idempotent Delivery</h3>
+      <ul>
+        <li><strong>Deduplication key:</strong> approval_id + step_id + channel + attempt. If already sent, skip. Prevents duplicate notifications on Kafka consumer retries.</li>
+        <li><strong>Delivery tracking:</strong> Each notification moves through states: queued → sent → delivered → read → acted-upon.</li>
+        <li><strong>Multi-channel fallback:</strong> If Slack delivery fails after 3 retries, fall back to Email. User preference: primary channel (Slack) + fallback (Email).</li>
+      </ul>
+
+      <h3>Rich Notifications with Action Buttons</h3>
+      <div class="highlight-box">
+        <h4>Slack Notification Example</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">
+          <strong style="color:#e8e8f0;">Approval Request #4821</strong><br>
+          <strong style="color:#e8e8f0;">Type:</strong> Discount Approval<br>
+          <strong style="color:#e8e8f0;">Requester:</strong> AI Sales Agent (on behalf of John Smith)<br>
+          <strong style="color:#e8e8f0;">Details:</strong> 25% discount on Acme Corp deal ($50,000 ARR)<br>
+          <strong style="color:#e8e8f0;">Justification:</strong> Competitive pressure from Competitor X, multi-year commitment<br>
+          <strong style="color:#e8e8f0;">SLA:</strong> 4 hours remaining<br><br>
+          [Approve] [Reject] [Request More Info] [Delegate]
+        </p>
+      </div>
+
+      <h3>Notification State Tracking</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  NOTIFICATION LIFECYCLE
+  ═══════════════════════════════════
+
+  queued → sent → delivered → read → acted-upon
+    │        │        │         │         │
+    │        │        │         │         └─ User clicked Approve/Reject
+    │        │        │         └─ Slack: message_read webhook
+    │        │        └─ Slack: message_sent confirmation
+    │        └─ Worker picked from Kafka, API call succeeded
+    └─ Published to Kafka topic
+
+  Each transition logged in PostgreSQL with timestamp.
+  Redis holds current state for fast lookup.
+</pre>
+      </div>
+    </div>
+
+    <!-- Section 6: Deep Dive 3 - Escalation -->
+    <div class="article-section" id="escalation">
+      <h2><span class="step-badge">6</span> Deep Dive 3: Escalation Scheduler</h2>
+
+      <h3>SLA Stages</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>SLA %</th>
+            <th>Action</th>
+            <th>Example (4-hour SLA)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>75%</td>
+            <td>Reminder notification to current approver</td>
+            <td>At 3 hours: "Reminder: Approval #4821 needs your action"</td>
+          </tr>
+          <tr>
+            <td>100%</td>
+            <td>Escalate to next level (approver's manager)</td>
+            <td>At 4 hours: Notify manager, mark as escalated</td>
+          </tr>
+          <tr>
+            <td>150%</td>
+            <td>Auto-action (approve/reject per policy)</td>
+            <td>At 6 hours: Auto-approve if policy allows, else escalate to VP</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Scheduler Implementation</h3>
+      <ul>
+        <li><strong>5-minute sweep:</strong> Cron job every 5 minutes scans all pending approvals. Checks current time vs. SLA deadlines. Triggers appropriate actions.</li>
+        <li><strong>Redis sorted set:</strong> Pending approvals stored in ZSET with SLA deadline as score. ZRANGEBYSCORE finds all overdue items in O(log N + M).</li>
+        <li><strong>Distributed lock:</strong> Redis SETNX ensures only one scheduler instance processes at a time. Prevents duplicate escalations.</li>
+      </ul>
+
+      <h3>State Machine</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  APPROVAL STATE MACHINE
+  ═══════════════════════════════════════════════════════
+
+                    ┌──────────┐
+                    │SUBMITTED │
+                    └────┬─────┘
+                         │ rules engine determines chain
+                         v
+                    ┌──────────┐
+              ┌─────│ PENDING  │─────┐
+              │     └────┬─────┘     │
+              │          │           │
+         75% SLA    user action   100% SLA
+              │          │           │
+              v          │           v
+        ┌──────────┐     │     ┌───────────┐
+        │REMINDED  │     │     │ ESCALATED │
+        └────┬─────┘     │     └─────┬─────┘
+             │           │           │
+             └─────┬─────┘     user action
+                   │                 │
+            ┌──────┴──────┐          │
+            v             v          v
+      ┌──────────┐  ┌──────────┐  ┌──────────┐
+      │ APPROVED │  │ REJECTED │  │ EXPIRED  │
+      └──────────┘  └──────────┘  │(auto-act)│
+                                  └──────────┘
+</pre>
+      </div>
+
+      <h3>OOO (Out of Office) Handling</h3>
+      <ul>
+        <li><strong>Calendar integration:</strong> Check Google Calendar / Outlook for OOO status before sending notifications.</li>
+        <li><strong>Auto-delegate:</strong> If approver is OOO, auto-delegate to their configured backup or manager.</li>
+        <li><strong>SLA adjustment:</strong> OOO time doesn't count against SLA if delegation is configured. Otherwise, immediate escalation.</li>
+        <li><strong>Return notification:</strong> When approver returns from OOO, send summary of delegated decisions.</li>
+      </ul>
+    </div>
+
+    <!-- Section 7: Scaling & ML -->
+    <div class="article-section" id="scaling">
+      <h2><span class="step-badge">7</span> Scaling & ML</h2>
+
+      <h3>Scaling Strategies</h3>
+      <ul>
+        <li><strong>Kafka partitioning:</strong> Partition by tenant_id for ordered processing per tenant. Scale consumers horizontally per channel.</li>
+        <li><strong>Redis cluster:</strong> Shard state data by approval_id. Hot approvals (pending) in Redis, completed approvals archived to PostgreSQL.</li>
+        <li><strong>Channel workers:</strong> Auto-scale based on queue depth. Slack worker scales independently from Email worker.</li>
+        <li><strong>Database:</strong> PostgreSQL with partitioning by created_date. Archive approvals older than 90 days to cold storage.</li>
+      </ul>
+
+      <h3>ML Enhancements</h3>
+      <ul>
+        <li><strong>Predicted approval time:</strong> ML model predicts when each approver typically responds. Use to set smarter SLA deadlines.</li>
+        <li><strong>Channel preference:</strong> Learn which channel gets fastest response per user (some respond to Slack in 5 min, Email in 2 hours).</li>
+        <li><strong>Auto-approval candidates:</strong> Identify routine approvals that are always approved — suggest auto-approval rules to admins.</li>
+        <li><strong>Optimal notification timing:</strong> Learn each approver's active hours. Don't send at 2 AM — queue for their work hours start.</li>
+      </ul>
+    </div>
+
+    <!-- Section 8: Cheat Sheet -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">8</span> Cheat Sheet</h2>
+
+      <div class="success-box">
+        <h4>Notification & Approval — Key Numbers</h4>
+        <ul>
+          <li><strong>100K approvals/day, 250K notifications/day</strong></li>
+          <li><strong>&lt;1s notification delivery latency</strong></li>
+          <li><strong>Kafka topic per channel (Slack, Email, Teams)</strong></li>
+          <li><strong>Idempotent delivery with dedup key: approval_id + step_id + channel</strong></li>
+          <li><strong>Rules Engine: configurable per tenant, cached in Redis (TTL 5 min)</strong></li>
+          <li><strong>Chain types: sequential, parallel, conditional</strong></li>
+          <li><strong>SLA stages: remind 75%, escalate 100%, auto-action 150%</strong></li>
+          <li><strong>5-min escalation sweep using Redis sorted set</strong></li>
+          <li><strong>State machine: submitted → pending → approved/rejected/escalated/expired</strong></li>
+          <li><strong>OOO handling with calendar integration and auto-delegation</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav-bottom">
+      <a href="design-03-ticket-triage.html">&larr; Ticket Triage</a>
+      <a href="design-05-plugin-platform.html">Plugin Platform &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

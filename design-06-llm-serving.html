@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Model Serving & Evaluation Pipeline — System Design Mastery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 900px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.8rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; white-space: pre; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x26A1;</span><span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All 10 Designs</a>
+        <a href="#model-router">Model Router</a>
+        <a href="#ab-testing">A/B Testing</a>
+        <a href="#evaluation">Evaluation</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <div class="article-header">
+      <h1>LLM Model Serving & Evaluation Pipeline</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-purple">FOR ML STAFF</span>
+        <span class="meta-tag meta-blue">Staff Level</span>
+        <span class="meta-tag meta-purple">40 min</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">"Serve multiple LLMs with intelligent model routing, A/B testing, canary deployments, evaluation pipeline, and auto-rollback capabilities."</strong>
+      </p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#clarify">Clarifying Questions & Scope</a></li>
+        <li><a href="#estimation">Back-of-Envelope Estimation</a></li>
+        <li><a href="#architecture">High-Level Architecture</a></li>
+        <li><a href="#model-router">Deep Dive 1: Model Router</a></li>
+        <li><a href="#ab-testing">Deep Dive 2: A/B Testing & Canary</a></li>
+        <li><a href="#evaluation">Deep Dive 3: Evaluation Pipeline</a></li>
+        <li><a href="#decisions">Key Design Decisions</a></li>
+        <li><a href="#cheatsheet">Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- Clarify -->
+    <div class="article-section" id="clarify">
+      <h2><span class="step-badge">1</span> Clarifying Questions & Scope</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Clarification</th>
+            <th>Assumption</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Model Count</td>
+            <td>How many models to serve?</td>
+            <td>3-5 models: fast (GPT-3.5/Haiku), mid (GPT-4o-mini/Sonnet), powerful (GPT-4/Opus)</td>
+          </tr>
+          <tr>
+            <td>Routing</td>
+            <td>Who decides which model?</td>
+            <td>Automatic complexity-based routing with manual overrides</td>
+          </tr>
+          <tr>
+            <td>Deployment</td>
+            <td>How do we roll out new models?</td>
+            <td>Canary deployment: 5% → 25% → 50% → 100%</td>
+          </tr>
+          <tr>
+            <td>Evaluation</td>
+            <td>How do we measure quality?</td>
+            <td>Offline evals, online metrics, and human evaluation</td>
+          </tr>
+          <tr>
+            <td>Rollback</td>
+            <td>When do we auto-rollback?</td>
+            <td>If quality drops >5% or error rate >2% vs baseline</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Estimation -->
+    <div class="article-section" id="estimation">
+      <h2><span class="step-badge">2</span> Back-of-Envelope Estimation</h2>
+
+      <div class="highlight-box">
+        <h4>Scale Numbers</h4>
+        <ul>
+          <li><strong>3M LLM calls/day across all tenants</strong></li>
+          <li><strong>Average 700 tokens/call = 2.1B tokens/day</strong></li>
+          <li><strong>Peak: ~50 calls/second</strong></li>
+        </ul>
+      </div>
+
+      <div class="success-box">
+        <h4>Cost Savings with Intelligent Routing</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">
+          <strong style="color:#e8e8f0;">WITHOUT routing (all powerful model):</strong><br>
+          3M calls x $0.021/call = <strong style="color:#ef4444;">$63,000/day</strong><br><br>
+          <strong style="color:#e8e8f0;">WITH routing (70% fast, 10% mid, 20% powerful):</strong><br>
+          2.1M x $0.002 + 0.3M x $0.007 + 0.6M x $0.021 = <strong style="color:#10b981;">$21,840/day</strong><br><br>
+          <strong style="color:#10b981;">Savings: 65% ($41,160/day = $15M/year)</strong>
+        </p>
+      </div>
+
+      <h3>Latency Budget Breakdown</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Fast Model</th>
+            <th>Powerful Model</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Complexity Classification</td>
+            <td>&lt;50ms</td>
+            <td>&lt;50ms</td>
+          </tr>
+          <tr>
+            <td>Cache Check</td>
+            <td>&lt;5ms</td>
+            <td>&lt;5ms</td>
+          </tr>
+          <tr>
+            <td>Model Inference (TTFT)</td>
+            <td>200-500ms</td>
+            <td>500ms-2s</td>
+          </tr>
+          <tr>
+            <td>Token Generation</td>
+            <td>300-800ms</td>
+            <td>1-3s</td>
+          </tr>
+          <tr>
+            <td>Total</td>
+            <td>500ms-1.3s</td>
+            <td>1.5-5s</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Architecture -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">3</span> High-Level Architecture</h2>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  LLM SERVING PLATFORM
+  ═══════════════════════════════════════════════════════════════════
+
+                         ┌───────────────────┐
+                         │   API Gateway     │
+                         │ Circuit Breaker   │
+                         │ Retry + Cache     │
+                         └────────┬──────────┘
+                                  │
+                         ┌────────v──────────┐
+                         │  Model Router     │
+                         │  (Complexity      │
+                         │   Classifier)     │
+                         └────────┬──────────┘
+                                  │
+              ┌───────────────────┼───────────────────┐
+              │                   │                   │
+     ┌────────v────────┐ ┌───────v────────┐ ┌────────v────────┐
+     │   FAST TIER     │ │   MID TIER     │ │  POWER TIER     │
+     │   (70%)         │ │   (10%)        │ │  (20%)          │
+     │                 │ │                │ │                  │
+     │ GPT-3.5-turbo  │ │ GPT-4o-mini   │ │ GPT-4 / Opus    │
+     │ Claude Haiku   │ │ Claude Sonnet  │ │ Claude Opus     │
+     │ Llama-70B      │ │               │ │                  │
+     │                 │ │                │ │                  │
+     │ ~500ms          │ │ ~1.5s          │ │ ~3s              │
+     │ $0.002/call     │ │ $0.007/call    │ │ $0.021/call      │
+     └─────────────────┘ └────────────────┘ └──────────────────┘
+              │                   │                   │
+              └───────────────────┼───────────────────┘
+                                  │
+                    ┌─────────────v──────────────┐
+                    │    EVAL PIPELINE (Async)   │
+                    │  Offline + Online + Human  │
+                    └─────────────┬──────────────┘
+                                  │
+                    ┌─────────────v──────────────┐
+                    │   ROLLBACK CONTROLLER      │
+                    │  Auto-rollback if quality   │
+                    │  drops >5% vs baseline      │
+                    └────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- Deep Dive 1: Model Router -->
+    <div class="article-section" id="model-router">
+      <h2><span class="step-badge">4</span> Deep Dive 1: Model Router</h2>
+
+      <h3>Complexity Classifier</h3>
+      <p>A lightweight classifier (&lt;50ms) analyzes each request and routes to the appropriate model tier:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Complexity Signal</th>
+            <th>Simple (Fast)</th>
+            <th>Complex (Powerful)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Task Type</td>
+            <td>FAQ, status check, simple lookup</td>
+            <td>Multi-step reasoning, analysis, code gen</td>
+          </tr>
+          <tr>
+            <td>Token Count</td>
+            <td>&lt;200 tokens expected</td>
+            <td>&gt;500 tokens expected</td>
+          </tr>
+          <tr>
+            <td>Context Needed</td>
+            <td>Single source, no RAG</td>
+            <td>Multiple sources, complex RAG</td>
+          </tr>
+          <tr>
+            <td>Reasoning Depth</td>
+            <td>Direct answer, no chain-of-thought</td>
+            <td>Multi-hop reasoning required</td>
+          </tr>
+          <tr>
+            <td>Stakes</td>
+            <td>Informational, low consequence</td>
+            <td>Financial, compliance, customer-facing</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Routing Logic</h3>
+      <ul>
+        <li><strong>Primary classification:</strong> TF-Lite model trained on (query, best_model) pairs from historical data. Features: query length, intent, entity count, conversation depth.</li>
+        <li><strong>Fallback on low confidence:</strong> If classifier confidence &lt;0.7, default to mid-tier model (safe middle ground).</li>
+        <li><strong>Manual override:</strong> Tenant config can force specific models for specific operations (e.g., "always use powerful for legal reviews").</li>
+        <li><strong>Upgrade path:</strong> If fast model returns low-quality response (detected by eval), automatically retry with powerful model. User sees slightly longer latency but correct answer.</li>
+      </ul>
+
+      <div class="highlight-box">
+        <h4>Cost Savings Math</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">
+          70% of requests are simple (password reset status, ticket update, basic lookup). These get answered perfectly by the fast model at <strong style="color:#10b981;">1/10th the cost</strong>. Only 20% truly need the powerful model. The remaining 10% are medium complexity handled by the mid-tier. This alone saves <strong style="color:#10b981;">$15M/year</strong>.
+        </p>
+      </div>
+    </div>
+
+    <!-- Deep Dive 2: A/B Testing & Canary -->
+    <div class="article-section" id="ab-testing">
+      <h2><span class="step-badge">5</span> Deep Dive 2: A/B Testing & Canary Deployment</h2>
+
+      <h3>Canary Rollout Stages</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  CANARY DEPLOYMENT: New Model Rollout
+  ═══════════════════════════════════════════════════════
+
+  Stage 1: 5% traffic    │ Monitor for 2 hours
+  ────────────────────────│ Metrics: error rate, latency, quality
+  If healthy:             │
+                          v
+  Stage 2: 25% traffic   │ Monitor for 6 hours
+  ────────────────────────│ Compare quality scores vs baseline
+  If healthy:             │
+                          v
+  Stage 3: 50% traffic   │ Monitor for 24 hours
+  ────────────────────────│ Statistical significance check
+  If healthy:             │
+                          v
+  Stage 4: 100% traffic  │ Old model kept warm for 48h (rollback)
+  ────────────────────────┘
+
+  AUTO-ROLLBACK TRIGGERS:
+  ─────────────────────────
+  • Error rate > 2% (vs baseline)
+  • Quality score drops > 5%
+  • Latency P95 increases > 50%
+  • Hallucination rate increases > 3%
+</pre>
+      </div>
+
+      <h3>A/B Testing Framework</h3>
+      <ul>
+        <li><strong>Traffic splitting:</strong> Consistent hashing by (tenant_id + user_id) ensures same user always hits same variant. Prevents confusing UX from model switching.</li>
+        <li><strong>Statistical significance:</strong> Require p-value &lt;0.05 and minimum 1,000 samples per variant before drawing conclusions.</li>
+        <li><strong>Metrics collected:</strong> Task completion rate, user satisfaction (thumbs up/down), response latency, cost per request, hallucination rate.</li>
+        <li><strong>Experiment duration:</strong> Minimum 7 days to account for weekly patterns. Auto-stop if degradation detected.</li>
+      </ul>
+
+      <h3>Auto-Rollback</h3>
+      <ul>
+        <li><strong>Real-time monitoring:</strong> Datadog/Prometheus tracks all metrics per model variant. Alerts within 5 minutes of degradation.</li>
+        <li><strong>Automatic rollback:</strong> If any auto-rollback trigger fires, immediately shift all traffic back to baseline model. No human intervention needed.</li>
+        <li><strong>Post-mortem:</strong> After rollback, run offline evaluation to understand WHY the new model degraded. Was it a specific query type? A specific tenant?</li>
+      </ul>
+    </div>
+
+    <!-- Deep Dive 3: Evaluation Pipeline -->
+    <div class="article-section" id="evaluation">
+      <h2><span class="step-badge">6</span> Deep Dive 3: Evaluation Pipeline</h2>
+
+      <h3>Three-Tier Evaluation</h3>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  EVALUATION PIPELINE (3 TIERS)
+  ═══════════════════════════════════════════════════════
+
+  TIER 1: OFFLINE EVALUATION (before deployment)
+  ┌──────────────────────────────────────────────┐
+  │  1,000+ labeled test cases                    │
+  │  Run new model on entire test suite           │
+  │  Compare: accuracy, hallucination, latency    │
+  │  Gate: must pass >= baseline on all metrics   │
+  └──────────────────────────────────────────────┘
+           │ passes
+           v
+  TIER 2: ONLINE EVALUATION (during canary)
+  ┌──────────────────────────────────────────────┐
+  │  Real traffic metrics:                        │
+  │  • Task success rate (did agent complete?)    │
+  │  • Thumbs up/down from users                  │
+  │  • Error rate, timeout rate                   │
+  │  • Response latency P50, P95, P99            │
+  │  Compare new model vs baseline in real-time   │
+  └──────────────────────────────────────────────┘
+           │ passes
+           v
+  TIER 3: HUMAN EVALUATION (weekly)
+  ┌──────────────────────────────────────────────┐
+  │  100 random responses/week reviewed by humans │
+  │  Grade: accuracy, helpfulness, safety         │
+  │  Catch subtle issues ML metrics miss          │
+  │  Feed back into offline test suite            │
+  └──────────────────────────────────────────────┘
+</pre>
+      </div>
+
+      <h3>Key Metrics</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Target</th>
+            <th>Measurement</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Task Accuracy</td>
+            <td>&gt;92%</td>
+            <td>Did the model produce the correct output on labeled test cases?</td>
+          </tr>
+          <tr>
+            <td>Hallucination Rate</td>
+            <td>&lt;3%</td>
+            <td>LLM-as-judge: does the response contain claims not in the context?</td>
+          </tr>
+          <tr>
+            <td>Latency P50</td>
+            <td>&lt;1.5s</td>
+            <td>Median time to complete response</td>
+          </tr>
+          <tr>
+            <td>Latency P95</td>
+            <td>&lt;4s</td>
+            <td>95th percentile — tail latency matters for UX</td>
+          </tr>
+          <tr>
+            <td>Latency P99</td>
+            <td>&lt;8s</td>
+            <td>99th percentile — worst case SLA</td>
+          </tr>
+          <tr>
+            <td>User Satisfaction</td>
+            <td>&gt;85% positive</td>
+            <td>Thumbs up rate on responses where feedback is collected</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Key Decisions -->
+    <div class="article-section" id="decisions">
+      <h2><span class="step-badge">7</span> Key Design Decisions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Routing approach</td>
+            <td>ML-based complexity classifier</td>
+            <td>Rules break on edge cases. ML adapts and improves with data.</td>
+          </tr>
+          <tr>
+            <td>Multi-provider</td>
+            <td>Abstract behind unified API</td>
+            <td>Swap providers without code changes. Negotiate better rates.</td>
+          </tr>
+          <tr>
+            <td>Caching strategy</td>
+            <td>Semantic cache (embedding similarity)</td>
+            <td>"What's my PTO balance?" and "How much PTO do I have?" should cache-hit.</td>
+          </tr>
+          <tr>
+            <td>Evaluation approach</td>
+            <td>3-tier (offline + online + human)</td>
+            <td>Each tier catches different issues. Together they're comprehensive.</td>
+          </tr>
+          <tr>
+            <td>Rollback trigger</td>
+            <td>Automatic with configurable thresholds</td>
+            <td>Humans too slow. Bad model at 100% traffic = thousands of bad responses.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Cheat Sheet -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">8</span> Cheat Sheet</h2>
+
+      <div class="success-box">
+        <h4>LLM Serving & Evaluation — Key Numbers</h4>
+        <ul>
+          <li><strong>3M LLM calls/day, 2.1B tokens/day</strong></li>
+          <li><strong>3-tier routing: Fast (70%), Mid (10%), Power (20%)</strong></li>
+          <li><strong>Cost with routing: $21,840/day vs $63,000/day without = 65% savings</strong></li>
+          <li><strong>Complexity classifier: &lt;50ms, TF-Lite model</strong></li>
+          <li><strong>Canary stages: 5% → 25% → 50% → 100%</strong></li>
+          <li><strong>Auto-rollback: error &gt;2%, quality drop &gt;5%, latency P95 &gt;50% increase</strong></li>
+          <li><strong>3-tier eval: Offline (1000+ labeled), Online (real metrics), Human (100/week)</strong></li>
+          <li><strong>Hallucination target: &lt;3%</strong></li>
+          <li><strong>Semantic cache for similar queries (not just exact match)</strong></li>
+          <li><strong>Multi-provider abstraction: swap models without code changes</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav-bottom">
+      <a href="design-05-plugin-platform.html">&larr; Plugin Platform</a>
+      <a href="design-07-conversation-memory.html">Conversation Memory &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

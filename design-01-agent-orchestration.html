@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design #1: AI Agent Orchestration Platform — System Design Mastery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 900px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.8rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: var(--red); }
+    .meta-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .meta-green { background: rgba(16,185,129,0.15); color: var(--green); }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: var(--accent-light); }
+    .article-section h4 { font-size: 1.05rem; font-weight: 700; margin: 20px 0 10px; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+    .article-section > ul > li strong { color: var(--text-primary); }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: var(--accent); color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--accent-light); }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: var(--accent-light); }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: var(--radius-sm); padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: var(--accent-light); margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid var(--red); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box h4 { color: var(--red); margin-top: 0; font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: var(--radius-sm); padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: var(--green); margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: var(--radius-sm); padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: var(--purple); margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: var(--radius-sm); padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: var(--orange); margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: var(--accent-light); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+    tbody td:first-child { color: var(--text-primary); font-weight: 500; }
+    tbody tr:hover { background: rgba(99,102,241,0.05); }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid var(--border); margin-top: 48px; }
+    .nav-bottom a { color: var(--accent-light); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .nav-bottom a:hover { color: var(--accent); }
+    .interview-tip { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.82rem; color: var(--green); }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x26A1;</span><span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All 10 Designs</a>
+        <a href="#step1">Requirements</a>
+        <a href="#step2">Estimation</a>
+        <a href="#step3">Architecture</a>
+        <a href="#step4">Deep Dives</a>
+        <a href="#step5">Scaling</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <div class="article-header">
+      <div class="article-meta">
+        <span class="meta-tag meta-red">MOST LIKELY QUESTION</span>
+        <span class="meta-tag meta-blue">Staff Level</span>
+        <span class="meta-tag meta-green">45 minutes</span>
+      </div>
+      <h1>&#x1F916; AI Agent Orchestration Platform</h1>
+      <p style="font-size:1.1rem; color:var(--text-secondary); line-height:1.7;">Core Product &mdash; Design a platform where an AI agent receives natural language requests and executes multi-step workflows across enterprise systems.</p>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#question">The Question & What Interviewers Look For</a></li>
+        <li><a href="#step1">Step 1: Clarify Requirements (0-5 min)</a></li>
+        <li><a href="#step2">Step 2: Back-of-Envelope Estimation (5-10 min)</a></li>
+        <li><a href="#step3">Step 3: High-Level Architecture (10-20 min)</a></li>
+        <li><a href="#step4">Step 4: Deep Dives (20-35 min)</a></li>
+        <li><a href="#circuit-breaker">Circuit Breaker Pattern</a></li>
+        <li><a href="#step5">Step 5: Scaling &amp; Trade-offs (35-40 min)</a></li>
+        <li><a href="#step6">Step 6: ML Integration Layer (40-45 min)</a></li>
+        <li><a href="#memory">Conversation Memory Architecture</a></li>
+        <li><a href="#practice">Mock Interview Practice Script</a></li>
+        <li><a href="#mistakes">Common Mistakes to Avoid</a></li>
+        <li><a href="#cheatsheet">Summary Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- The Question -->
+    <div class="article-section" id="question">
+      <h2>The Question</h2>
+      <div class="warn-box">
+        <p style="font-style:italic; margin:0; font-size:0.95rem;">"Design a platform where an AI agent receives natural language requests from employees (via Slack/Teams), reasons about what actions to take, executes multi-step workflows across enterprise systems (ServiceNow, Jira, Salesforce, Okta), and returns results. The system must be multi-tenant, reliable, and respond within 5 seconds."</p>
+      </div>
+
+      <h3>What the interviewer is looking for:</h3>
+      <ul>
+        <li><strong>1. Decomposition:</strong> Can you break down a complex system into clear components?</li>
+        <li><strong>2. Distributed systems:</strong> Do you understand queues, caches, databases?</li>
+        <li><strong>3. Scale reasoning:</strong> Can you reason about QPS, storage, latency?</li>
+        <li><strong>4. Depth:</strong> Can you go deep on 2-3 components with real-world trade-offs?</li>
+        <li><strong>5. AI/LLM challenges:</strong> Do you understand LLM-specific challenges (latency, cost, reliability)?</li>
+      </ul>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="article-section" id="step1">
+      <h2><span class="step-badge">1</span> Clarify Requirements <small style="color:var(--text-muted);">(First 5 minutes)</small></h2>
+      <table>
+        <thead><tr><th>#</th><th>Your Question</th><th>Expected Answer</th></tr></thead>
+        <tbody>
+          <tr><td>Q1</td><td>Should I focus on the reasoning/LLM layer or the execution infrastructure?</td><td>Both, but emphasize execution infra as SWE</td></tr>
+          <tr><td>Q2</td><td>Latency target: conversational (&lt;5s) or async background tasks?</td><td>Conversational &mdash; users expect fast response</td></tr>
+          <tr><td>Q3</td><td>How many enterprise systems per customer?</td><td>5-20 connectors</td></tr>
+          <tr><td>Q4</td><td>Multi-tenant with different configs per customer?</td><td>Yes</td></tr>
+          <tr><td>Q5</td><td>Permission model: does agent act as user or as system?</td><td>As user (user-level permissions)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="article-section" id="step2">
+      <h2><span class="step-badge">2</span> Back-of-Envelope Estimation <small style="color:var(--text-muted);">(5-10 min)</small></h2>
+      <div class="diagram-box">
+        <pre class="architecture-diagram">
+USERS:
+  350+ customers x 15,000 employees avg = ~5 Million total users
+  10% DAU (Daily Active Users) = 500,000 users/day
+  Avg 3 requests per user = 1.5 Million requests/day
+
+QPS (Queries Per Second):
+  1.5M requests / 86,400 seconds = ~17 req/sec (average)
+  Peak (3x average) = ~50 req/sec
+
+PER REQUEST BREAKDOWN:
+  1 LLM call for planning     -> 1-3 seconds
+  2-3 tool/API calls           -> 200ms - 2s each
+  1 LLM call for response      -> 1-2 seconds
+  Target: < 5 seconds end-to-end
+
+STORAGE:
+  Each conversation: ~5KB (messages + metadata)
+  1.5M conversations/day x 5KB = 7.5 GB/day
+  + Audit logs = 10 TB/year</pre>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="article-section" id="step3">
+      <h2><span class="step-badge">3</span> High-Level Architecture <small style="color:var(--text-muted);">(10-20 min)</small></h2>
+      <div class="diagram-box">
+        <pre class="architecture-diagram">
+&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+&#x2502; Slack/Teams  &#x2502; &#x2500;&#x2500;&#x2192; API Gateway (Auth, Rate Limit, WebSocket)
+&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;            &#x2502;
+       &#x2502;            Session Manager (Redis: context, history, user profile)
+       &#x2502;                   &#x2502;
+       &#x2502;         &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+       &#x2502;         &#x2502;  REASONING ENGINE   &#x2502;
+       &#x2502;         &#x2502;  &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;  &#x2502;
+       &#x2502;         &#x2502;  &#x2502; Planning (LLM)&#x2502;  &#x2502; &#x2192; Decompose request into steps
+       &#x2502;         &#x2502;  &#x2502; Execution Eng &#x2502;  &#x2502; &#x2192; Run tool calls with retry/CB
+       &#x2502;         &#x2502;  &#x2502; Observation   &#x2502;  &#x2502; &#x2192; Evaluate, re-plan if needed
+       &#x2502;         &#x2502;  &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;  &#x2502;
+       &#x2502;         &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+       &#x2502;              &#x2502;          &#x2502;
+       &#x2502;     &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2510;  &#x250C;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+       &#x2502;     &#x2502;Tool Registry&#x2502;  &#x2502;State Manager&#x2502;
+       &#x2502;     &#x2502;(per tenant) &#x2502;  &#x2502;(Redis + PG) &#x2502;
+       &#x2502;     &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;  &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+       &#x2502;          &#x2502;
+       &#x2502;   &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+       &#x2502;   &#x2534;      &#x2534;      &#x2534;          &#x2534;
+       &#x2502; ServiceNow  Jira  Salesforce  Okta</pre>
+      </div>
+
+      <h3>The 5 Layers Explained</h3>
+      <ul>
+        <li><strong>1. ENTRY:</strong> User sends message via Slack/Teams &rarr; API Gateway handles auth, rate limiting, and WebSocket for real-time bidirectional communication.</li>
+        <li><strong>2. SESSION:</strong> Session Manager (Redis) loads user context, permissions, conversation history, and tenant configuration. Sub-millisecond lookups.</li>
+        <li><strong>3. REASONING:</strong> The brain of the system with 3 phases: <strong>PLAN</strong> (LLM outputs step-by-step plan), <strong>EXECUTE</strong> (tool calls with timeout/retry/circuit breaker), <strong>OBSERVE</strong> (LLM evaluates result, decides to proceed, retry, or re-plan).</li>
+        <li><strong>4. TOOLS:</strong> Tool Registry is per-tenant &mdash; each customer has different enterprise systems configured. Agent only sees plugins available to THAT customer. Self-service UI for admins to configure connectors.</li>
+        <li><strong>5. RESPONSE:</strong> Results streamed back to user in real-time via WebSocket. User sees tokens appear word-by-word, reducing perceived latency.</li>
+      </ul>
+    </div>
+
+    <!-- Step 4: Deep Dives -->
+    <div class="article-section" id="step4">
+      <h2><span class="step-badge">4</span> Deep Dives <small style="color:var(--text-muted);">(20-35 min &mdash; this is where you WIN)</small></h2>
+
+      <h3>Deep Dive #1: Reasoning Engine (The Brain)</h3>
+      <div class="highlight-box">
+        <h4>ReAct Pattern: Plan &rarr; Execute &rarr; Observe &rarr; (Re-plan)</h4>
+        <p>The Reasoning Engine implements the ReAct (Reason + Act) pattern, the industry-standard approach for agentic AI systems.</p>
+      </div>
+      <ul>
+        <li><strong>PLANNING:</strong> LLM receives the request + user context + available plugins + conversation history. It outputs a structured plan: <code>[{plugin:'servicenow', action:'create_ticket', params:{...}}, ...]</code>. The plan specifies which tools to call, in what order, and with what parameters.</li>
+        <li><strong>Model routing:</strong> Fast model (GPT-3.5 class) for simple tasks like "what's my PTO balance?". Powerful model (GPT-4/Claude class) for complex multi-step reasoning like "provision a new employee across all systems."</li>
+        <li><strong>EXECUTION:</strong> Each plugin call is wrapped with: <strong>timeout</strong> (don't wait forever), <strong>retry</strong> (exponential backoff with jitter), <strong>circuit breaker</strong> (fail fast if service is down), <strong>idempotency</strong> (same request produces same result, safe to retry).</li>
+        <li><strong>Parallel execution:</strong> For independent steps, run concurrently using asyncio.gather(). Example: creating a ticket and sending a notification can happen simultaneously. This gives ~50% speedup on multi-step workflows (3.0s &rarr; 1.5s).</li>
+        <li><strong>OBSERVATION:</strong> After each step, the LLM evaluates the result and decides: proceed to next step, retry the current step, or re-plan entirely. This enables self-healing &mdash; if a step fails, the agent can reason about alternatives.</li>
+        <li><strong>DLQ (Dead Letter Queue):</strong> Failed executions that exhaust retries go to a DLQ for investigation. Alerting triggers when DLQ depth exceeds threshold.</li>
+      </ul>
+
+      <h3>Deep Dive #2: Plugin/Connector Registry (Multi-Tenant)</h3>
+      <ul>
+        <li><strong>Plugin Definition:</strong> Each plugin has: name + description (for LLM to understand when to use it) + API endpoint + auth config + input/output schema.</li>
+        <li><strong>Connector Instance:</strong> Customer-specific configuration: their ServiceNow URL, their credentials, their custom field mappings. Same plugin template, different instance per tenant.</li>
+        <li><strong>Credential Storage:</strong> All credentials stored in HashiCorp Vault with per-tenant isolation. Agent authenticates to Vault per request (zero-trust). OAuth tokens auto-rotated before expiry.</li>
+        <li><strong>Self-Service UI:</strong> Admin picks system type &rarr; enters their URL &rarr; authenticates via OAuth &rarr; maps custom fields &rarr; activates connector. No engineering involvement needed.</li>
+        <li><strong>Agent Context:</strong> When the LLM plans, it only sees plugins available to THAT customer. Acme Corp sees ServiceNow + Okta; Beta Inc sees Jira + Salesforce.</li>
+      </ul>
+
+      <h3>Deep Dive #3: State Manager</h3>
+      <ul>
+        <li><strong>What it tracks:</strong> Current plan, step results, intermediate data, conversation context, execution trace.</li>
+        <li><strong>Hot State (Redis):</strong> Active conversations and in-flight task state. Sub-millisecond reads. TTL 24 hours.</li>
+        <li><strong>Cold Storage (PostgreSQL):</strong> Audit trail for every action taken. Required for SOC2, GDPR compliance. Append-only for integrity.</li>
+        <li><strong>Resume on Failure:</strong> If the agent crashes mid-execution, state manager has checkpoints. New instance picks up from last successful step.</li>
+        <li><strong>Debugging:</strong> Full execution trace for every request &mdash; what the LLM planned, what tools were called, what they returned, what the LLM observed. Critical for production debugging.</li>
+      </ul>
+    </div>
+
+    <!-- Circuit Breaker -->
+    <div class="article-section" id="circuit-breaker">
+      <h2>Circuit Breaker Pattern</h2>
+      <div class="diagram-box">
+        <pre class="architecture-diagram">
+CIRCUIT BREAKER STATES:
+
+  &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;  failures > threshold  &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+  &#x2502; CLOSED &#x2502; &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2192; &#x2502; OPEN &#x2502;
+  &#x2502;(normal)&#x2502;                        &#x2502;(fail &#x2502;
+  &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;                        &#x2502;fast) &#x2502;
+       &#x25B2;                            &#x2514;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2518;
+       &#x2502;                               &#x2502;
+       &#x2502;    success                    &#x2502; timeout
+       &#x2502;                               &#x2502;
+  &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;                    &#x250C;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+  &#x2502;  CLOSED  &#x2502; &#x25C0;&#x2500;&#x2500; success &#x2500;&#x2500;&#x2500;&#x2500;&#x2500; &#x2502;HALF-OPEN &#x2502;
+  &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;                    &#x2502;(test one)&#x2502;
+                   failure &#x2500;&#x2500;&#x2192;    &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+                   back to OPEN</pre>
+      </div>
+      <ul>
+        <li><strong>CLOSED (Normal):</strong> All requests pass through. Failures are counted.</li>
+        <li><strong>OPEN (Failing):</strong> When failures exceed threshold (e.g., 5 failures in 60s), circuit opens. All requests immediately fail with a cached/default response. No calls to the downstream service.</li>
+        <li><strong>HALF-OPEN (Testing):</strong> After a recovery timeout (e.g., 30s), one test request is allowed through. If it succeeds, circuit closes. If it fails, circuit opens again.</li>
+        <li><strong>CRITICAL:</strong> Circuit breaker is per connector INSTANCE (not per type). One customer's ServiceNow being down does NOT affect other customers' ServiceNow connections.</li>
+      </ul>
+    </div>
+
+    <!-- Step 5: Scaling -->
+    <div class="article-section" id="step5">
+      <h2><span class="step-badge">5</span> Scaling &amp; Trade-offs <small style="color:var(--text-muted);">(35-40 min)</small></h2>
+
+      <h3>Latency Optimization</h3>
+      <ul>
+        <li><strong>Parallel tool calls</strong> with asyncio.gather() &mdash; 50% speedup: 3.0s &rarr; 1.5s for independent steps</li>
+        <li><strong>Stream LLM tokens</strong> to user in real-time &mdash; perceived latency drops to first-token time (~200ms)</li>
+        <li><strong>Cache user profiles + plugin schemas</strong> in Redis &mdash; eliminate DB lookups per request</li>
+        <li><strong>Model routing:</strong> Simple &rarr; fast/cheap model (500ms), Complex &rarr; powerful model (2-3s)</li>
+      </ul>
+
+      <h3>Reliability</h3>
+      <ul>
+        <li><strong>DLQ</strong> for failed executions with alerting and investigation workflow</li>
+        <li><strong>Circuit breaker PER CONNECTOR INSTANCE</strong> &mdash; prevent cascade failures across tenants</li>
+        <li><strong>Graceful degradation</strong> &mdash; if a non-critical tool fails, agent continues with partial results</li>
+        <li><strong>Idempotent tool calls</strong> &mdash; same request produces same result, safe to retry without side effects</li>
+      </ul>
+
+      <h3>Cost Optimization</h3>
+      <div class="success-box">
+        <h4>70% Cost Reduction with Model Routing</h4>
+        <p>Route 70% of simple queries to cheaper models ($0.002/1K tokens) and only 30% complex queries to powerful models ($0.03/1K tokens). Result: $21,840/day vs $63,000/day without routing.</p>
+      </div>
+      <ul>
+        <li><strong>Cache common query patterns</strong> &mdash; "How do I reset my password?" served from cache</li>
+        <li><strong>Token budget per customer</strong> &mdash; enforce limits, alert on overuse</li>
+        <li><strong>Prompt compression</strong> &mdash; summarize conversation history to reduce input tokens</li>
+      </ul>
+
+      <h3>Security (Enterprise-grade)</h3>
+      <ul>
+        <li><strong>Per-customer credentials in HashiCorp Vault</strong> &mdash; never in app DB or environment variables</li>
+        <li><strong>User-level permissions on EVERY tool call</strong> &mdash; agent cannot do more than the user is authorized to do</li>
+        <li><strong>Zero-trust:</strong> Agent authenticates to Vault per request, no long-lived tokens in memory</li>
+        <li><strong>Audit trail</strong> for SOC2, GDPR &mdash; every action logged with who, what, when, result</li>
+      </ul>
+
+      <h3>Observability</h3>
+      <ul>
+        <li><strong>OpenTelemetry tracing</strong> &mdash; end-to-end trace for every request across all services</li>
+        <li><strong>Per-step latency/success metrics</strong> &mdash; identify which step is the bottleneck</li>
+        <li><strong>Token usage tracking</strong> per customer per model &mdash; cost attribution and billing</li>
+        <li><strong>Alerting</strong> if success rate drops below 95% or P99 latency exceeds 10s</li>
+      </ul>
+    </div>
+
+    <!-- Step 6: ML Integration -->
+    <div class="article-section" id="step6">
+      <h2><span class="step-badge">6</span> ML Integration Layer <small style="color:var(--text-muted);">(40-45 min)</small></h2>
+
+      <h3>Multiple Models</h3>
+      <ul>
+        <li><strong>NLU classifier:</strong> Intent detection (is this a question, action request, or conversation?)</li>
+        <li><strong>LLM for planning:</strong> Decompose complex requests into executable steps</li>
+        <li><strong>Cross-encoder for re-ranking:</strong> When searching knowledge base, re-rank results by relevance</li>
+        <li><strong>Model routing:</strong> Lightweight classifier predicts query complexity in &lt;50ms</li>
+      </ul>
+
+      <h3>Model Router Architecture (3-Tier)</h3>
+      <div class="diagram-box">
+        <pre class="architecture-diagram">
+  Fast Tier  (Llama-3, Mistral):     ~70% traffic  |  $0.002/1K tokens
+  Mid Tier   (Claude Haiku):          ~10% traffic  |  $0.005/1K tokens
+  Power Tier (GPT-4, Claude Opus):    ~20% traffic  |  $0.03/1K tokens
+
+  Model Gateway:
+    &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+    &#x2502; Circuit Breaker per provider     &#x2502;
+    &#x2502; Retry/Fallback between tiers     &#x2502;
+    &#x2502; Rate Limiter per customer         &#x2502;
+    &#x2502; Response Caching                  &#x2502;
+    &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+                      &#x2502;
+  Evaluation Pipeline (async &mdash; non-blocking):
+    Accuracy Score | Hallucination Detector | Latency Tracker | Cost Tracker
+
+  Rollback Controller:
+    Monitor metric trends &#x2192; Compare vs baseline &#x2192; Auto-rollback if degraded</pre>
+      </div>
+
+      <h3>Key Design Decisions</h3>
+      <table>
+        <thead><tr><th>Decision</th><th>Rationale</th></tr></thead>
+        <tbody>
+          <tr><td>3-tier model routing</td><td>70% cheap + 10% mid + 20% expensive = 65% cost savings</td></tr>
+          <tr><td>Async evaluation</td><td>Non-blocking; doesn't add latency to user requests</td></tr>
+          <tr><td>Circuit breaker per provider</td><td>If GPT-4 is down, fallback to Claude automatically</td></tr>
+          <tr><td>Canary deployment</td><td>Progressive rollout 5% &rarr; 25% &rarr; 100% reduces blast radius</td></tr>
+          <tr><td>Response caching</td><td>Identical queries get cached responses (Redis, TTL 1hr)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>A/B Testing &amp; Canary Deployment</h3>
+      <ul>
+        <li><strong>Canary:</strong> New model gets 5% of traffic. Monitor for 24 hours.</li>
+        <li><strong>Promotion:</strong> If metrics (accuracy, latency, satisfaction) are equal or better &rarr; 25% &rarr; 100%</li>
+        <li><strong>Auto-rollback:</strong> If any metric degrades beyond threshold, automatic rollback to previous version</li>
+        <li><strong>Data Flywheel:</strong> User thumbs up/down &rarr; fine-tuning signal. Collective Learning across ALL tenants.</li>
+      </ul>
+    </div>
+
+    <!-- Conversation Memory -->
+    <div class="article-section" id="memory">
+      <h2>Conversation Memory Architecture</h2>
+      <div class="diagram-box">
+        <pre class="architecture-diagram">
+SHORT-TERM MEMORY (Redis Cluster, TTL 24hr):
+  Session messages, turn count, metadata
+  ~50 KB/session, Eventual consistency
+  Structure: {session_id: {messages: [...], user_context: {...}, created_at}}
+
+WORKING MEMORY (Redis Cluster, TTL 1hr):
+  Task state, tool output, scratch pad
+  ~20 KB/task, Strong consistency
+  Example: Step 1 returned user's manager &#x2192; stored &#x2192; Step 2 uses for approval
+
+LONG-TERM MEMORY (PostgreSQL + pgvector, configurable TTL):
+  User prefs, interaction summaries, learned patterns, embeddings
+  ~200 KB/user, Strong consistency
+  Semantic search via cosine similarity on embeddings
+
+CONTEXT WINDOW MANAGER:
+  1. Gather short-term messages (current conversation)
+  2. Attach working memory (current task state)
+  3. Semantic search long-term memory for relevant past interactions
+  4. Summarize if total exceeds token limit
+  5. Assemble final prompt for LLM</pre>
+      </div>
+      <p>The Context Window Manager is critical &mdash; it intelligently selects which information to include in the LLM's context window (8K-128K tokens), prioritizing recency, relevance, and task state.</p>
+    </div>
+
+    <!-- Practice Script -->
+    <div class="article-section" id="practice">
+      <h2>Mock Interview Practice Script</h2>
+      <div class="highlight-box">
+        <pre class="interview-tip">
+[0-5 min]  Ask 5 clarifying questions (show the table)
+[5-10 min] Walk through estimation: users &#x2192; QPS &#x2192; latency &#x2192; storage
+[10-20 min] Draw the architecture diagram, explain all 5 layers
+[20-35 min] Deep dive: Reasoning Engine (Plan &#x2192; Execute &#x2192; Observe)
+            Then: Circuit breaker pattern, Plugin Registry, State Manager
+[35-45 min] Scaling: parallel execution, streaming, caching, model routing
+            Trade-offs: cost vs latency, consistency vs availability</pre>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Set a timer for 45 minutes. Talk through each section aloud. Record yourself and listen back for where you hesitate.</p>
+    </div>
+
+    <!-- Common Mistakes -->
+    <div class="article-section" id="mistakes">
+      <h2>Common Mistakes to AVOID</h2>
+      <div class="warn-box">
+        <h4>Don't make these errors in your interview:</h4>
+        <ul style="list-style:none; padding:0; margin:8px 0 0;">
+          <li style="padding:4px 0; color:var(--text-secondary);">&#x274C; Jumping into code without clarifying requirements first</li>
+          <li style="padding:4px 0; color:var(--text-secondary);">&#x274C; Drawing a monolithic architecture (show you think distributed)</li>
+          <li style="padding:4px 0; color:var(--text-secondary);">&#x274C; Ignoring multi-tenancy (this is an enterprise product!)</li>
+          <li style="padding:4px 0; color:var(--text-secondary);">&#x274C; Not discussing failure modes (what happens when ServiceNow is down?)</li>
+          <li style="padding:4px 0; color:var(--text-secondary);">&#x274C; Forgetting about permissions (agent acts as USER, not system)</li>
+          <li style="padding:4px 0; color:var(--text-secondary);">&#x274C; Not mentioning observability (how do you debug in production?)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Summary Cheat Sheet -->
+    <div class="article-section" id="cheatsheet">
+      <h2>Summary Cheat Sheet</h2>
+      <div class="diagram-box">
+        <pre class="architecture-diagram">
+ARCHITECTURE:      User &#x2192; Gateway &#x2192; Reasoning Engine &#x2192; Tools &#x2192; Response (streamed)
+REASONING ENGINE:  PLAN &#x2192; EXECUTE &#x2192; OBSERVE &#x2192; (re-plan if needed)
+KEY PATTERNS:      Circuit Breaker, Retry with exp backoff, Parallel execution,
+                   Idempotency keys, Dead Letter Queue
+MULTI-TENANCY:     Per-tenant Tool Registry, Per-tenant credentials in Vault,
+                   User-level permissions on every tool call
+DATA STORES:       Redis (session state), PostgreSQL (audit logs), Vault (credentials)
+NUMBERS:           5M users | 500K DAU | 1.5M req/day | ~50 peak QPS |
+                   &lt;5s latency | 10 TB/year storage</pre>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="nav-bottom">
+      <a href="agentic-ai.html">&larr; Back to All 10 Designs</a>
+      <a href="design-02-enterprise-search.html">Next: Enterprise Search (RAG) &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

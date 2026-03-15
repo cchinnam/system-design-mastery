@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Tenant Plugin/Connector Platform — System Design Mastery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 900px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.8rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; white-space: pre; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x26A1;</span><span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All 10 Designs</a>
+        <a href="#template-instance">Template vs Instance</a>
+        <a href="#middleware">Middleware Chain</a>
+        <a href="#rate-limiter">Rate Limiter</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <div class="article-header">
+      <h1>Multi-Tenant Plugin/Connector Platform</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-green">STRYKER EXPERIENCE</span>
+        <span class="meta-tag meta-blue">Staff Level</span>
+        <span class="meta-tag meta-purple">40 min</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">"Design a platform for customers to connect their business systems (ServiceNow, Jira, Salesforce, SAP, etc.) to an AI agent. Different systems, APIs, authentication methods, and data schemas."</strong>
+      </p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#signals">Interviewer Signals</a></li>
+        <li><a href="#clarify">Clarifying Questions & Scope</a></li>
+        <li><a href="#estimation">Back-of-Envelope Estimation</a></li>
+        <li><a href="#architecture">High-Level Architecture</a></li>
+        <li><a href="#decisions">Key Design Decisions</a></li>
+        <li><a href="#template-instance">Deep Dive 1: Template vs Instance</a></li>
+        <li><a href="#middleware">Deep Dive 2: Middleware Chain</a></li>
+        <li><a href="#rate-limiter">Deep Dive 3: Sliding Window Rate Limiter</a></li>
+        <li><a href="#credentials">Deep Dive 4: Credential Management</a></li>
+        <li><a href="#cheatsheet">Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- Interviewer Signals -->
+    <div class="article-section" id="signals">
+      <h2><span class="step-badge">1</span> Interviewer Signals</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Signal</th>
+            <th>What They Want to See</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Abstraction</td>
+            <td>Can you design a unified interface over heterogeneous systems?</td>
+          </tr>
+          <tr>
+            <td>Multi-tenancy</td>
+            <td>How do you isolate tenant data, credentials, and rate limits?</td>
+          </tr>
+          <tr>
+            <td>Extensibility</td>
+            <td>How easy is it to add a new connector type (e.g., Workday)?</td>
+          </tr>
+          <tr>
+            <td>Resilience</td>
+            <td>How do you handle external API failures, rate limits, timeouts?</td>
+          </tr>
+          <tr>
+            <td>Security</td>
+            <td>How are credentials stored, rotated, and scoped?</td>
+          </tr>
+          <tr>
+            <td>Operational Maturity</td>
+            <td>Monitoring, alerting, debugging — can you operate this at scale?</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Clarify -->
+    <div class="article-section" id="clarify">
+      <h2><span class="step-badge">2</span> Clarifying Questions & Scope</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Clarification</th>
+            <th>Assumption</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Connector Count</td>
+            <td>How many systems to support?</td>
+            <td>10 connector types initially (ServiceNow, Jira, Salesforce, etc.)</td>
+          </tr>
+          <tr>
+            <td>Instances</td>
+            <td>How many instances per customer?</td>
+            <td>5-15 connectors per customer, 350 customers = ~3,500 instances</td>
+          </tr>
+          <tr>
+            <td>Operations</td>
+            <td>Read-only or read-write?</td>
+            <td>Both: read data + create/update records</td>
+          </tr>
+          <tr>
+            <td>Auth Methods</td>
+            <td>What auth types?</td>
+            <td>OAuth 2.0, API Key, Basic Auth, mTLS, SAML</td>
+          </tr>
+          <tr>
+            <td>Rate Limits</td>
+            <td>External API limits?</td>
+            <td>Per-tenant, per-connector. Must respect external system limits.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Estimation -->
+    <div class="article-section" id="estimation">
+      <h2><span class="step-badge">3</span> Back-of-Envelope Estimation</h2>
+      <div class="highlight-box">
+        <h4>Scale Numbers</h4>
+        <ul>
+          <li><strong>3,500 connector instances (350 customers x 10 avg)</strong></li>
+          <li><strong>350K API calls/day to external systems</strong></li>
+          <li><strong>1K credential rotations/day (OAuth token refreshes)</strong></li>
+          <li><strong>Peak: ~15 API calls/second</strong></li>
+          <li><strong>Avg response time target: &lt;2s (including external API latency)</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">4</span> High-Level Architecture</h2>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  PLUGIN/CONNECTOR PLATFORM
+  ═══════════════════════════════════════════════════════════════════
+
+  AI Agent Request
+       │
+       v
+  ┌──────────┐     ┌─────────────────────────────────────────────┐
+  │ Gateway  │────>│          RUNTIME ENGINE                     │
+  │ (Auth,   │     │  ┌─────────────────────────────────────┐    │
+  │  Route)  │     │  │     MIDDLEWARE CHAIN                 │    │
+  └──────────┘     │  │                                     │    │
+                   │  │  Auth → RateLimit → Transform →     │    │
+                   │  │  Execute → Retry → Log              │    │
+                   │  │                                     │    │
+                   │  └─────────────────────────────────────┘    │
+                   └─────────────────────┬───────────────────────┘
+                                         │
+              ┌──────────────────────────┼──────────────────────┐
+              │                          │                      │
+       ┌──────v──────┐          ┌────────v────────┐     ┌──────v──────┐
+       │  Registry   │          │ Config Store    │     │   Vault     │
+       │ (Templates  │          │ (Per-tenant     │     │(Credentials │
+       │ + Instances)│          │  settings)      │     │  secrets)   │
+       └─────────────┘          └─────────────────┘     └─────────────┘
+
+                   EXTERNAL SYSTEMS              CROSS-CUTTING
+              ┌────────────────────┐        ┌─────────────────────┐
+              │ ServiceNow │ Jira  │        │ Metrics │ Tracing   │
+              │ Salesforce │ SAP   │        │ Alerts  │ Audit Log │
+              │ Workday    │ etc.  │        └─────────────────────┘
+              └────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- Key Design Decisions -->
+    <div class="article-section" id="decisions">
+      <h2><span class="step-badge">5</span> Key Design Decisions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Template vs Instance model</td>
+            <td>Separate template (blueprint) from instance (runtime config)</td>
+            <td>Like Docker Image vs Container. One "ServiceNow connector" template, many customer instances.</td>
+          </tr>
+          <tr>
+            <td>Middleware chain pattern</td>
+            <td>Ordered chain of composable middleware</td>
+            <td>Each concern (auth, rate-limit, transform) is isolated and testable. Easy to add new middleware.</td>
+          </tr>
+          <tr>
+            <td>Credential storage</td>
+            <td>HashiCorp Vault with dynamic secrets</td>
+            <td>Never store credentials in DB. Auto-rotation. Per-tenant isolation. Audit trail.</td>
+          </tr>
+          <tr>
+            <td>Rate limiting</td>
+            <td>Sliding window per (tenant, connector)</td>
+            <td>Respects external API limits. No burst spikes at window boundaries. Redis ZSET implementation.</td>
+          </tr>
+          <tr>
+            <td>Schema transformation</td>
+            <td>Declarative field mappings in JSON</td>
+            <td>Customers map their custom fields without code. "status" → "ticket_state", "assignee" → "owner".</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Deep Dive 1: Template vs Instance -->
+    <div class="article-section" id="template-instance">
+      <h2><span class="step-badge">6</span> Deep Dive 1: Template vs Instance</h2>
+
+      <div class="highlight-box">
+        <h4>Analogy: Docker Image vs Container</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">A <strong style="color:#e8e8f0;">Template</strong> is like a Docker Image — it defines WHAT a connector can do. An <strong style="color:#e8e8f0;">Instance</strong> is like a Container — it's a running configuration for a specific tenant with their credentials and custom mappings.</p>
+      </div>
+
+      <h3>Template (Blueprint)</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  CONNECTOR TEMPLATE: ServiceNow
+  ═══════════════════════════════════════════
+
+  {
+    "template_id": "servicenow-v2",
+    "name": "ServiceNow ITSM Connector",
+    "version": "2.3.1",
+    "auth_types": ["oauth2", "basic_auth"],
+    "base_url_pattern": "https://{instance}.service-now.com",
+    "capabilities": [
+      "read_tickets",
+      "create_ticket",
+      "update_ticket",
+      "list_groups",
+      "get_user",
+      "search_kb_articles"
+    ],
+    "api_version": "v2",
+    "rate_limit_default": 500,  // requests/minute
+    "required_fields": ["instance_name"],
+    "optional_fields": ["custom_table_prefix"]
+  }
+</pre>
+      </div>
+
+      <h3>Instance (Tenant Configuration)</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  CONNECTOR INSTANCE: Acme Corp's ServiceNow
+  ═══════════════════════════════════════════
+
+  {
+    "instance_id": "inst-acme-snow-001",
+    "tenant_id": "acme-corp",
+    "template_id": "servicenow-v2",
+    "config": {
+      "instance_name": "acmecorp",
+      "base_url": "https://acmecorp.service-now.com"
+    },
+    "credential_ref": "vault://acme-corp/servicenow/oauth",
+    "field_mappings": {
+      "short_description": "title",
+      "assignment_group": "team",
+      "u_custom_field_1": "business_unit",
+      "u_location_code": "office_location"
+    },
+    "rate_limit_override": 300,  // Acme's ServiceNow plan limit
+    "status": "active",
+    "health_check_interval": 60  // seconds
+  }
+</pre>
+      </div>
+
+      <h3>Registry</h3>
+      <ul>
+        <li><strong>Template Registry:</strong> PostgreSQL table of all connector templates. Versioned — updates create new versions, instances can pin to specific versions.</li>
+        <li><strong>Instance Registry:</strong> PostgreSQL table of all active instances. Includes health status, last successful call, error rate.</li>
+        <li><strong>Discovery:</strong> AI agent queries registry: "What connectors does Acme have?" → Returns list of active instances with capabilities.</li>
+      </ul>
+    </div>
+
+    <!-- Deep Dive 2: Middleware Chain -->
+    <div class="article-section" id="middleware">
+      <h2><span class="step-badge">7</span> Deep Dive 2: Middleware Chain</h2>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  REQUEST FLOW THROUGH MIDDLEWARE CHAIN
+  ═══════════════════════════════════════════════════════
+
+  Incoming Request
+       │
+  ┌────v────┐  Inject credentials from Vault. Handle OAuth
+  │  AUTH   │  token refresh automatically. mTLS cert loading.
+  └────┬────┘
+       │
+  ┌────v────────┐  Check sliding window. Per (tenant, connector).
+  │ RATE LIMIT  │  429 if exceeded. Queue if near limit.
+  └────┬────────┘
+       │
+  ┌────v──────────┐  Map internal schema → external API schema.
+  │  TRANSFORM    │  Apply customer's field_mappings. Type coercion.
+  └────┬──────────┘
+       │
+  ┌────v────────┐  HTTP call to external system. Connection pooling.
+  │  EXECUTE    │  Timeout: 30s. Circuit breaker per instance.
+  └────┬────────┘
+       │
+  ┌────v────┐  Exponential backoff: 1s, 2s, 4s. Max 3 retries.
+  │  RETRY  │  Only on 429, 503, 504. NOT on 400, 401, 404.
+  └────┬────┘
+       │
+  ┌────v────┐  Full audit trail. Request/response (sanitized).
+  │   LOG   │  Latency, status code, tenant, connector, operation.
+  └────┬────┘
+       │
+       v
+  Response to AI Agent
+</pre>
+      </div>
+
+      <h3>Middleware Details</h3>
+      <ul>
+        <li><strong>Auth Middleware:</strong> Reads credential_ref from instance config. Fetches from Vault. For OAuth: checks token expiry, refreshes if &lt;5 min remaining. Injects Authorization header. For API Key: injects header or query param per template spec.</li>
+        <li><strong>Rate Limit Middleware:</strong> Sliding window algorithm (see Deep Dive 3). Per (tenant_id, connector_instance_id). Respects both our internal limits AND the external system's API limits. Returns 429 with Retry-After header.</li>
+        <li><strong>Transform Middleware:</strong> Applies field_mappings from instance config. Maps internal canonical schema to external API format. Example: internal "title" → ServiceNow "short_description". Handles type coercion (string → int, date formatting).</li>
+        <li><strong>Execute Middleware:</strong> HTTP client with connection pooling (keep-alive). Per-instance circuit breaker: opens after 5 consecutive failures, half-open after 30s. Configurable timeout (default 30s).</li>
+        <li><strong>Retry Middleware:</strong> Exponential backoff: 1s, 2s, 4s. Max 3 retries. Only retries on transient errors (429, 503, 504). Never retries client errors (400, 401, 404) — those indicate a real problem.</li>
+        <li><strong>Log Middleware:</strong> Structured JSON logs. Every request/response recorded with: tenant_id, instance_id, operation, latency_ms, status_code, request_id. Credentials redacted. Audit compliance.</li>
+      </ul>
+    </div>
+
+    <!-- Deep Dive 3: Rate Limiter -->
+    <div class="article-section" id="rate-limiter">
+      <h2><span class="step-badge">8</span> Deep Dive 3: Sliding Window Rate Limiter</h2>
+
+      <h3>Redis ZSET Algorithm</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  SLIDING WINDOW RATE LIMITER (Redis ZSET)
+  ═══════════════════════════════════════════════════════
+
+  Key: rate_limit:{tenant_id}:{connector_id}
+  Score: timestamp (Unix ms)
+  Member: unique request ID
+
+  ALGORITHM (per request):
+  ─────────────────────────────────────────────────────
+  1. ZADD key {now_ms} {request_id}        // Add this request
+  2. ZREMRANGEBYSCORE key 0 {now_ms - 60000} // Remove requests older than 60s
+  3. count = ZCARD key                       // Count requests in window
+  4. IF count > limit: REJECT (429)          // Over limit
+     ELSE: ALLOW                             // Under limit
+  5. EXPIRE key 120                          // TTL cleanup safety net
+
+  EXAMPLE (limit = 5 requests/minute):
+  ─────────────────────────────────────────────────────
+  Time    Action          ZSET Size    Result
+  00:00   Request A       1            ALLOWED
+  00:15   Request B       2            ALLOWED
+  00:30   Request C       3            ALLOWED
+  00:45   Request D       4            ALLOWED
+  00:50   Request E       5            ALLOWED
+  00:55   Request F       6            REJECTED (429)
+  01:05   Request G       5            ALLOWED (A expired at 01:00)
+  01:20   Request H       5            ALLOWED (B expired at 01:15)
+</pre>
+      </div>
+
+      <div class="success-box">
+        <h4>Why Sliding Window over Fixed Window?</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;"><strong style="color:#e8e8f0;">Fixed window problem:</strong> Limit is 100/min. User sends 100 requests at 0:59, then 100 more at 1:01. That's 200 requests in 2 seconds — the external API sees a burst and throttles us.<br><br>
+        <strong style="color:#e8e8f0;">Sliding window:</strong> Always counts the last 60 seconds exactly. No burst at window boundaries. External APIs stay happy.</p>
+      </div>
+    </div>
+
+    <!-- Deep Dive 4: Credential Management -->
+    <div class="article-section" id="credentials">
+      <h2><span class="step-badge">9</span> Deep Dive 4: Credential Management</h2>
+
+      <h3>Vault-Based Architecture</h3>
+      <ul>
+        <li><strong>HashiCorp Vault:</strong> All credentials stored in Vault, never in PostgreSQL or config files. Each tenant gets their own Vault namespace for isolation.</li>
+        <li><strong>Auto-rotation:</strong> OAuth tokens auto-refreshed before expiry. API keys rotated on configurable schedule (e.g., every 90 days). Rotation triggers health check to verify new credentials work.</li>
+        <li><strong>Per-tenant isolation:</strong> Vault policies ensure Tenant A can never access Tenant B's credentials. Service accounts scoped to specific tenants.</li>
+        <li><strong>Zero-trust:</strong> Runtime engine never caches credentials in memory beyond single request. Credentials fetched from Vault per-request (with short Vault token TTL).</li>
+      </ul>
+
+      <h3>OAuth 2.0 Flow Detail</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  OAUTH TOKEN LIFECYCLE
+  ═══════════════════════════════════════════
+
+  1. Customer configures connector in UI
+     → Redirects to external system's OAuth consent screen
+     → Receives authorization code
+
+  2. Backend exchanges code for access_token + refresh_token
+     → Stores both in Vault: vault://acme/servicenow/oauth
+     → Sets token_expiry metadata
+
+  3. At runtime (each API call):
+     → Auth middleware reads token from Vault
+     → If expires_at < now + 5min:
+        → Use refresh_token to get new access_token
+        → Store new token in Vault
+        → Use new token for request
+     → Inject Authorization: Bearer {token}
+
+  4. If refresh fails (token revoked):
+     → Mark instance as "auth_failed"
+     → Notify customer: "Please re-authenticate ServiceNow"
+     → Stop processing requests (don't leak errors to users)
+</pre>
+      </div>
+    </div>
+
+    <!-- Cheat Sheet -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">10</span> Cheat Sheet</h2>
+
+      <div class="success-box">
+        <h4>Plugin/Connector Platform — Key Numbers</h4>
+        <ul>
+          <li><strong>3,500 connector instances (350 customers x 10 avg)</strong></li>
+          <li><strong>350K API calls/day, 1K credential rotations/day</strong></li>
+          <li><strong>Template vs Instance = Docker Image vs Container</strong></li>
+          <li><strong>Middleware chain: Auth → RateLimit → Transform → Execute → Retry → Log</strong></li>
+          <li><strong>Sliding window rate limiter: Redis ZSET, per (tenant, connector)</strong></li>
+          <li><strong>Credentials in Vault only, never in DB or config</strong></li>
+          <li><strong>OAuth auto-refresh when &lt;5 min remaining</strong></li>
+          <li><strong>Circuit breaker: opens after 5 consecutive failures, half-open at 30s</strong></li>
+          <li><strong>Retry: exponential backoff 1s/2s/4s, only on 429/503/504</strong></li>
+          <li><strong>Declarative field mappings in JSON (no code needed per customer)</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav-bottom">
+      <a href="design-04-notification-approval.html">&larr; Notification & Approval</a>
+      <a href="design-06-llm-serving.html">LLM Serving &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

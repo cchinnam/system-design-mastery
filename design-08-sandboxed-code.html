@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sandboxed Code Execution Environment — System Design Mastery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 900px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.8rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; white-space: pre; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x26A1;</span><span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All 10 Designs</a>
+        <a href="#validator">Code Validator</a>
+        <a href="#sandbox-pool">Sandbox Pool</a>
+        <a href="#data-access">Data Access</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <div class="article-header">
+      <h1>Sandboxed Code Execution Environment</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-orange">IN JD</span>
+        <span class="meta-tag meta-blue">Staff Level</span>
+        <span class="meta-tag meta-purple">35 min</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">"Design a system where an AI agent generates and executes code (Python, SQL, shell scripts). Must be fully sandboxed, time-limited, resource-constrained, and auditable."</strong>
+      </p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#clarify">Clarifying Questions & Scope</a></li>
+        <li><a href="#estimation">Back-of-Envelope Estimation</a></li>
+        <li><a href="#architecture">High-Level Architecture</a></li>
+        <li><a href="#validator">Deep Dive 1: Code Validator</a></li>
+        <li><a href="#sandbox-pool">Deep Dive 2: Sandbox Pool</a></li>
+        <li><a href="#data-access">Deep Dive 3: Data Access Layer</a></li>
+        <li><a href="#scaling">Scaling & ML</a></li>
+        <li><a href="#cheatsheet">Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- Clarify -->
+    <div class="article-section" id="clarify">
+      <h2><span class="step-badge">1</span> Clarifying Questions & Scope</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Clarification</th>
+            <th>Assumption</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Languages</td>
+            <td>Which languages to support?</td>
+            <td>Python, SQL, shell scripts (Bash). Extensible to JS/R.</td>
+          </tr>
+          <tr>
+            <td>Use Cases</td>
+            <td>What kinds of code?</td>
+            <td>Data queries, report generation, automation scripts, data transforms</td>
+          </tr>
+          <tr>
+            <td>Data Access</td>
+            <td>What data can code access?</td>
+            <td>Tenant's own data only, via controlled data access proxy</td>
+          </tr>
+          <tr>
+            <td>Execution Limits</td>
+            <td>Time and resource limits?</td>
+            <td>30s max execution, 1 CPU, 512MB RAM, 100MB disk</td>
+          </tr>
+          <tr>
+            <td>Audit</td>
+            <td>What needs to be logged?</td>
+            <td>Every execution: code, input, output, duration, user, status</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Estimation -->
+    <div class="article-section" id="estimation">
+      <h2><span class="step-badge">2</span> Back-of-Envelope Estimation</h2>
+      <div class="highlight-box">
+        <h4>Scale Numbers</h4>
+        <ul>
+          <li><strong>50K code executions/day across all tenants</strong></li>
+          <li><strong>Peak: 200 concurrent executions</strong></li>
+          <li><strong>Sandbox spin-up: &lt;2 seconds (warm pool)</strong></li>
+          <li><strong>Average execution time: 5 seconds</strong></li>
+          <li><strong>Sandbox pool size: 300 warm instances (200 peak + 50% buffer)</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">3</span> High-Level Architecture</h2>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  SANDBOXED CODE EXECUTION PIPELINE
+  ═══════════════════════════════════════════════════════════════════
+
+  AI Agent generates code
+       │
+  ┌────v──────────┐     ┌──────────────┐     ┌──────────────────┐
+  │  CODE         │────>│  SANDBOX     │────>│   EXECUTE        │
+  │  VALIDATOR    │     │  POOL        │     │                  │
+  │               │     │              │     │  Resource limits: │
+  │ • Static      │     │ • gVisor /   │     │  • 1 CPU          │
+  │   analysis    │     │   Firecracker│     │  • 512MB RAM      │
+  │ • Whitelist   │     │ • Fresh per  │     │  • 100MB disk     │
+  │   libs        │     │   execution  │     │  • 30s timeout    │
+  │ • SQL inject  │     │ • Warm pool  │     │  • SIGKILL on     │
+  │   prevention  │     │   (300)      │     │    timeout        │
+  │ • LLM safety  │     │ • tmpfs      │     │                  │
+  │   review      │     │   filesystem │     │                  │
+  └───────────────┘     └──────────────┘     └────────┬─────────┘
+                                                      │
+       ┌──────────────────────────────────────────────┘
+       │
+  ┌────v──────────┐     ┌──────────────┐
+  │  OUTPUT       │────>│  AUDIT LOG   │
+  │  SANITIZER    │     │              │
+  │               │     │ • Code       │
+  │ • Truncate    │     │ • Input      │
+  │   large output│     │ • Output     │
+  │ • Redact PII  │     │ • Duration   │
+  │ • Format      │     │ • User       │
+  │   results     │     │ • Status     │
+  └───────────────┘     └──────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- Deep Dive 1: Code Validator -->
+    <div class="article-section" id="validator">
+      <h2><span class="step-badge">4</span> Deep Dive 1: Code Validator</h2>
+
+      <h3>Multi-Layer Validation</h3>
+      <p>Before any code touches a sandbox, it passes through 4 layers of validation:</p>
+
+      <p><span class="step-badge">1</span> <strong style="color:#e8e8f0;">Static Analysis (AST Parsing)</strong></p>
+      <ul>
+        <li><strong>Python:</strong> Parse with `ast` module. Walk the AST to detect forbidden patterns.</li>
+        <li><strong>Blocked operations:</strong> `os.system()`, `subprocess.*`, `eval()`, `exec()`, `__import__()`, file system writes outside tmpfs, network socket creation, process spawning.</li>
+        <li><strong>Blocked modules:</strong> `os`, `subprocess`, `socket`, `ctypes`, `pickle` (deserialization attacks), `importlib`.</li>
+      </ul>
+
+      <p><span class="step-badge">2</span> <strong style="color:#e8e8f0;">Library Whitelist</strong></p>
+      <ul>
+        <li><strong>Allowed libraries:</strong> pandas, numpy, datetime, json, csv, math, statistics, re, collections, itertools.</li>
+        <li><strong>NOT allowed:</strong> requests (no HTTP), boto3 (no AWS), paramiko (no SSH), any library that enables network or file system access.</li>
+        <li><strong>Custom libraries:</strong> Tenant-configurable whitelist for their specific needs (e.g., allow `openpyxl` for Excel processing).</li>
+      </ul>
+
+      <p><span class="step-badge">3</span> <strong style="color:#e8e8f0;">SQL Injection Prevention</strong></p>
+      <ul>
+        <li><strong>Parameterized queries only:</strong> All SQL must use parameterized queries. Raw string concatenation with user input is rejected.</li>
+        <li><strong>Statement whitelist:</strong> Only SELECT, WITH (CTEs) allowed. No INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, TRUNCATE.</li>
+        <li><strong>Table whitelist:</strong> SQL can only reference tables the tenant has been granted access to.</li>
+      </ul>
+
+      <p><span class="step-badge">4</span> <strong style="color:#e8e8f0;">LLM Safety Review (for complex cases)</strong></p>
+      <ul>
+        <li><strong>When triggered:</strong> If static analysis can't determine safety (e.g., dynamic attribute access, metaprogramming patterns).</li>
+        <li><strong>Fast LLM check:</strong> Send code to a fast model with prompt: "Does this code attempt to access the filesystem, network, or execute arbitrary commands? Respond YES or NO with explanation."</li>
+        <li><strong>Latency:</strong> ~200ms. Only triggered for ~5% of code submissions.</li>
+      </ul>
+
+      <div class="warn-box">
+        <p><strong style="color:#ef4444;">Defense in Depth:</strong> Validation is the FIRST line of defense, not the ONLY one. Even if validation misses something, the sandbox itself prevents real damage (no network, no persistent filesystem, resource limits, SIGKILL timeout).</p>
+      </div>
+    </div>
+
+    <!-- Deep Dive 2: Sandbox Pool -->
+    <div class="article-section" id="sandbox-pool">
+      <h2><span class="step-badge">5</span> Deep Dive 2: Sandbox Pool</h2>
+
+      <h3>Sandbox Technology</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Technology</th>
+            <th>Isolation Level</th>
+            <th>Spin-Up Time</th>
+            <th>Best For</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>gVisor (runsc)</td>
+            <td>Kernel-level syscall filtering</td>
+            <td>&lt;500ms (warm)</td>
+            <td>Most use cases. Good balance of security + speed.</td>
+          </tr>
+          <tr>
+            <td>Firecracker</td>
+            <td>Full microVM isolation</td>
+            <td>&lt;125ms (warm)</td>
+            <td>Highest security needs. AWS Lambda uses this.</td>
+          </tr>
+          <tr>
+            <td>Docker + seccomp</td>
+            <td>Container-level</td>
+            <td>&lt;1s</td>
+            <td>Development/testing. Not recommended for production.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Warm Pool Architecture</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  SANDBOX POOL MANAGEMENT
+  ═══════════════════════════════════════════════════════
+
+  WARM POOL (300 pre-created sandboxes)
+  ┌─────────────────────────────────────────────────┐
+  │  [sandbox-001] IDLE  │ Python 3.11 + libs loaded │
+  │  [sandbox-002] IDLE  │ Python 3.11 + libs loaded │
+  │  [sandbox-003] IN USE│ Running user code...      │
+  │  [sandbox-004] IDLE  │ Python 3.11 + libs loaded │
+  │  ...                                              │
+  │  [sandbox-300] IDLE  │ Python 3.11 + libs loaded │
+  └─────────────────────────────────────────────────┘
+
+  LIFECYCLE:
+  ─────────────────────────────────────────────────────
+  1. IDLE → Checkout (assign to execution request)
+  2. IN USE → Code runs inside sandbox
+  3. COMPLETE → Sandbox DESTROYED (never reused)
+  4. REPLENISH → New sandbox created to maintain pool size
+
+  WHY DESTROY?
+  A previous execution might have left state (variables,
+  temp files, modified env). Fresh sandbox = zero leakage.
+</pre>
+      </div>
+
+      <h3>Resource Limits (per sandbox)</h3>
+      <ul>
+        <li><strong>CPU:</strong> 1 vCPU. Cgroup CPU quota prevents monopolizing host.</li>
+        <li><strong>Memory:</strong> 512 MB hard limit. OOM killer triggers if exceeded — execution fails cleanly.</li>
+        <li><strong>Disk:</strong> 100 MB tmpfs (in-memory filesystem). No persistent disk. Destroyed with sandbox.</li>
+        <li><strong>Time:</strong> 30 seconds hard timeout. SIGKILL sent at timeout — no graceful shutdown, immediate termination.</li>
+        <li><strong>Network:</strong> NONE. Network namespace with no interfaces. Code cannot make HTTP calls, DNS lookups, or any network communication.</li>
+        <li><strong>Processes:</strong> Max 10 PIDs. Prevents fork bombs.</li>
+      </ul>
+    </div>
+
+    <!-- Deep Dive 3: Data Access Layer -->
+    <div class="article-section" id="data-access">
+      <h2><span class="step-badge">6</span> Deep Dive 3: Data Access Layer</h2>
+
+      <h3>Data Access Proxy</h3>
+      <p>Code inside the sandbox cannot directly access databases. Instead, it talks to a Data Access Proxy that enforces permissions:</p>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  DATA ACCESS ARCHITECTURE
+  ═══════════════════════════════════════════════════════
+
+  ┌──────────┐     ┌──────────────────┐     ┌──────────────┐
+  │ Sandbox  │────>│  Data Access     │────>│  Read-Only   │
+  │ (Code)   │     │  Proxy           │     │  Replica     │
+  │          │     │                  │     │  (Database)  │
+  │ import   │     │ • Validates SQL  │     │              │
+  │ db_client│     │ • Checks perms   │     │ SELECT only  │
+  │          │     │ • Enforces row   │     │ No writes    │
+  │ result = │     │   limits (10K)   │     │              │
+  │ db.query(│     │ • No raw creds   │     │              │
+  │  "SELECT │     │ • Query timeout  │     │              │
+  │   ...")  │     │   (10s)          │     │              │
+  └──────────┘     └──────────────────┘     └──────────────┘
+</pre>
+      </div>
+
+      <h3>Proxy Enforcement Rules</h3>
+      <ul>
+        <li><strong>Read-only replica:</strong> Proxy connects to read-only database replica. Even if SQL injection slips through, it can't modify data.</li>
+        <li><strong>Row limits:</strong> Max 10,000 rows per query. Prevents data exfiltration via large SELECT * queries.</li>
+        <li><strong>Table allowlist:</strong> Code can only query tables explicitly granted to this tenant. No system tables, no cross-tenant data.</li>
+        <li><strong>No raw credentials:</strong> Code uses `db_client.query()` — the proxy injects database credentials. Code never sees connection strings, passwords, or tokens.</li>
+        <li><strong>Query timeout:</strong> 10-second timeout on queries. Long-running queries killed by the proxy before they impact database performance.</li>
+        <li><strong>Result size limit:</strong> Max 5 MB response payload. Prevents memory exhaustion in sandbox from huge result sets.</li>
+      </ul>
+
+      <h3>Full Audit Log</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>execution_id</td>
+            <td>exec-2026031510-abc123</td>
+          </tr>
+          <tr>
+            <td>tenant_id</td>
+            <td>acme-corp</td>
+          </tr>
+          <tr>
+            <td>user_id</td>
+            <td>jane@acme.com</td>
+          </tr>
+          <tr>
+            <td>language</td>
+            <td>python</td>
+          </tr>
+          <tr>
+            <td>code (sanitized)</td>
+            <td>import pandas as pd; df = db.query("SELECT...")...</td>
+          </tr>
+          <tr>
+            <td>duration_ms</td>
+            <td>3,450</td>
+          </tr>
+          <tr>
+            <td>status</td>
+            <td>success</td>
+          </tr>
+          <tr>
+            <td>output_size_bytes</td>
+            <td>12,480</td>
+          </tr>
+          <tr>
+            <td>data_accessed</td>
+            <td>["tickets", "users"] (tables queried)</td>
+          </tr>
+          <tr>
+            <td>rows_returned</td>
+            <td>247</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Scaling & ML -->
+    <div class="article-section" id="scaling">
+      <h2><span class="step-badge">7</span> Scaling & ML</h2>
+
+      <h3>Scaling Strategies</h3>
+      <ul>
+        <li><strong>Auto-scaling pool:</strong> Monitor pool utilization. Scale up when &gt;70% in use. Scale down when &lt;30% in use. Min 100, max 500 sandboxes.</li>
+        <li><strong>Multi-region:</strong> Deploy sandbox pools in each region (US, EU, APAC). Route executions to nearest region for lowest latency.</li>
+        <li><strong>Queue overflow:</strong> When pool is exhausted, queue requests with timeout. Users see "Execution queued, estimated wait: 5 seconds".</li>
+      </ul>
+
+      <h3>ML Enhancements</h3>
+      <ul>
+        <li><strong>Code quality prediction:</strong> Before execution, predict if code will succeed or fail. Catch obvious bugs (undefined variables, type mismatches) before wasting a sandbox.</li>
+        <li><strong>Resource estimation:</strong> Predict CPU and memory needs from code analysis. Allocate right-sized sandbox (some code needs 256MB, some needs 1GB).</li>
+        <li><strong>Anomaly detection:</strong> Detect unusual patterns — user suddenly running 100x more executions, code attempting new patterns. Alert security team.</li>
+        <li><strong>Code optimization:</strong> Suggest more efficient code. "Your query scans full table; add WHERE clause to reduce rows by 90%."</li>
+      </ul>
+    </div>
+
+    <!-- Cheat Sheet -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">8</span> Cheat Sheet</h2>
+
+      <div class="success-box">
+        <h4>Sandboxed Code Execution — Key Numbers</h4>
+        <ul>
+          <li><strong>50K executions/day, 200 peak concurrent</strong></li>
+          <li><strong>&lt;2s spin-up with warm pool (300 instances)</strong></li>
+          <li><strong>4-layer validation: static analysis, whitelist, SQL prevention, LLM review</strong></li>
+          <li><strong>gVisor/Firecracker for kernel-level isolation</strong></li>
+          <li><strong>Resource limits: 1 CPU, 512MB RAM, 100MB tmpfs, 30s timeout</strong></li>
+          <li><strong>SIGKILL on timeout — no graceful shutdown</strong></li>
+          <li><strong>Fresh sandbox per execution — never reused</strong></li>
+          <li><strong>No network access inside sandbox</strong></li>
+          <li><strong>Data Access Proxy: read-only replica, 10K row limit, table allowlist</strong></li>
+          <li><strong>Full audit log: code, input, output, duration, user, status, tables accessed</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav-bottom">
+      <a href="design-07-conversation-memory.html">&larr; Conversation Memory</a>
+      <a href="design-09-knowledge-graph.html">Knowledge Graph &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

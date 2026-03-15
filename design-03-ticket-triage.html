@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Ticket Triage System — System Design Mastery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 900px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.8rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; white-space: pre; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x26A1;</span><span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All 10 Designs</a>
+        <a href="#feature-engineering">Features</a>
+        <a href="#collective-learning">Collective Learning</a>
+        <a href="#confidence">Confidence Routing</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <div class="article-header">
+      <h1>AI Ticket Triage System</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-purple">CODY'S EXPERTISE</span>
+        <span class="meta-tag meta-blue">Senior Level</span>
+        <span class="meta-tag meta-purple">35 min</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">"Design a system that routes IT tickets to the correct assignment group (out of hundreds) with &gt;95% accuracy. Handle small data per customer and learn across organizations."</strong>
+      </p>
+    </div>
+
+    <div class="highlight-box">
+      <h4>Why It Matters</h4>
+      <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">Companies have <strong style="color:#e8e8f0;">50-500 assignment groups</strong>. Manual triage takes <strong style="color:#e8e8f0;">5-15 minutes per ticket</strong>. Misroutes add <strong style="color:#e8e8f0;">DAYS</strong> to resolution. The key challenge: each customer has too few tickets to train a good model alone. The answer is <strong style="color:#e8e8f0;">COLLECTIVE LEARNING</strong>.</p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#clarify">Clarifying Questions & Scope</a></li>
+        <li><a href="#key-insight">Key Insight: The Small Data Problem</a></li>
+        <li><a href="#estimation">Back-of-Envelope Estimation</a></li>
+        <li><a href="#architecture">High-Level Architecture</a></li>
+        <li><a href="#feature-engineering">Deep Dive 1: Feature Engineering</a></li>
+        <li><a href="#collective-learning">Deep Dive 2: Collective Learning</a></li>
+        <li><a href="#confidence">Deep Dive 3: Confidence Routing</a></li>
+        <li><a href="#example-output">Example Output</a></li>
+        <li><a href="#scaling">Scaling & Feedback Loop</a></li>
+        <li><a href="#cheatsheet">Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- Section 1: Clarify -->
+    <div class="article-section" id="clarify">
+      <h2><span class="step-badge">1</span> Clarifying Questions & Scope</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Clarification</th>
+            <th>Assumption</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Assignment Groups</td>
+            <td>How many groups per customer?</td>
+            <td>50-500 groups per customer</td>
+          </tr>
+          <tr>
+            <td>Ticket Volume</td>
+            <td>Daily ticket volume per customer?</td>
+            <td>100-10K tickets/day per customer</td>
+          </tr>
+          <tr>
+            <td>Cross-Customer Learning</td>
+            <td>Can we learn patterns across orgs?</td>
+            <td>Yes — Collective Learning (share weights, not data)</td>
+          </tr>
+          <tr>
+            <td>Input Fields</td>
+            <td>What ticket data is available?</td>
+            <td>All fields: short desc, description, category, subcategory, priority, department, location</td>
+          </tr>
+          <tr>
+            <td>Low Confidence</td>
+            <td>What happens when model is unsure?</td>
+            <td>Low confidence tickets routed to human for manual triage</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 2: Key Insight -->
+    <div class="article-section" id="key-insight">
+      <h2><span class="step-badge">2</span> Key Insight: The Small Data Problem</h2>
+
+      <div class="warn-box">
+        <p><strong style="color:#ef4444;">THE MAIN CHALLENGE IS SMALL DATA.</strong> A single organization with 2,000 employees might have only 1,000 training examples across 50 groups. That's just 20 tickets per group on average — far too few for any ML model to learn reliable patterns. The solution: <strong style="color:#ef4444;">COLLECTIVE LEARNING</strong> across all customers.</p>
+      </div>
+
+      <p>Think of it this way: individually, each customer has too little data. But collectively, 350 customers generate millions of tickets. The challenge is learning shared patterns (like "password" relates to "access management") while respecting that each customer's group names and routing rules are different.</p>
+    </div>
+
+    <!-- Section 3: Estimation -->
+    <div class="article-section" id="estimation">
+      <h2><span class="step-badge">3</span> Back-of-Envelope Estimation</h2>
+
+      <div class="highlight-box">
+        <h4>Scale Numbers</h4>
+        <ul>
+          <li><strong>350 customers x 1,000 tickets/day avg = 350K tickets/day</strong></li>
+          <li><strong>Peak load: ~15 tickets/second</strong></li>
+          <li><strong>Inference latency: &lt;100ms (classification, NOT generation)</strong></li>
+          <li><strong>Nightly retraining per customer (~35 min total pipeline)</strong></li>
+        </ul>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Confidence Band</th>
+            <th>Threshold</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>HIGH</td>
+            <td>&gt;0.95</td>
+            <td>Auto-route immediately (no human in loop)</td>
+          </tr>
+          <tr>
+            <td>MEDIUM</td>
+            <td>0.70 - 0.95</td>
+            <td>Flag for human review with suggestion</td>
+          </tr>
+          <tr>
+            <td>LOW</td>
+            <td>&lt;0.70</td>
+            <td>Route to manual triage queue</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 4: Architecture -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">4</span> High-Level Architecture</h2>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  TICKET TRIAGE PIPELINE — 4 LAYERS
+  ═══════════════════════════════════════════════════════════════════
+
+  LAYER 1: FEATURE EXTRACTION
+  ┌──────────────────────────────────────────────────────────────┐
+  │  Incoming Ticket                                             │
+  │  ┌─────────┬────────────┬──────┬─────────┬────────┬───────┐ │
+  │  │ Short   │ Description│ Cat  │ SubCat  │Priority│ Dept  │ │
+  │  │ Desc    │            │      │         │        │ + Loc │ │
+  │  └────┬────┴─────┬──────┴──┬───┴────┬────┴───┬────┴───┬───┘ │
+  │       └──────────┴─────────┴────────┴────────┴────────┘     │
+  │                         ALL FIELDS                           │
+  └──────────────────────────────┬───────────────────────────────┘
+                                 │
+  LAYER 2: BERT ENCODER          v
+  ┌──────────────────────────────────────────────────────────────┐
+  │  [SHORT] Cannot connect to VPN [DESC] Getting timeout error  │
+  │  when trying to access corporate VPN from home [CAT] Network │
+  │  [SUBCAT] VPN [PRIORITY] P2 [DEPT] Engineering [LOC] Remote  │
+  │                                                              │
+  │  Pre-trained BERT (shared across ALL customers)              │
+  │  + Fine-tuned classification head (PER customer)             │
+  └──────────────────────────────┬───────────────────────────────┘
+                                 │
+  LAYER 3: CONFIDENCE ROUTER     v
+  ┌──────────────────────────────────────────────────────────────┐
+  │  ┌──────────┐  ┌─────────────┐  ┌──────────────────────┐    │
+  │  │ >0.95    │  │ 0.70-0.95   │  │ <0.70                │    │
+  │  │AUTO-ROUTE│  │FLAG + SUGGEST│  │MANUAL TRIAGE         │    │
+  │  │ (60-70%) │  │ (20-25%)    │  │ (5-10%)              │    │
+  │  └──────────┘  └─────────────┘  └──────────────────────┘    │
+  └──────────────────────────────┬───────────────────────────────┘
+                                 │
+  LAYER 4: FEEDBACK LOOP         v
+  ┌──────────────────────────────────────────────────────────────┐
+  │  Human corrections → Labeled data → Nightly retrain          │
+  │  Misroutes tracked → Per-group accuracy dashboard            │
+  └──────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- Section 5: Deep Dive 1 - Feature Engineering -->
+    <div class="article-section" id="feature-engineering">
+      <h2><span class="step-badge">5</span> Deep Dive 1: Feature Engineering</h2>
+
+      <h3>Use ALL Fields — Not Just Description</h3>
+      <p>Classical ML approaches failed because they used only 1-2 fields (typically just the short description). The breakthrough insight is that <strong style="color:#e8e8f0;">ALL fields matter</strong>, especially structured fields like department and location.</p>
+
+      <h3>Input Format</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  TOKENIZED INPUT TO BERT:
+
+  [SHORT] Cannot connect to VPN
+  [DESC] Getting timeout error when trying to access corporate VPN
+         from home office. Started after laptop update yesterday.
+  [CAT] Network
+  [SUBCAT] VPN
+  [PRIORITY] P2
+  [DEPT] Engineering
+  [LOC] Remote
+</pre>
+      </div>
+
+      <div class="warn-box">
+        <p><strong style="color:#ef4444;">CRITICAL EXAMPLE — Why ALL Fields Matter:</strong></p>
+        <p style="color:#a0a0b8;">The exact same ticket text <strong style="color:#e8e8f0;">"Cannot connect to VPN"</strong> routes to DIFFERENT groups depending on context:</p>
+        <p style="color:#a0a0b8;"><strong style="color:#e8e8f0;">Engineering + Remote</strong> &rarr; routes to <strong style="color:#10b981;">"Network Security"</strong> (they manage VPN certificates for remote engineers)</p>
+        <p style="color:#a0a0b8;"><strong style="color:#e8e8f0;">Sales + London</strong> &rarr; routes to <strong style="color:#10b981;">"EMEA Desktop Support"</strong> (regional team handles office connectivity)</p>
+        <p style="color:#a0a0b8;">Without department and location, you'd route both to the same group — and be wrong 50% of the time.</p>
+      </div>
+
+      <h3>Feature Importance Ranking</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Impact</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Short Description</td>
+            <td>HIGH</td>
+            <td>Core intent signal — what the user needs</td>
+          </tr>
+          <tr>
+            <td>Department</td>
+            <td>HIGH</td>
+            <td>Determines which team variant handles it</td>
+          </tr>
+          <tr>
+            <td>Location</td>
+            <td>HIGH</td>
+            <td>Regional routing (APAC vs EMEA vs Americas)</td>
+          </tr>
+          <tr>
+            <td>Category / SubCategory</td>
+            <td>MEDIUM</td>
+            <td>Pre-classification signal (if available)</td>
+          </tr>
+          <tr>
+            <td>Description</td>
+            <td>MEDIUM</td>
+            <td>Additional context, but noisy and verbose</td>
+          </tr>
+          <tr>
+            <td>Priority</td>
+            <td>LOW-MEDIUM</td>
+            <td>Some groups only handle P1s (e.g., "Major Incident")</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 6: Deep Dive 2 - Collective Learning -->
+    <div class="article-section" id="collective-learning">
+      <h2><span class="step-badge">6</span> Deep Dive 2: Collective Learning</h2>
+
+      <h3>The Problem</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  THE SMALL DATA PROBLEM
+  ═══════════════════════════════════════════════════
+
+  Single Customer (Acme Corp):
+  ┌─────────────────────────────────────────────────┐
+  │  50 assignment groups                            │
+  │  × 20 tickets per group (average)                │
+  │  = 1,000 total training examples                 │
+  │                                                  │
+  │  That's like trying to teach someone 50 topics   │
+  │  with only 20 flashcards each. NOT ENOUGH.       │
+  └─────────────────────────────────────────────────┘
+
+  All Customers Combined:
+  ┌─────────────────────────────────────────────────┐
+  │  350 customers × 1,000 tickets/day               │
+  │  × 365 days = 127.75 MILLION tickets/year        │
+  │                                                  │
+  │  PLENTY of data to learn that "password"          │
+  │  relates to "access management" concepts.         │
+  └─────────────────────────────────────────────────┘
+</pre>
+      </div>
+
+      <h3>The Solution: 3-Stage Training</h3>
+
+      <p><span class="step-badge">1</span> <strong style="color:#e8e8f0;">Pre-train BERT on ALL customers' data</strong></p>
+      <p>The shared BERT base learns universal IT patterns across all 350 customers. It learns that "password" relates to "access", "VPN" relates to "network", "printer" relates to "hardware". These are universal IT concepts that transfer across organizations.</p>
+
+      <p><span class="step-badge">2</span> <strong style="color:#e8e8f0;">Fine-tune per customer with customer-specific classification head</strong></p>
+      <p>Each customer gets their own classification head (final layers) that maps the shared representations to THEIR specific assignment groups:</p>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  SHARED BERT BASE (trained on ALL customers)
+  ┌──────────────────────────────────────────────┐
+  │  "password" → [access_concept_vector]         │
+  │  "VPN"      → [network_concept_vector]        │
+  │  "printer"  → [hardware_concept_vector]       │
+  └──────────────────────┬───────────────────────┘
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+  ┌───────v──────┐ ┌────v─────────┐ ┌──v──────────────┐
+  │ Acme Head    │ │ Beta Head    │ │ Gamma Head       │
+  │              │ │              │ │                  │
+  │ "password" → │ │ "password" → │ │ "password" →     │
+  │ Identity Team│ │ IAM Group    │ │ Access Mgmt Team │
+  └──────────────┘ └──────────────┘ └──────────────────┘
+</pre>
+      </div>
+
+      <p><span class="step-badge">3</span> <strong style="color:#e8e8f0;">Transfer learning for brand-new customers (0 tickets)</strong></p>
+      <p>New customer onboards with zero historical data. Use the shared BERT base + a generic classification head trained on similar-sized companies. Within 100 tickets of feedback, the customer-specific head starts outperforming the generic one.</p>
+
+      <div class="success-box">
+        <h4>Privacy Guarantee</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">We share <strong style="color:#e8e8f0;">WEIGHTS, not DATA</strong>. No customer ever sees another customer's tickets. The shared BERT base is trained on aggregated patterns — it learns that "password" relates to access concepts, not that "John from Acme" had a password issue. This is the same principle behind federated learning.</p>
+      </div>
+    </div>
+
+    <!-- Section 7: Deep Dive 3 - Confidence Routing -->
+    <div class="article-section" id="confidence">
+      <h2><span class="step-badge">7</span> Deep Dive 3: Confidence Routing</h2>
+
+      <h3>Three-Band Routing</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Band</th>
+            <th>Confidence</th>
+            <th>Action</th>
+            <th>% of Tickets</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>AUTO-ROUTE</td>
+            <td>&gt;0.95</td>
+            <td>Route immediately, no human review</td>
+            <td>60-70%</td>
+          </tr>
+          <tr>
+            <td>FLAG</td>
+            <td>0.70 - 0.95</td>
+            <td>Suggest group, human confirms/corrects</td>
+            <td>20-25%</td>
+          </tr>
+          <tr>
+            <td>MANUAL</td>
+            <td>&lt;0.70</td>
+            <td>Route to manual triage queue</td>
+            <td>5-10%</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="highlight-box">
+        <h4>Why Variable Thresholds?</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">Thresholds are tuned <strong style="color:#e8e8f0;">per customer</strong>. A customer with 500 groups needs higher confidence than one with 50 groups (more room for confusion). A customer in healthcare needs higher confidence than one in retail (higher cost of misroute). Result: <strong style="color:#e8e8f0;">96% accuracy on auto-routed tickets</strong> across the board.</p>
+      </div>
+
+      <h3>Confidence Calibration</h3>
+      <ul>
+        <li><strong>Temperature scaling:</strong> Raw softmax outputs are poorly calibrated. Apply learned temperature parameter so that "0.95 confidence" actually means "correct 95% of the time".</li>
+        <li><strong>Platt scaling:</strong> Alternative calibration using logistic regression on validation set outputs.</li>
+        <li><strong>Per-group calibration:</strong> Some groups are inherently harder to predict. Adjust thresholds per group based on historical accuracy.</li>
+      </ul>
+    </div>
+
+    <!-- Section 8: Example Output -->
+    <div class="article-section" id="example-output">
+      <h2><span class="step-badge">8</span> Example Output</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ticket</th>
+            <th>Predicted Group</th>
+            <th>Confidence</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>"Password reset for SAP"</td>
+            <td>Identity & Access Mgmt</td>
+            <td>0.98</td>
+            <td style="color:#10b981;">AUTO-ROUTE</td>
+          </tr>
+          <tr>
+            <td>"Laptop screen flickering"</td>
+            <td>Desktop Support - HQ</td>
+            <td>0.96</td>
+            <td style="color:#10b981;">AUTO-ROUTE</td>
+          </tr>
+          <tr>
+            <td>"Need access to Salesforce"</td>
+            <td>SaaS Provisioning</td>
+            <td>0.82</td>
+            <td style="color:#f59e0b;">FLAG (suggest)</td>
+          </tr>
+          <tr>
+            <td>"Application running slow"</td>
+            <td>App Support? Infra?</td>
+            <td>0.61</td>
+            <td style="color:#ef4444;">MANUAL TRIAGE</td>
+          </tr>
+          <tr>
+            <td>"New hire setup for Tokyo"</td>
+            <td>APAC Onboarding</td>
+            <td>0.93</td>
+            <td style="color:#f59e0b;">FLAG (suggest)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 9: Scaling & Feedback -->
+    <div class="article-section" id="scaling">
+      <h2><span class="step-badge">9</span> Scaling & Feedback Loop</h2>
+
+      <h3>Model Architecture & Serving</h3>
+      <ul>
+        <li><strong>Hybrid model:</strong> Shared BERT base (~110M params) + per-customer classification head (~500K params each). Total: 110M + (350 x 500K) = ~285M params.</li>
+        <li><strong>Serving:</strong> TF Serving or NVIDIA Triton. Batch inference for throughput. &lt;100ms per prediction (classification, not generation).</li>
+        <li><strong>Nightly retraining:</strong> Per-customer head retrained nightly on last 90 days of labeled data. Shared base retrained weekly on aggregate data.</li>
+        <li><strong>A/B testing:</strong> Shadow mode for new models — run predictions but don't route. Compare accuracy before promoting.</li>
+      </ul>
+
+      <h3>Data Flywheel</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  THE DATA FLYWHEEL
+  ═══════════════════════════════════════════════════
+
+  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+  │  Ticket      │────>│  ML Model    │────>│  Auto-Route  │
+  │  Submitted   │     │  Predicts    │     │  or Flag     │
+  └──────────────┘     └──────────────┘     └──────┬───────┘
+         ^                                         │
+         │                                         v
+  ┌──────┴───────┐     ┌──────────────┐     ┌──────────────┐
+  │  Nightly     │<────│  Labeled     │<────│  Human       │
+  │  Retrain     │     │  Data Store  │     │  Correction  │
+  └──────────────┘     └──────────────┘     └──────────────┘
+
+  Every correction makes the model smarter.
+  More accuracy → more auto-routes → less human work → faster resolution.
+</pre>
+      </div>
+
+      <h3>Monitoring Metrics</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Example Value</th>
+            <th>Action Trigger</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Overall Accuracy</td>
+            <td>96.2%</td>
+            <td>Alert if drops below 94%</td>
+          </tr>
+          <tr>
+            <td>Auto-Route Rate</td>
+            <td>67%</td>
+            <td>Investigate if drops below 55%</td>
+          </tr>
+          <tr>
+            <td>Per-Group Accuracy (worst)</td>
+            <td>"EMEA Infra": 89%</td>
+            <td>Flag groups below 90% for review</td>
+          </tr>
+          <tr>
+            <td>Common Misroute Pair</td>
+            <td>"Desktop Support" ↔ "Hardware"</td>
+            <td>Consider merging groups or adding features</td>
+          </tr>
+          <tr>
+            <td>New Group Detection</td>
+            <td>3 new groups this month</td>
+            <td>Auto-trigger retraining with new labels</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 10: Cheat Sheet -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">10</span> Cheat Sheet</h2>
+
+      <div class="success-box">
+        <h4>AI Ticket Triage — Key Numbers</h4>
+        <ul>
+          <li><strong>350K tickets/day, 15 tickets/sec peak</strong></li>
+          <li><strong>&lt;100ms inference (classification, not generation)</strong></li>
+          <li><strong>Collective Learning: shared BERT base + per-customer head</strong></li>
+          <li><strong>Use ALL fields: short desc + desc + cat + subcat + priority + dept + location</strong></li>
+          <li><strong>3-band confidence: &gt;0.95 auto, 0.70-0.95 flag, &lt;0.70 manual</strong></li>
+          <li><strong>96% accuracy on auto-routed tickets</strong></li>
+          <li><strong>60-70% of tickets auto-routed (no human needed)</strong></li>
+          <li><strong>Nightly retraining per customer, weekly shared base update</strong></li>
+          <li><strong>New customer: transfer learning from shared base, effective within 100 tickets</strong></li>
+          <li><strong>Share WEIGHTS not DATA (privacy preserved)</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav-bottom">
+      <a href="design-02-enterprise-search.html">&larr; Enterprise Search</a>
+      <a href="design-04-notification-approval.html">Notification & Approval &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

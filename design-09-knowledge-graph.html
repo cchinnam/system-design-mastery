@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise Knowledge Graph — System Design Mastery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 900px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.8rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; white-space: pre; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x26A1;</span><span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All 10 Designs</a>
+        <a href="#schema">Schema Design</a>
+        <a href="#sync">Sync Pipeline</a>
+        <a href="#agent-integration">Agent Integration</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <div class="article-header">
+      <h1>Enterprise Knowledge Graph</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-orange">IN JD</span>
+        <span class="meta-tag meta-blue">Staff Level</span>
+        <span class="meta-tag meta-purple">40 min</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">"Design a knowledge graph that models org structure, systems, relationships, and permissions. The AI agent uses this graph for context-aware decision making."</strong>
+      </p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#clarify">Clarifying Questions & Scope</a></li>
+        <li><a href="#estimation">Back-of-Envelope Estimation</a></li>
+        <li><a href="#architecture">High-Level Architecture</a></li>
+        <li><a href="#schema">Deep Dive 1: Graph Schema</a></li>
+        <li><a href="#sync">Deep Dive 2: Sync Pipeline</a></li>
+        <li><a href="#agent-integration">Deep Dive 3: Agent Integration</a></li>
+        <li><a href="#scaling">Scaling & ML</a></li>
+        <li><a href="#cheatsheet">Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- Clarify -->
+    <div class="article-section" id="clarify">
+      <h2><span class="step-badge">1</span> Clarifying Questions & Scope</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Clarification</th>
+            <th>Assumption</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Data Sources</td>
+            <td>Where does graph data come from?</td>
+            <td>HR systems, AD/LDAP, ITSM, CMDB, ticketing systems</td>
+          </tr>
+          <tr>
+            <td>Entity Types</td>
+            <td>What kinds of nodes?</td>
+            <td>Person, Team, Role, Application, Permission, Document, Ticket</td>
+          </tr>
+          <tr>
+            <td>Query Patterns</td>
+            <td>What questions does the agent ask?</td>
+            <td>"Who manages X?", "Who has access to Y?", "What team owns Z?"</td>
+          </tr>
+          <tr>
+            <td>Freshness</td>
+            <td>How current must the graph be?</td>
+            <td>Real-time for org changes, daily for CMDB/app data</td>
+          </tr>
+          <tr>
+            <td>Scale</td>
+            <td>How large?</td>
+            <td>50K nodes/customer, 500K edges/customer, 350 customers</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Estimation -->
+    <div class="article-section" id="estimation">
+      <h2><span class="step-badge">2</span> Back-of-Envelope Estimation</h2>
+      <div class="highlight-box">
+        <h4>Scale Numbers</h4>
+        <ul>
+          <li><strong>17.5M nodes total (350 customers x 50K nodes avg)</strong></li>
+          <li><strong>175M edges total (350 customers x 500K edges avg)</strong></li>
+          <li><strong>1M graph queries/day across all tenants</strong></li>
+          <li><strong>&lt;50ms for 2-hop traversal queries</strong></li>
+          <li><strong>Graph size per tenant: ~500 MB (50K nodes, 500K edges)</strong></li>
+          <li><strong>Total graph storage: ~175 GB</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">3</span> High-Level Architecture</h2>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  ENTERPRISE KNOWLEDGE GRAPH
+  ═══════════════════════════════════════════════════════════════════
+
+  DATA SOURCES                SYNC PIPELINE               GRAPH STORE
+  ┌──────────┐              ┌──────────────┐           ┌──────────────┐
+  │ HR System│──webhook──-->│              │           │              │
+  │ (Workday)│              │   Change     │           │   Neo4j      │
+  ├──────────┤              │   Detection  │           │              │
+  │ AD/LDAP  │──webhook──-->│      +       │──────────>│   Nodes:     │
+  ├──────────┤              │   Conflict   │           │   Person     │
+  │ ITSM     │──polling──-->│   Resolution │           │   Team       │
+  │ (CMDB)   │              │      +       │           │   Role       │
+  ├──────────┤              │   Validation │           │   Application│
+  │ Ticketing│──polling──-->│              │           │   Permission │
+  └──────────┘              └──────────────┘           │   Document   │
+                                                       │   Ticket     │
+                                                       └──────┬───────┘
+                                                              │
+                                                    ┌─────────v────────┐
+                                                    │   Query Engine   │
+                                                    │   Cypher queries │
+                                                    │   Cached paths   │
+                                                    └─────────┬────────┘
+                                                              │
+                                                    ┌─────────v────────┐
+                                                    │   AI Agent       │
+                                                    │   Context-aware  │
+                                                    │   decisions      │
+                                                    └──────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- Deep Dive 1: Schema -->
+    <div class="article-section" id="schema">
+      <h2><span class="step-badge">4</span> Deep Dive 1: Graph Schema</h2>
+
+      <h3>Node Types</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Node Type</th>
+            <th>Key Properties</th>
+            <th>Source System</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Person</td>
+            <td>name, email, employee_id, department, location, title, status</td>
+            <td>HR (Workday), AD/LDAP</td>
+          </tr>
+          <tr>
+            <td>Team</td>
+            <td>name, team_id, type (engineering/ops/support), size</td>
+            <td>HR, ServiceNow</td>
+          </tr>
+          <tr>
+            <td>Role</td>
+            <td>name, role_id, level (viewer/editor/admin), scope</td>
+            <td>IAM, AD</td>
+          </tr>
+          <tr>
+            <td>Application</td>
+            <td>name, app_id, type (SaaS/internal), criticality, owner_team</td>
+            <td>CMDB</td>
+          </tr>
+          <tr>
+            <td>Permission</td>
+            <td>permission_id, type (read/write/admin), scope, expiry</td>
+            <td>IAM, AD, App-specific</td>
+          </tr>
+          <tr>
+            <td>Document</td>
+            <td>title, doc_id, type, created_by, space, last_modified</td>
+            <td>Confluence, SharePoint</td>
+          </tr>
+          <tr>
+            <td>Ticket</td>
+            <td>ticket_id, type, status, priority, assignee, created_date</td>
+            <td>ServiceNow, Jira</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Edge Types (Relationships)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Edge Type</th>
+            <th>From → To</th>
+            <th>Properties</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>MANAGES</td>
+            <td>Person → Person</td>
+            <td>since_date</td>
+          </tr>
+          <tr>
+            <td>MEMBER_OF</td>
+            <td>Person → Team</td>
+            <td>role_in_team, since_date</td>
+          </tr>
+          <tr>
+            <td>HAS_ROLE</td>
+            <td>Person → Role</td>
+            <td>granted_date, granted_by</td>
+          </tr>
+          <tr>
+            <td>HAS_ACCESS_TO</td>
+            <td>Person/Role → Application</td>
+            <td>access_level, granted_date, expiry</td>
+          </tr>
+          <tr>
+            <td>OWNS</td>
+            <td>Team → Application</td>
+            <td>ownership_type (primary/secondary)</td>
+          </tr>
+          <tr>
+            <td>CREATED_BY</td>
+            <td>Document/Ticket → Person</td>
+            <td>created_date</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Example Graph Path</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  EXAMPLE: "Who can approve Jane's access to Salesforce?"
+  ═══════════════════════════════════════════════════════
+
+  (Jane)──MEMBER_OF──>(Engineering Team)
+    │                       │
+    │                       └──OWNS──>(Internal Tools)
+    │
+    └──MANAGES──>(Sarah Chen - Manager)
+                      │
+                      └──HAS_ROLE──>(Approver Role)
+                                         │
+                                         └──HAS_ACCESS_TO──>(Salesforce)
+
+  Traversal: Jane → MANAGES → Sarah → HAS_ROLE → Approver
+  Answer: "Sarah Chen (Jane's manager) can approve Salesforce access.
+           She has the Approver role with admin-level access."
+
+  ANOTHER EXAMPLE: "What systems does the Security team own?"
+  ═══════════════════════════════════════════════════════
+
+  (Security Team)──OWNS──>(Okta)
+        │           └──>(CrowdStrike)
+        │           └──>(Vault)
+        │           └──>(PagerDuty)
+        │
+        └──MEMBER_OF──>(Alice - Lead)
+        └──MEMBER_OF──>(Bob - Engineer)
+        └──MEMBER_OF──>(Carol - Analyst)
+</pre>
+      </div>
+    </div>
+
+    <!-- Deep Dive 2: Sync Pipeline -->
+    <div class="article-section" id="sync">
+      <h2><span class="step-badge">5</span> Deep Dive 2: Sync Pipeline</h2>
+
+      <h3>Dual Sync Strategy</h3>
+      <ul>
+        <li><strong>Webhooks (real-time):</strong> HR system fires webhook when employee is hired, transferred, or terminated. AD fires webhook on group membership changes. Graph updated within seconds.</li>
+        <li><strong>Nightly batch (completeness):</strong> Full reconciliation job runs nightly. Pulls complete data from all sources. Detects any changes missed by webhooks. Resolves conflicts.</li>
+      </ul>
+
+      <h3>Conflict Resolution</h3>
+      <div class="highlight-box">
+        <h4>Source of Truth Hierarchy</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">
+          When two sources disagree about the same fact, the <strong style="color:#e8e8f0;">source system of record</strong> wins:<br><br>
+          <strong style="color:#e8e8f0;">Org structure (manager, department):</strong> HR system (Workday) is truth<br>
+          <strong style="color:#e8e8f0;">Group memberships:</strong> AD/LDAP is truth<br>
+          <strong style="color:#e8e8f0;">Application ownership:</strong> CMDB is truth<br>
+          <strong style="color:#e8e8f0;">Permissions:</strong> IAM system is truth<br><br>
+          If Workday says Jane reports to Sarah but ServiceNow says Jane reports to Mike, <strong style="color:#e8e8f0;">Workday wins</strong>. Always.
+        </p>
+      </div>
+
+      <h3>Change Detection</h3>
+      <ul>
+        <li><strong>Hash comparison:</strong> Hash each node's properties. Compare with stored hash. Only update if changed. Reduces write amplification by 90%.</li>
+        <li><strong>Tombstoning:</strong> Deleted entities aren't removed immediately. Marked as `status: inactive` with deletion timestamp. Purged after 30 days. Allows rollback and audit.</li>
+        <li><strong>Edge validation:</strong> When a Person node is deactivated (employee leaves), automatically deactivate their MANAGES, MEMBER_OF, HAS_ACCESS_TO edges. Cascade rules per edge type.</li>
+      </ul>
+    </div>
+
+    <!-- Deep Dive 3: Agent Integration -->
+    <div class="article-section" id="agent-integration">
+      <h2><span class="step-badge">6</span> Deep Dive 3: Agent Integration</h2>
+
+      <h3>How the AI Agent Uses the Graph</h3>
+
+      <p><span class="step-badge">1</span> <strong style="color:#e8e8f0;">Context Queries</strong></p>
+      <p>When a user starts a conversation, the agent enriches context by querying the graph:</p>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  User: jane@acme.com starts a conversation
+
+  Agent queries graph:
+  ─────────────────────────────────────────
+  MATCH (p:Person {email: "jane@acme.com"})
+  OPTIONAL MATCH (p)-[:MEMBER_OF]->(t:Team)
+  OPTIONAL MATCH (p)-[:MANAGES]->(m:Person)
+  OPTIONAL MATCH (p)-[:HAS_ACCESS_TO]->(a:Application)
+  RETURN p, t, m, a
+
+  Result enriches conversation context:
+  "Jane is in Engineering, managed by Sarah,
+   has access to Jira, GitHub, Salesforce."
+</pre>
+      </div>
+
+      <p><span class="step-badge">2</span> <strong style="color:#e8e8f0;">Approval Routing (Traverse MANAGES)</strong></p>
+      <ul>
+        <li><strong>Query:</strong> "Who should approve this request?" → Traverse MANAGES edges up the org chart until finding someone with the required approval authority.</li>
+        <li><strong>Example:</strong> Jane requests admin access to production DB. Traverse: Jane → Sarah (Manager, can approve read-only) → VP Engineering (can approve admin). Route to VP.</li>
+      </ul>
+
+      <p><span class="step-badge">3</span> <strong style="color:#e8e8f0;">Permission Checking (Traverse HAS_ACCESS_TO)</strong></p>
+      <ul>
+        <li><strong>Query:</strong> "Does Jane have access to Salesforce?" → Traverse HAS_ACCESS_TO from Jane to Salesforce. Check access_level property.</li>
+        <li><strong>Transitive access:</strong> Jane is MEMBER_OF Sales Team, Sales Team HAS_ACCESS_TO Salesforce. Jane has access through team membership.</li>
+      </ul>
+
+      <p><span class="step-badge">4</span> <strong style="color:#e8e8f0;">Smart Suggestions</strong></p>
+      <ul>
+        <li><strong>Similar ticket routing:</strong> "5 similar tickets from Jane's team were resolved by the Database team" → Suggest routing to Database team.</li>
+        <li><strong>Access recommendations:</strong> "90% of Jane's team members have access to Tableau. Jane doesn't." → Proactively suggest access request.</li>
+        <li><strong>Expert finding:</strong> "Who on the Security team has the most resolved tickets for VPN issues?" → Graph traversal + ticket aggregation.</li>
+      </ul>
+    </div>
+
+    <!-- Scaling & ML -->
+    <div class="article-section" id="scaling">
+      <h2><span class="step-badge">7</span> Scaling & ML</h2>
+
+      <h3>Scaling Strategies</h3>
+      <ul>
+        <li><strong>Per-tenant graph partitioning:</strong> Each tenant gets their own Neo4j database (or labeled subgraph). No cross-tenant traversal possible.</li>
+        <li><strong>Read replicas:</strong> Agent queries hit read replicas. Writes go to primary. Replication lag &lt;1s.</li>
+        <li><strong>Query caching:</strong> Cache frequent traversal results in Redis. "Jane's manager" doesn't change often — cache with TTL 1 hour. Cache invalidated on webhook updates.</li>
+        <li><strong>Index strategy:</strong> Composite indexes on (tenant_id, email), (tenant_id, app_name), (tenant_id, team_name) for fast lookups.</li>
+      </ul>
+
+      <h3>ML Enhancements</h3>
+      <ul>
+        <li><strong>Graph embeddings:</strong> Use Node2Vec or GraphSAGE to create vector embeddings of nodes. Similar people/teams cluster together. Enables "find people similar to X" queries.</li>
+        <li><strong>Link prediction:</strong> Predict missing edges. "Jane's team all have Tableau access except Jane" → Predict SHOULD_HAVE_ACCESS edge. Surface as recommendation.</li>
+        <li><strong>Anomaly detection:</strong> Detect unusual patterns. "User has admin access to 50 applications" → likely over-provisioned. "Manager has 100 direct reports" → likely data quality issue.</li>
+        <li><strong>Community detection:</strong> Identify informal communities (people who collaborate across team boundaries). Use Louvain or Label Propagation algorithms. Helps agent route cross-team requests.</li>
+      </ul>
+    </div>
+
+    <!-- Cheat Sheet -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">8</span> Cheat Sheet</h2>
+
+      <div class="success-box">
+        <h4>Enterprise Knowledge Graph — Key Numbers</h4>
+        <ul>
+          <li><strong>17.5M nodes, 175M edges across 350 tenants</strong></li>
+          <li><strong>1M graph queries/day, &lt;50ms for 2-hop traversal</strong></li>
+          <li><strong>7 node types: Person, Team, Role, Application, Permission, Document, Ticket</strong></li>
+          <li><strong>6 edge types: MANAGES, MEMBER_OF, HAS_ROLE, HAS_ACCESS_TO, OWNS, CREATED_BY</strong></li>
+          <li><strong>Neo4j with per-tenant partitioning</strong></li>
+          <li><strong>Webhooks (real-time) + nightly batch (completeness)</strong></li>
+          <li><strong>Conflict resolution: source system of record wins</strong></li>
+          <li><strong>Agent uses graph for: context, approval routing, permission checks, suggestions</strong></li>
+          <li><strong>Graph embeddings (Node2Vec) for "similar people" queries</strong></li>
+          <li><strong>Link prediction for access recommendations</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav-bottom">
+      <a href="design-08-sandboxed-code.html">&larr; Sandboxed Code Execution</a>
+      <a href="design-10-latency-optimization.html">Latency Optimization &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

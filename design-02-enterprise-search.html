@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise Search (Agentic RAG) — System Design Mastery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 900px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.8rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; white-space: pre; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x26A1;</span><span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All 10 Designs</a>
+        <a href="#ingestion">Ingestion</a>
+        <a href="#hybrid-search">Hybrid Search</a>
+        <a href="#permissions">Permissions</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <div class="article-header">
+      <h1>Enterprise Search (Agentic RAG)</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-red">CONFIRMED ASKED</span>
+        <span class="meta-tag meta-blue">Staff Level</span>
+        <span class="meta-tag meta-purple">45 min</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">"Design a search system that indexes Confluence, SharePoint, Slack, Google Drive, and ServiceNow KB. Users ask natural language queries. Must enforce per-user access permissions. Multi-tenant architecture with &lt;500ms retrieval latency."</strong>
+      </p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#clarify">Clarifying Questions & Scope</a></li>
+        <li><a href="#estimation">Back-of-Envelope Estimation</a></li>
+        <li><a href="#architecture">High-Level Architecture</a></li>
+        <li><a href="#ingestion">Deep Dive 1: Ingestion Pipeline</a></li>
+        <li><a href="#hybrid-search">Deep Dive 2: Hybrid Search</a></li>
+        <li><a href="#permissions">Deep Dive 3: Permission-Aware Filtering</a></li>
+        <li><a href="#scaling">Scaling & Production</a></li>
+        <li><a href="#ml">ML & Evaluation</a></li>
+        <li><a href="#cheatsheet">Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- Section 1: Clarifying Questions -->
+    <div class="article-section" id="clarify">
+      <h2><span class="step-badge">1</span> Clarifying Questions & Scope</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Clarification</th>
+            <th>Assumption</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Document Volume</td>
+            <td>How many docs per customer?</td>
+            <td>100K - 10M documents per customer</td>
+          </tr>
+          <tr>
+            <td>Freshness</td>
+            <td>How quickly must new content be searchable?</td>
+            <td>Fresh within minutes (near real-time)</td>
+          </tr>
+          <tr>
+            <td>Access Control</td>
+            <td>How are permissions enforced?</td>
+            <td>ACL-based permissions per document/space</td>
+          </tr>
+          <tr>
+            <td>Tenant Isolation</td>
+            <td>How strict is data isolation?</td>
+            <td>Strict isolation — zero cross-tenant leakage</td>
+          </tr>
+          <tr>
+            <td>Answer Generation</td>
+            <td>Return docs or generate answers?</td>
+            <td>Generate answers with citations to source docs</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 2: Estimation -->
+    <div class="article-section" id="estimation">
+      <h2><span class="step-badge">2</span> Back-of-Envelope Estimation</h2>
+
+      <div class="highlight-box">
+        <h4>Scale Numbers</h4>
+        <ul>
+          <li><strong>350 customers x 1M docs avg = 350M documents</strong></li>
+          <li><strong>5 chunks per doc x 500 tokens avg = 1.75 billion chunks total</strong></li>
+          <li><strong>1,536-dim embeddings x 1.75B = ~1TB vector storage</strong></li>
+          <li><strong>Query load: ~30 QPS across all tenants</strong></li>
+        </ul>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Target</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Retrieval Latency</td>
+            <td>&lt;500ms (vector + keyword + rerank)</td>
+          </tr>
+          <tr>
+            <td>End-to-End (with answer)</td>
+            <td>&lt;3 seconds (including LLM generation)</td>
+          </tr>
+          <tr>
+            <td>Ingestion Throughput</td>
+            <td>10K documents/minute per connector</td>
+          </tr>
+          <tr>
+            <td>Freshness SLA</td>
+            <td>&lt;5 minutes from source update</td>
+          </tr>
+          <tr>
+            <td>Permission Accuracy</td>
+            <td>100% (zero unauthorized access)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 3: Architecture -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">3</span> High-Level Architecture</h2>
+
+      <h3>Ingestion Pipeline</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  DATA SOURCES                    INGESTION PIPELINE                      STORAGE
+  +-----------+                                                    +------------------+
+  | Confluence|--+                                                 |   Vector DB      |
+  +-----------+  |   +-----------+   +---------+   +---------+    |  (Pinecone/      |
+  | SharePoint|--+-->| Connectors|-->| Extract |-->|  Chunk  |--+-|>  Qdrant)         |
+  +-----------+  |   | REST /    |   |  Text   |   | 500-1K  |  | +------------------+
+  |   Slack   |--+   | Graph API |   | (Tika)  |   | tokens  |  |
+  +-----------+  |   | Webhooks  |   +---------+   | overlap |  | +------------------+
+  |Google Drv |--+   | + Polling |                 | 100 tok |  | | Elasticsearch    |
+  +-----------+  |   +-----------+                 +---------+  +-|> (BM25 keyword)  |
+  |ServiceNow|--+                                      |         +------------------+
+  +-----------+                                   +---------+
+                                                  |  Embed  |    +------------------+
+                                                  | ada-002 |    |  Metadata Store  |
+                                                  +---------+    |  (PostgreSQL)    |
+                                                                 +------------------+
+
+  EACH CHUNK STORES:
+  text | source_url | author | timestamp | section_title | ACL_metadata | tenant_id
+</pre>
+      </div>
+
+      <h3>Query Pipeline</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  USER QUERY FLOW
+  +--------+    +-------+    +----------+    +------------------+    +------------+
+  |  User  |--->|  NLU  |--->|  Query   |--->| Hybrid Retrieval |--->| Permission |
+  | Query  |    |Intent |    | Expansion|    |                  |    |   Filter   |
+  +--------+    +-------+    |Synonyms  |    | Vector (cosine)  |    +-----+------+
+                             +----------+    | + BM25 (keyword) |          |
+                                             +------------------+          v
+                                                                   +------------+
+  +--------+    +----------+    +---------+                        |  Re-rank   |
+  |  User  |<---|  Answer  |<---|  LLM    |<-----------------------| Cross-enc  |
+  |Response|    |  + Cites  |    |Generate |                       |  Top-50    |
+  +--------+    +----------+    +---------+                        +------------+
+</pre>
+      </div>
+    </div>
+
+    <!-- Section 4: Deep Dive 1 - Ingestion -->
+    <div class="article-section" id="ingestion">
+      <h2><span class="step-badge">4</span> Deep Dive 1: Ingestion Pipeline</h2>
+
+      <h3>Source Connectors</h3>
+      <ul>
+        <li><strong>Confluence:</strong> REST API v2 with webhooks for real-time updates. Pagination for full sync. Extract page content, comments, attachments.</li>
+        <li><strong>SharePoint:</strong> Microsoft Graph API with delta queries. Webhooks via subscription API. Handle nested folder permissions.</li>
+        <li><strong>Slack:</strong> Conversations API + Events API (webhooks). Index messages, threads, file shares. Channel-level ACL mapping.</li>
+        <li><strong>Google Drive:</strong> Drive API v3 with push notifications (webhooks). Watch changes endpoint. File-level and folder-level permissions.</li>
+        <li><strong>ServiceNow:</strong> Table API + REST. Webhooks via business rules. KB articles, incidents, change records.</li>
+      </ul>
+
+      <div class="highlight-box">
+        <h4>Webhook + Polling Hybrid Strategy</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;"><strong style="color:#e8e8f0;">Primary: Webhooks</strong> for real-time updates (&lt;1 min latency). Each source sends change events to our ingestion queue.<br>
+        <strong style="color:#e8e8f0;">Fallback: Polling</strong> every 5 minutes to catch missed webhooks. Reconciliation job compares source timestamps vs. our last-indexed timestamps. This guarantees no document is missed even if webhooks fail silently.</p>
+      </div>
+
+      <h3>Chunking Strategy</h3>
+      <ul>
+        <li><strong>Chunk size:</strong> 500-1,000 tokens per chunk, targeting semantic coherence</li>
+        <li><strong>Paragraph boundaries:</strong> Never split mid-sentence. Respect headings, bullet lists, and code blocks as natural boundaries.</li>
+        <li><strong>Overlap:</strong> 100-token overlap between consecutive chunks to preserve context across boundaries</li>
+        <li><strong>Metadata per chunk:</strong> source_url, author, last_modified, section_title, parent_doc_id, chunk_index, ACL groups</li>
+        <li><strong>Special handling:</strong> Tables chunked as single units. Code blocks kept intact. Images get alt-text or OCR text.</li>
+      </ul>
+
+      <h3>Embedding Generation</h3>
+      <ul>
+        <li><strong>Model:</strong> OpenAI text-embedding-ada-002 (1,536 dimensions) for baseline; option to fine-tune</li>
+        <li><strong>Batch processing:</strong> Embed in batches of 100 chunks for throughput</li>
+        <li><strong>Incremental updates:</strong> Only re-embed changed chunks (compare content hash)</li>
+        <li><strong>Storage:</strong> Vectors stored with chunk_id as primary key, tenant_id as partition key</li>
+      </ul>
+    </div>
+
+    <!-- Section 5: Deep Dive 2 - Hybrid Search -->
+    <div class="article-section" id="hybrid-search">
+      <h2><span class="step-badge">5</span> Deep Dive 2: Hybrid Search</h2>
+
+      <h3>Why Hybrid? Two Failure Modes</h3>
+
+      <div class="success-box">
+        <h4>Vector Search Wins (Semantic)</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">Query: <strong style="color:#e8e8f0;">"How do I reset my password?"</strong><br>
+        Matches document titled: <strong style="color:#e8e8f0;">"Credential Recovery Procedures"</strong><br>
+        BM25 would miss this entirely — no keyword overlap. Vector search captures semantic similarity.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>BM25 Wins (Exact Match)</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">Query: <strong style="color:#e8e8f0;">"VPN-2847 error code"</strong><br>
+        Matches document containing: <strong style="color:#e8e8f0;">"Error VPN-2847: Certificate expired"</strong><br>
+        Vector search might return generic VPN docs. BM25 nails the exact error code.</p>
+      </div>
+
+      <h3>Reciprocal Rank Fusion (RRF)</h3>
+      <p>Combine results from both retrieval methods using RRF:</p>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  RRF Score Formula:
+  ─────────────────────────────────────────────────────
+  score(doc) = 1/(k + rank_vector) + 1/(k + rank_keyword)
+
+  where k = 60 (standard constant)
+
+  Example:
+  ┌──────────┬──────────────┬──────────────┬───────────┐
+  │ Document │ Vector Rank  │ BM25 Rank    │ RRF Score │
+  ├──────────┼──────────────┼──────────────┼───────────┤
+  │ Doc A    │ 1            │ 5            │ 0.0317    │
+  │ Doc B    │ 3            │ 2            │ 0.0321    │  ← Winner
+  │ Doc C    │ 2            │ 8            │ 0.0309    │
+  │ Doc D    │ 10           │ 1            │ 0.0307    │
+  └──────────┴──────────────┴──────────────┴───────────┘
+
+  Doc B ranks best overall — good in BOTH systems.
+</pre>
+      </div>
+
+      <h3>Cross-Encoder Re-ranking</h3>
+      <ul>
+        <li><strong>Input:</strong> Top 50 results from RRF (after permission filtering)</li>
+        <li><strong>Model:</strong> Cross-encoder (e.g., ms-marco-MiniLM-L-12) that scores query-document pairs jointly</li>
+        <li><strong>Output:</strong> Re-ranked top 10 results with relevance scores</li>
+        <li><strong>Latency:</strong> ~100ms for 50 pairs on GPU (batched inference)</li>
+        <li><strong>Why not use cross-encoder first?</strong> Too expensive for 1.75B chunks. Use cheap retrieval to narrow, then expensive re-ranking to refine.</li>
+      </ul>
+    </div>
+
+    <!-- Section 6: Deep Dive 3 - Permission-Aware Filtering -->
+    <div class="article-section" id="permissions">
+      <h2><span class="step-badge">6</span> Deep Dive 3: Permission-Aware Filtering</h2>
+
+      <div class="warn-box">
+        <p><strong style="color:#ef4444;">CRITICAL REQUIREMENT:</strong> A user must NEVER see content they don't have access to in the source system. This is a compliance and trust requirement — a single violation can lose a customer. Permission filtering is not optional, it's the #1 priority.</p>
+      </div>
+
+      <h3>How It Works</h3>
+      <ul>
+        <li><strong>Step 1 — ACL Metadata at Ingestion:</strong> Each chunk stores the list of groups/users who can access it (pulled from the source system's permissions API)</li>
+        <li><strong>Step 2 — User Identity Resolution:</strong> At query time, resolve the user's identity to their group memberships (AD groups, Slack channels, Confluence spaces, etc.)</li>
+        <li><strong>Step 3 — Over-Retrieve + Filter:</strong> Retrieve top 200 results from hybrid search, then filter to only those matching user's group memberships, return top 10</li>
+        <li><strong>Step 4 — Permission Cache:</strong> Cache user's group memberships in Redis with TTL 5 minutes. Avoids re-querying AD/LDAP on every search.</li>
+        <li><strong>Step 5 — Fallback Verification:</strong> For high-sensitivity tenants, verify top-10 results against the source system directly before returning. Adds ~50ms but guarantees accuracy.</li>
+      </ul>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  PERMISSION FILTERING FLOW
+  ─────────────────────────────────────────────────────────────
+
+  Query: "How to configure SSO?"  User: jane@acme.com
+
+  ┌──────────────────┐
+  │ Hybrid Retrieval │ → Top 200 results (no permission check yet)
+  └────────┬─────────┘
+           │
+  ┌────────v─────────┐
+  │ Resolve User ACL │ → jane@acme.com is in: [engineering, sso-admins, all-staff]
+  │ (Redis cache 5m) │
+  └────────┬─────────┘
+           │
+  ┌────────v─────────┐
+  │ Filter by ACL    │ → 200 results → 47 accessible → Top 10
+  │ chunk.acl ∩ user │
+  └────────┬─────────┘
+           │
+  ┌────────v─────────┐
+  │ Cross-Encoder    │ → Re-rank top 10 → Final 5 for answer generation
+  │ Re-rank          │
+  └────────┬─────────┘
+           │
+  ┌────────v─────────┐
+  │ LLM Answer Gen   │ → "To configure SSO, follow these steps... [1][2][3]"
+  │ with Citations   │
+  └──────────────────┘
+</pre>
+      </div>
+
+      <h3>Edge Cases</h3>
+      <ul>
+        <li><strong>Permission changes:</strong> When a doc's permissions change in the source, webhooks trigger re-indexing of ACL metadata. Redis cache TTL ensures stale permissions expire within 5 minutes.</li>
+        <li><strong>Shared links:</strong> Publicly shared docs (e.g., "anyone with the link") get tagged with a special "public" ACL group. All users match this.</li>
+        <li><strong>Deleted documents:</strong> Webhook triggers immediate removal from vector DB and Elasticsearch. Tombstone record in metadata store prevents stale cache hits.</li>
+        <li><strong>Cross-source permissions:</strong> User may have access to a Confluence page but not the linked Slack thread. Each chunk is independently permission-checked.</li>
+      </ul>
+    </div>
+
+    <!-- Section 7: Scaling -->
+    <div class="article-section" id="scaling">
+      <h2><span class="step-badge">7</span> Scaling & Production</h2>
+
+      <h3>Sharding Strategy</h3>
+      <ul>
+        <li><strong>Shard by tenant_id:</strong> Each tenant's vectors in a dedicated namespace/partition. Guarantees zero cross-tenant leakage and enables per-tenant scaling.</li>
+        <li><strong>Large tenants (>5M docs):</strong> Sub-shard by source type (Confluence, Slack, etc.) for parallel retrieval.</li>
+        <li><strong>Vector DB:</strong> Pinecone namespaces or Qdrant collections per tenant. HNSW index with ef_construction=200, M=16.</li>
+      </ul>
+
+      <h3>Caching</h3>
+      <ul>
+        <li><strong>Query cache:</strong> Cache frequent queries (normalized) with results. TTL 5 minutes. Hit rate ~25-30% for enterprise (repeated questions).</li>
+        <li><strong>Embedding cache:</strong> Cache query embeddings to skip re-embedding identical queries.</li>
+        <li><strong>Permission cache:</strong> Redis with TTL 5 min. Key: user_id, Value: set of group IDs.</li>
+      </ul>
+
+      <h3>Incremental Updates</h3>
+      <ul>
+        <li><strong>Content hash:</strong> MD5 hash of chunk text. Only re-embed if hash changes. Saves 80%+ embedding API costs on re-indexing.</li>
+        <li><strong>Delta sync:</strong> Track last_sync_timestamp per source per tenant. Only fetch changed documents.</li>
+        <li><strong>Zero-downtime re-index:</strong> Build new index in parallel, swap atomically when ready.</li>
+      </ul>
+
+      <h3>Multi-Model Embeddings</h3>
+      <ul>
+        <li><strong>Code-heavy tenants:</strong> Use code-specific embeddings (e.g., code-search-ada) for repositories and technical docs.</li>
+        <li><strong>Multilingual tenants:</strong> Use multilingual embedding models for non-English content.</li>
+        <li><strong>Domain-specific:</strong> Fine-tune embeddings on enterprise vocabulary for improved recall.</li>
+      </ul>
+    </div>
+
+    <!-- Section 8: ML -->
+    <div class="article-section" id="ml">
+      <h2><span class="step-badge">8</span> ML & Evaluation</h2>
+
+      <h3>Fine-Tuning</h3>
+      <ul>
+        <li><strong>Embedding fine-tuning:</strong> Use click-through data to create (query, positive_doc, negative_doc) triplets. Fine-tune embedding model on enterprise-specific vocabulary ("PTO" = "paid time off").</li>
+        <li><strong>Cross-encoder from click data:</strong> Train on (query, clicked_doc) as positive, (query, shown_but_not_clicked) as negative. Improves re-ranking accuracy by 10-15%.</li>
+        <li><strong>LLM answer generation:</strong> Prompt engineering with citation format. Use retrieved chunks as context. Ensure attribution to source documents with clickable links.</li>
+      </ul>
+
+      <h3>Evaluation Metrics</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Target</th>
+            <th>How Measured</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>MRR (Mean Reciprocal Rank)</td>
+            <td>&gt;0.65</td>
+            <td>Position of first relevant result in top-10</td>
+          </tr>
+          <tr>
+            <td>NDCG@10</td>
+            <td>&gt;0.70</td>
+            <td>Graded relevance of top-10 results</td>
+          </tr>
+          <tr>
+            <td>Answer Accuracy</td>
+            <td>&gt;90%</td>
+            <td>Human eval of LLM-generated answers (weekly sample)</td>
+          </tr>
+          <tr>
+            <td>Citation Accuracy</td>
+            <td>&gt;95%</td>
+            <td>Do citations actually support the generated answer?</td>
+          </tr>
+          <tr>
+            <td>Permission Accuracy</td>
+            <td>100%</td>
+            <td>Automated audit: compare returned results against source ACLs</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 9: Cheat Sheet -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">9</span> Cheat Sheet</h2>
+
+      <div class="success-box">
+        <h4>Enterprise Search (Agentic RAG) — Key Numbers</h4>
+        <ul>
+          <li><strong>350M docs, 1.75B chunks, ~1TB vectors</strong></li>
+          <li><strong>Hybrid retrieval: Vector (semantic) + BM25 (keyword) + RRF fusion</strong></li>
+          <li><strong>Cross-encoder re-ranks top-50 in ~100ms</strong></li>
+          <li><strong>Permission filtering: over-retrieve 200, filter by ACL, return 10</strong></li>
+          <li><strong>Redis permission cache TTL 5 min</strong></li>
+          <li><strong>&lt;500ms retrieval, &lt;3s end-to-end with answer</strong></li>
+          <li><strong>Shard by tenant_id for isolation + independent scaling</strong></li>
+          <li><strong>Webhook + polling hybrid for &lt;5 min freshness</strong></li>
+          <li><strong>100-token overlap between chunks preserves context</strong></li>
+          <li><strong>Content hash avoids re-embedding unchanged chunks (80% cost savings)</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav-bottom">
+      <a href="design-01-agent-orchestration.html">&larr; Agent Orchestration</a>
+      <a href="design-03-ticket-triage.html">Ticket Triage &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

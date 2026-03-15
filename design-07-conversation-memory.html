@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversation Memory & Context System — System Design Mastery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 900px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.8rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; white-space: pre; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x26A1;</span><span class="logo-text">SystemDesign<span class="logo-highlight">Mastery</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All 10 Designs</a>
+        <a href="#short-term">Short-term</a>
+        <a href="#working">Working Memory</a>
+        <a href="#long-term">Long-term</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <div class="article-header">
+      <h1>Conversation Memory & Context System</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-orange">IN JD: AGENT MEMORY</span>
+        <span class="meta-tag meta-blue">Senior Level</span>
+        <span class="meta-tag meta-purple">35 min</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">"Design a memory system with three layers: short-term (current conversation), working (intermediate computation results), and long-term (user preferences, learned patterns across sessions)."</strong>
+      </p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#requirements">Requirements</a></li>
+        <li><a href="#estimation">Back-of-Envelope Estimation</a></li>
+        <li><a href="#architecture">High-Level Architecture</a></li>
+        <li><a href="#short-term">Deep Dive 1: Short-Term Memory</a></li>
+        <li><a href="#working">Deep Dive 2: Working Memory</a></li>
+        <li><a href="#long-term">Deep Dive 3: Long-Term Memory</a></li>
+        <li><a href="#scaling">Scaling & ML</a></li>
+        <li><a href="#cheatsheet">Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- Requirements -->
+    <div class="article-section" id="requirements">
+      <h2><span class="step-badge">1</span> Requirements</h2>
+
+      <h3>Functional Requirements</h3>
+      <ul>
+        <li><strong>Conversation history:</strong> Maintain full conversation context within a session for coherent multi-turn dialogue</li>
+        <li><strong>Working memory:</strong> Store intermediate computation results (API call outputs, tool results) during multi-step tasks</li>
+        <li><strong>Long-term preferences:</strong> Learn and recall user preferences, past interactions, and patterns across sessions</li>
+        <li><strong>Context window management:</strong> Intelligently select what to include when context window is limited</li>
+        <li><strong>Semantic search over memory:</strong> Find relevant past interactions by meaning, not just keyword match</li>
+      </ul>
+
+      <h3>Non-Functional Requirements</h3>
+      <ul>
+        <li><strong>Latency:</strong> &lt;50ms for short-term reads, &lt;200ms for long-term semantic search</li>
+        <li><strong>Durability:</strong> Short-term can be lost (Redis). Long-term must be durable (PostgreSQL).</li>
+        <li><strong>Privacy:</strong> Per-user encryption. Right-to-delete. Configurable retention policies.</li>
+        <li><strong>Scale:</strong> Support 500K concurrent conversations, 50M user memory profiles</li>
+        <li><strong>Consistency:</strong> Within a conversation: strong consistency. Across sessions: eventual is OK.</li>
+      </ul>
+    </div>
+
+    <!-- Estimation -->
+    <div class="article-section" id="estimation">
+      <h2><span class="step-badge">2</span> Back-of-Envelope Estimation</h2>
+
+      <div class="highlight-box">
+        <h4>Scale Numbers</h4>
+        <ul>
+          <li><strong>15M messages/day across all conversations</strong></li>
+          <li><strong>Peak: 520 messages/second</strong></li>
+          <li><strong>Redis (short-term + working): 24.8 GB</strong></li>
+          <li><strong>PostgreSQL (long-term structured): 0.93 TB</strong></li>
+          <li><strong>Vector storage (long-term semantic): 2.85 TB</strong></li>
+        </ul>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Memory Layer</th>
+            <th>Storage</th>
+            <th>TTL</th>
+            <th>Access Pattern</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Short-term</td>
+            <td>Redis</td>
+            <td>24 hours</td>
+            <td>Sequential reads, append-only during conversation</td>
+          </tr>
+          <tr>
+            <td>Working</td>
+            <td>Redis</td>
+            <td>1 hour</td>
+            <td>Random reads/writes during task execution</td>
+          </tr>
+          <tr>
+            <td>Long-term</td>
+            <td>PG + pgvector</td>
+            <td>Configurable (90d-forever)</td>
+            <td>Semantic search, structured queries</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Architecture -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">3</span> High-Level Architecture</h2>
+
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  3-LAYER MEMORY ARCHITECTURE
+  ═══════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │                   CONTEXT WINDOW MANAGER                    │
+  │  Assembles the optimal context for each LLM call:          │
+  │  1. System prompt (fixed)                                   │
+  │  2. Relevant long-term memories (semantic search)           │
+  │  3. Working memory (current task state)                     │
+  │  4. Recent conversation (last N turns)                      │
+  │  5. Current user message                                    │
+  └───────┬──────────────────┬──────────────────┬──────────────┘
+          │                  │                  │
+  ┌───────v──────┐  ┌───────v──────┐  ┌────────v─────────┐
+  │ SHORT-TERM   │  │   WORKING    │  │   LONG-TERM      │
+  │              │  │              │  │                   │
+  │ Redis        │  │ Redis        │  │ PostgreSQL        │
+  │ TTL: 24hr    │  │ TTL: 1hr     │  │ + pgvector        │
+  │              │  │              │  │                   │
+  │ Conversation │  │ Intermediate │  │ User preferences  │
+  │ messages     │  │ results      │  │ Interaction history│
+  │ (ordered)    │  │ (key-value)  │  │ Learned patterns  │
+  │              │  │              │  │ Semantic search    │
+  │ ~8 GB        │  │ ~16.8 GB     │  │ ~3.78 TB          │
+  └──────────────┘  └──────────────┘  └───────────────────┘
+</pre>
+      </div>
+
+      <h3>Context Window Manager — 5 Steps</h3>
+      <ul>
+        <li><strong>Step 1 — Budget allocation:</strong> Given 128K token context window, allocate: 2K system prompt, 4K long-term memories, 2K working memory, remaining for conversation history + current message.</li>
+        <li><strong>Step 2 — Long-term retrieval:</strong> Semantic search over user's memory using current query as search key. Return top 5 most relevant past interactions/preferences.</li>
+        <li><strong>Step 3 — Working memory injection:</strong> Include current task state, intermediate results, pending actions. Critical for multi-step workflows.</li>
+        <li><strong>Step 4 — Conversation truncation:</strong> If conversation exceeds budget, summarize older turns (keep last 10 verbatim, summarize earlier ones).</li>
+        <li><strong>Step 5 — Assembly:</strong> Combine all layers into a single prompt. Order matters: system → long-term → working → conversation → current message.</li>
+      </ul>
+    </div>
+
+    <!-- Deep Dive 1: Short-Term -->
+    <div class="article-section" id="short-term">
+      <h2><span class="step-badge">4</span> Deep Dive 1: Short-Term Memory</h2>
+
+      <h3>Redis Data Structure</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  SHORT-TERM MEMORY (Redis)
+  ═══════════════════════════════════════════
+
+  Key: conv:{conversation_id}
+  Type: Redis List (ordered messages)
+  TTL: 24 hours
+
+  LPUSH conv:abc123 {
+    "role": "user",
+    "content": "I need VPN access",
+    "timestamp": "2026-03-15T10:00:00Z",
+    "tokens": 8
+  }
+
+  LPUSH conv:abc123 {
+    "role": "assistant",
+    "content": "I'll help you with VPN access. Which office?",
+    "timestamp": "2026-03-15T10:00:02Z",
+    "tokens": 14,
+    "tool_calls": []
+  }
+
+  LRANGE conv:abc123 0 -1  → Full conversation history
+  LRANGE conv:abc123 0 9   → Last 10 messages
+</pre>
+      </div>
+
+      <h3>Context Window Summarization</h3>
+      <p>When a conversation exceeds the context budget, older messages are summarized:</p>
+      <ul>
+        <li><strong>Threshold:</strong> When conversation exceeds 80% of allocated budget, trigger summarization</li>
+        <li><strong>Process:</strong> Take messages 11-50, send to fast LLM with prompt "Summarize this conversation so far in 3-5 bullet points. Preserve key decisions, names, and numbers."</li>
+        <li><strong>Result:</strong> Replace messages 11-50 with a single [SUMMARY] message. Keep messages 1-10 (most recent) verbatim.</li>
+        <li><strong>Progressive:</strong> As conversation grows, re-summarize periodically. Summary of summaries keeps total under budget.</li>
+      </ul>
+    </div>
+
+    <!-- Deep Dive 2: Working Memory -->
+    <div class="article-section" id="working">
+      <h2><span class="step-badge">5</span> Deep Dive 2: Working Memory</h2>
+
+      <h3>Purpose: Intermediate Results During Multi-Step Tasks</h3>
+      <p>When an agent executes a multi-step workflow, it needs to remember intermediate results. Working memory stores these temporarily.</p>
+
+      <div class="highlight-box">
+        <h4>Example: "Who is my manager and do they have an open approval for me?"</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">
+          <strong style="color:#e8e8f0;">Step 1:</strong> Look up user in HR system → Working memory stores: { "manager": "Sarah Chen", "manager_id": "SC-4521" }<br>
+          <strong style="color:#e8e8f0;">Step 2:</strong> Query approval system with manager_id → Working memory stores: { "pending_approvals": [{ "id": "APR-892", "type": "VPN Access", "status": "pending" }] }<br>
+          <strong style="color:#e8e8f0;">Step 3:</strong> Compose answer using both results from working memory: "Your manager is Sarah Chen. She has one pending approval for you: VPN Access request (APR-892)."
+        </p>
+      </div>
+
+      <h3>Redis Data Structure</h3>
+      <div class="diagram-box">
+<pre class="architecture-diagram">
+  WORKING MEMORY (Redis Hash)
+  ═══════════════════════════════════════════
+
+  Key: work:{conversation_id}:{task_id}
+  Type: Redis Hash
+  TTL: 1 hour
+
+  HSET work:abc123:task-001 "step_1_result" '{
+    "manager": "Sarah Chen",
+    "manager_id": "SC-4521",
+    "source": "workday_api",
+    "retrieved_at": "2026-03-15T10:00:01Z"
+  }'
+
+  HSET work:abc123:task-001 "step_2_result" '{
+    "pending_approvals": [...],
+    "source": "approval_system",
+    "retrieved_at": "2026-03-15T10:00:03Z"
+  }'
+
+  HSET work:abc123:task-001 "plan" '{
+    "steps": ["lookup_manager", "check_approvals", "compose_answer"],
+    "current_step": 2,
+    "status": "in_progress"
+  }'
+</pre>
+      </div>
+
+      <h3>Re-Planning Support</h3>
+      <ul>
+        <li><strong>Plan storage:</strong> The agent's execution plan is stored in working memory. If a step fails, the agent can re-plan using the partial results already collected.</li>
+        <li><strong>Rollback:</strong> If a multi-step task fails at step 3, the agent has steps 1-2 results in working memory. It can try an alternative step 3 without re-executing steps 1-2.</li>
+        <li><strong>TTL:</strong> 1 hour. Working memory is ephemeral — if the task takes longer than 1 hour, it's likely abandoned or should be restarted.</li>
+      </ul>
+    </div>
+
+    <!-- Deep Dive 3: Long-Term -->
+    <div class="article-section" id="long-term">
+      <h2><span class="step-badge">6</span> Deep Dive 3: Long-Term Memory</h2>
+
+      <h3>Dual Storage: Structured + Semantic</h3>
+      <ul>
+        <li><strong>PostgreSQL (structured):</strong> User preferences, settings, explicit facts. Queryable with SQL. Example: preferred_language = "en", timezone = "PST", notification_channel = "slack".</li>
+        <li><strong>pgvector (semantic):</strong> Embedded summaries of past interactions. Searchable by meaning. Example: "User asked about VPN issues 3 times in the last month" can be found by querying "network connectivity problems".</li>
+      </ul>
+
+      <h3>What Gets Stored Long-Term</h3>
+
+      <div class="success-box">
+        <h4>Example: Pattern Detection</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.8;">
+          <strong style="color:#e8e8f0;">Observation:</strong> User asked about VPN 3 times in the last month (March 1, March 8, March 14).<br>
+          <strong style="color:#e8e8f0;">Stored as:</strong> "User has recurring VPN connectivity issues. Previous solutions: certificate renewal (March 1), DNS cache flush (March 8)."<br>
+          <strong style="color:#e8e8f0;">Used when:</strong> Next time user mentions VPN, agent proactively says: "I see you've had VPN issues before. Last time, flushing the DNS cache resolved it. Would you like to try that first?"
+        </p>
+      </div>
+
+      <div class="warn-box">
+        <p><strong style="color:#ef4444;">IMPORTANT:</strong> Store <strong>summaries, not raw conversations</strong>. Raw messages contain too much noise and PII. Summarization extracts the useful signal: preferences, patterns, resolved issues, key decisions. This also dramatically reduces storage costs.</p>
+      </div>
+
+      <h3>Privacy & Compliance</h3>
+      <ul>
+        <li><strong>Encryption:</strong> All long-term memory encrypted at rest (AES-256) and in transit (TLS 1.3). Per-user encryption keys stored in Vault.</li>
+        <li><strong>Retention policy:</strong> Configurable per tenant. Default: 90 days for interaction summaries, forever for explicit preferences. Auto-purge on expiry.</li>
+        <li><strong>Right to delete:</strong> User requests deletion → immediately purge all memory (short-term, working, long-term) associated with their user_id. Cascading delete across all stores.</li>
+        <li><strong>Data minimization:</strong> Only store what's useful. No raw message content in long-term. No sensitive data (passwords, SSNs) ever stored in memory.</li>
+      </ul>
+    </div>
+
+    <!-- Scaling & ML -->
+    <div class="article-section" id="scaling">
+      <h2><span class="step-badge">7</span> Scaling & ML</h2>
+
+      <h3>Scaling Strategies</h3>
+      <ul>
+        <li><strong>Redis cluster:</strong> Shard by conversation_id for short-term and working memory. Each shard handles ~100K concurrent conversations.</li>
+        <li><strong>PostgreSQL partitioning:</strong> Partition long-term memory by tenant_id. Separate pgvector indexes per tenant for query isolation.</li>
+        <li><strong>Summarization workers:</strong> Async workers process conversation summaries after session ends. Batch embedding generation for cost efficiency.</li>
+      </ul>
+
+      <h3>ML Enhancements</h3>
+      <ul>
+        <li><strong>Embed → Search:</strong> Embed conversation summaries using ada-002. Semantic search finds relevant memories even when wording differs ("VPN problem" matches "network connectivity issue").</li>
+        <li><strong>Summarization:</strong> Use fast LLM (GPT-3.5/Haiku) to extract key facts from conversations. Structured output: { preferences: [], patterns: [], resolved_issues: [] }.</li>
+        <li><strong>Pattern detection:</strong> Identify recurring issues per user. "User has asked about printer 5 times" → surface proactively. Batch job runs nightly.</li>
+        <li><strong>Memory decay:</strong> Older memories become less relevant. Apply decay factor to semantic search scores: score * exp(-lambda * days_since_memory). Lambda tuned per memory type (preferences decay slowly, task details decay fast).</li>
+      </ul>
+    </div>
+
+    <!-- Cheat Sheet -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">8</span> Cheat Sheet</h2>
+
+      <div class="success-box">
+        <h4>Conversation Memory — Key Numbers</h4>
+        <ul>
+          <li><strong>3 layers: Short-term (Redis 24hr), Working (Redis 1hr), Long-term (PG + pgvector)</strong></li>
+          <li><strong>15M messages/day, 520 peak msg/sec</strong></li>
+          <li><strong>Redis: 24.8 GB, PG: 0.93 TB, Vectors: 2.85 TB</strong></li>
+          <li><strong>Context Window Manager: system → long-term → working → conversation → current</strong></li>
+          <li><strong>Summarize older conversation turns when exceeding 80% budget</strong></li>
+          <li><strong>Working memory: intermediate results for multi-step tasks</strong></li>
+          <li><strong>Long-term: store summaries, NOT raw conversations</strong></li>
+          <li><strong>Semantic search with memory decay: score * exp(-lambda * days)</strong></li>
+          <li><strong>Privacy: per-user encryption, right-to-delete, configurable retention</strong></li>
+          <li><strong>"You asked about VPN 3 times" — proactive pattern surfacing</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav-bottom">
+      <a href="design-06-llm-serving.html">&larr; LLM Serving</a>
+      <a href="design-08-sandboxed-code.html">Sandboxed Code Execution &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
