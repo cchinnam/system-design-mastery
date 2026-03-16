@@ -96,6 +96,7 @@
         <a href="#architecture">Architecture</a>
         <a href="#rag-pipeline">RAG Pipeline</a>
         <a href="#agents">Multi-Agent</a>
+        <a href="#agent-patterns">5 Patterns</a>
         <a href="#code">Code Deep-Dive</a>
       </div>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
@@ -134,6 +135,7 @@
         <li><a href="#frontend">Frontend: Admin Dashboard & Pipeline UI</a></li>
         <li><a href="#code">Code Deep-Dive: Key Implementations</a></li>
         <li><a href="#decisions">Design Decisions & Trade-offs</a></li>
+        <li><a href="#agent-patterns">Agent-to-Agent Communication Patterns (5 Patterns)</a></li>
         <li><a href="#scale">Scaling & Future Enhancements</a></li>
         <li><a href="#cheatsheet">Interview Cheat Sheet</a></li>
       </ol>
@@ -1093,9 +1095,454 @@ Usage:
       </table>
     </div>
 
-    <!-- ═══════════════════ 11. SCALING ═══════════════════ -->
+    <!-- ═══════════════════ 11. AGENT COMMUNICATION PATTERNS ═══════════════════ -->
+    <div class="article-section" id="agent-patterns">
+      <h2><span class="step-badge">11</span> Agent-to-Agent Communication Patterns</h2>
+
+      <p>Understanding how agents communicate is critical for interviews. There are <strong style="color:#e8e8f0;">5 major patterns</strong> used in enterprise AI systems — from simple sequential pipelines to complex state machine graphs.</p>
+
+      <!-- Pattern 1: Shared State -->
+      <h3>Pattern 1: Shared State (Current Implementation)</h3>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+  ┌──────────┐     ┌──────────┐     ┌──────────┐
+  │ Agent A  │────▶│ Agent B  │────▶│ Agent C  │
+  │ Research │     │ Draft    │     │ Fact-Chk │
+  └────┬─────┘     └────┬─────┘     └────┬─────┘
+       │                │                │
+       ▼                ▼                ▼
+  ┌──────────────────────────────────────────────┐
+  │          SHARED STATE OBJECT                  │
+  │  { topic, researchSummary, sources,           │
+  │    draft, factCheckResults, metadata }        │
+  └──────────────────────────────────────────────┘
+
+  Flow: Linear, sequential. Each agent reads & writes to shared state.
+  State lives: Client-side (React useState) between API calls.
+  Server: Stateless — rebuilds state from request body each call.</div>
+      </div>
+
+      <div class="success-box">
+        <h4>How It Works in chinnam.AI</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.8;">
+          The <code>PipelineState</code> TypeScript interface is the contract. The <strong style="color:#e8e8f0;">frontend orchestrates</strong> 3 sequential API calls — each call sends the accumulated state in the request body. The server is stateless: it rebuilds the state object, passes it to the agent function, and returns the updated state. No sessions, no database persistence for pipeline state. The React <code>useState</code> hook holds the state between calls.
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">TypeScript</span>
+          <span class="code-file">Shared State — Frontend Orchestration</span>
+        </div>
+        <pre><code><span class="comment">// Frontend holds state between sequential API calls</span>
+<span class="keyword">const</span> researchData = <span class="keyword">await</span> <span class="function">callStep</span>(<span class="string">"research"</span>, { topic })
+<span class="comment">// researchData.state = { topic, researchSummary, sources, images, tables }</span>
+
+<span class="keyword">const</span> draftData = <span class="keyword">await</span> <span class="function">callStep</span>(<span class="string">"draft"</span>, {
+  topic,
+  state: researchData.state  <span class="comment">// ← pass accumulated state forward</span>
+})
+
+<span class="keyword">const</span> factCheckData = <span class="keyword">await</span> <span class="function">callStep</span>(<span class="string">"fact-check"</span>, {
+  topic,
+  state: draftData.state     <span class="comment">// ← pass accumulated state forward</span>
+})
+
+<span class="comment">// Server is STATELESS — no sessions, no DB persistence for pipeline state</span>
+<span class="comment">// Each API call receives prev state in body, returns updated state in response</span></code></pre>
+      </div>
+
+      <ul>
+        <li><strong>Pros:</strong> Simple, debuggable, no infrastructure, works for 3-5 agents</li>
+        <li><strong>Cons:</strong> No conditional branching, no loops/retries, no parallel agent execution</li>
+        <li><strong>Best for:</strong> Simple sequential pipelines with a fixed number of steps</li>
+      </ul>
+
+      <!-- Pattern 2: Message Passing -->
+      <h3>Pattern 2: Message Passing with Supervisor (LangGraph)</h3>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+                    ┌─────────────┐
+           ┌──────▶│  SUPERVISOR  │◀──────┐
+           │       │  (Router LLM)│       │
+           │       └──┬───┬───┬──┘       │
+           │          │   │   │          │
+           │          ▼   ▼   ▼          │
+      ┌────┴───┐ ┌────────┐ ┌───────┐ ┌─┴──────┐
+      │Research │ │ Draft  │ │Fact-  │ │  END   │
+      │ Agent  │ │ Agent  │ │Check  │ │        │
+      └────┬───┘ └────┬───┘ └───┬───┘ └────────┘
+           │          │         │
+           └──────────┴─────────┘
+                      │
+         All agents write to shared state
+         Supervisor reads state & decides next agent
+
+  Key: Supervisor can LOOP BACK — if fact-check fails,
+       route back to Draft with revision instructions.</div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">LangGraph — State Machine with Supervisor</span>
+        </div>
+        <pre><code><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict
+
+<span class="comment"># 1. Define shared state — all agents read/write to this</span>
+<span class="keyword">class</span> <span class="type">PipelineState</span>(TypedDict):
+    topic: <span class="type">str</span>
+    research: <span class="type">str</span>
+    draft: <span class="type">str</span>
+    fact_check: <span class="type">dict</span>
+    revision_count: <span class="type">int</span>
+    next_step: <span class="type">str</span>  <span class="comment"># Supervisor sets this</span>
+
+<span class="comment"># 2. Define agent functions (nodes)</span>
+<span class="keyword">def</span> <span class="function">research_agent</span>(state: <span class="type">PipelineState</span>) -> <span class="type">PipelineState</span>:
+    <span class="comment"># Query pgvector, generate research summary</span>
+    state[<span class="string">"research"</span>] = <span class="function">call_claude</span>(RESEARCH_PROMPT, state[<span class="string">"topic"</span>])
+    <span class="keyword">return</span> state
+
+<span class="keyword">def</span> <span class="function">drafting_agent</span>(state: <span class="type">PipelineState</span>) -> <span class="type">PipelineState</span>:
+    <span class="comment"># Generate article from research</span>
+    state[<span class="string">"draft"</span>] = <span class="function">call_claude</span>(DRAFT_PROMPT, state[<span class="string">"research"</span>])
+    <span class="keyword">return</span> state
+
+<span class="keyword">def</span> <span class="function">fact_check_agent</span>(state: <span class="type">PipelineState</span>) -> <span class="type">PipelineState</span>:
+    <span class="comment"># Validate claims against sources</span>
+    result = <span class="function">call_claude</span>(FACTCHECK_PROMPT, state[<span class="string">"draft"</span>])
+    state[<span class="string">"fact_check"</span>] = <span class="function">parse_fact_check</span>(result)
+    <span class="keyword">return</span> state
+
+<span class="keyword">def</span> <span class="function">supervisor</span>(state: <span class="type">PipelineState</span>) -> <span class="type">PipelineState</span>:
+    <span class="comment"># Dynamic routing based on state</span>
+    <span class="keyword">if not</span> state.get(<span class="string">"research"</span>):
+        state[<span class="string">"next_step"</span>] = <span class="string">"research"</span>
+    <span class="keyword">elif not</span> state.get(<span class="string">"draft"</span>):
+        state[<span class="string">"next_step"</span>] = <span class="string">"draft"</span>
+    <span class="keyword">elif not</span> state.get(<span class="string">"fact_check"</span>):
+        state[<span class="string">"next_step"</span>] = <span class="string">"fact_check"</span>
+    <span class="keyword">elif</span> state[<span class="string">"fact_check"</span>][<span class="string">"issues"</span>] <span class="keyword">and</span> state[<span class="string">"revision_count"</span>] < <span class="number">2</span>:
+        state[<span class="string">"next_step"</span>] = <span class="string">"draft"</span>       <span class="comment"># ← LOOP BACK to revise!</span>
+        state[<span class="string">"revision_count"</span>] += <span class="number">1</span>
+    <span class="keyword">else</span>:
+        state[<span class="string">"next_step"</span>] = <span class="string">"end"</span>
+    <span class="keyword">return</span> state
+
+<span class="comment"># 3. Build the graph</span>
+graph = <span class="type">StateGraph</span>(<span class="type">PipelineState</span>)
+graph.<span class="function">add_node</span>(<span class="string">"research"</span>, research_agent)
+graph.<span class="function">add_node</span>(<span class="string">"draft"</span>, drafting_agent)
+graph.<span class="function">add_node</span>(<span class="string">"fact_check"</span>, fact_check_agent)
+graph.<span class="function">add_node</span>(<span class="string">"supervisor"</span>, supervisor)
+
+<span class="comment"># 4. Define edges — all agents report back to supervisor</span>
+graph.<span class="function">set_entry_point</span>(<span class="string">"supervisor"</span>)
+graph.<span class="function">add_edge</span>(<span class="string">"research"</span>, <span class="string">"supervisor"</span>)
+graph.<span class="function">add_edge</span>(<span class="string">"draft"</span>, <span class="string">"supervisor"</span>)
+graph.<span class="function">add_edge</span>(<span class="string">"fact_check"</span>, <span class="string">"supervisor"</span>)
+
+<span class="comment"># 5. Conditional routing — supervisor decides next agent</span>
+graph.<span class="function">add_conditional_edges</span>(
+    <span class="string">"supervisor"</span>,
+    <span class="keyword">lambda</span> state: state[<span class="string">"next_step"</span>],
+    {
+        <span class="string">"research"</span>: <span class="string">"research"</span>,
+        <span class="string">"draft"</span>: <span class="string">"draft"</span>,
+        <span class="string">"fact_check"</span>: <span class="string">"fact_check"</span>,
+        <span class="string">"end"</span>: END,
+    }
+)
+
+<span class="comment"># 6. Compile and run</span>
+app = graph.<span class="function">compile</span>()
+result = app.<span class="function">invoke</span>({<span class="string">"topic"</span>: <span class="string">"RAG systems"</span>, <span class="string">"revision_count"</span>: <span class="number">0</span>})</code></pre>
+      </div>
+
+      <ul>
+        <li><strong>Pros:</strong> Dynamic routing, loops/retries, conditional branching, built-in checkpointing</li>
+        <li><strong>Cons:</strong> Framework dependency, steeper learning curve, harder to debug</li>
+        <li><strong>Best for:</strong> Complex multi-agent systems where agents need to loop, branch, or run in parallel</li>
+      </ul>
+
+      <!-- Pattern 3: Pub/Sub -->
+      <h3>Pattern 3: Pub/Sub Event-Driven (Enterprise Scale)</h3>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+  ┌──────────┐     ┌───────────────────┐     ┌──────────┐
+  │ Agent A  │────▶│  MESSAGE BROKER   │────▶│ Agent B  │
+  │ Research │     │  (Kafka / Redis   │     │ Draft    │
+  └──────────┘     │   Streams / SQS)  │     └──────────┘
+                   │                   │
+                   │  topic:           │     ┌──────────┐
+                   │  "research.done"  │────▶│ Agent C  │
+                   │  "draft.done"     │     │ Fact-Chk │
+                   │  "revision.needed"│     └──────────┘
+                   └───────────────────┘
+
+  Flow: Agents publish events, others subscribe.
+  Agents are fully decoupled — can scale independently.
+  New agents added without changing existing ones.</div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">Kafka-based Agent Communication</span>
+        </div>
+        <pre><code><span class="comment"># Producer — Research Agent publishes result</span>
+<span class="keyword">from</span> kafka <span class="keyword">import</span> KafkaProducer
+<span class="keyword">import</span> json
+
+producer = KafkaProducer(value_serializer=<span class="keyword">lambda</span> v: json.<span class="function">dumps</span>(v).<span class="function">encode</span>())
+
+<span class="keyword">def</span> <span class="function">research_agent</span>(topic):
+    summary = <span class="function">call_claude</span>(RESEARCH_PROMPT, topic)
+    producer.<span class="function">send</span>(<span class="string">"research.done"</span>, {
+        <span class="string">"topic"</span>: topic,
+        <span class="string">"research_summary"</span>: summary,
+        <span class="string">"sources"</span>: sources,
+    })
+
+<span class="comment"># Consumer — Draft Agent subscribes to research events</span>
+<span class="keyword">from</span> kafka <span class="keyword">import</span> KafkaConsumer
+
+consumer = KafkaConsumer(<span class="string">"research.done"</span>)
+<span class="keyword">for</span> message <span class="keyword">in</span> consumer:
+    data = json.<span class="function">loads</span>(message.value)
+    draft = <span class="function">call_claude</span>(DRAFT_PROMPT, data[<span class="string">"research_summary"</span>])
+    producer.<span class="function">send</span>(<span class="string">"draft.done"</span>, {
+        **data,
+        <span class="string">"draft"</span>: draft,
+    })</code></pre>
+      </div>
+
+      <ul>
+        <li><strong>Pros:</strong> Fully decoupled, horizontally scalable, fault tolerant (DLQ + retries), agents can be added/removed independently</li>
+        <li><strong>Cons:</strong> Infrastructure overhead (Kafka/Redis), eventual consistency, harder to trace full pipeline</li>
+        <li><strong>Best for:</strong> High-throughput enterprise systems processing thousands of requests concurrently</li>
+      </ul>
+
+      <!-- Pattern 4: Tool Use -->
+      <h3>Pattern 4: Tool-Use / Function Calling</h3>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+  ┌──────────────────────────────────────────┐
+  │           SUPERVISOR LLM                  │
+  │                                          │
+  │  "I need research on RAG. Let me call    │
+  │   the research_agent tool..."            │
+  │                                          │
+  │  Available tools:                        │
+  │   ├─ research_agent(topic) → summary     │
+  │   ├─ drafting_agent(summary) → article   │
+  │   ├─ fact_check_agent(article) → results │
+  │   ├─ web_search(query) → results         │
+  │   └─ publish_post(article) → url         │
+  │                                          │
+  │  The LLM DECIDES which tool to call,     │
+  │  in what order, and whether to retry.    │
+  └──────────────────────────────────────────┘</div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">Claude Tool-Use — LLM Decides Agent Routing</span>
+        </div>
+        <pre><code><span class="keyword">import</span> anthropic
+
+client = anthropic.<span class="function">Anthropic</span>()
+
+<span class="comment"># Define agents as tools the LLM can invoke</span>
+tools = [
+    {
+        <span class="string">"name"</span>: <span class="string">"research_agent"</span>,
+        <span class="string">"description"</span>: <span class="string">"Search knowledge base and summarize research papers on a topic"</span>,
+        <span class="string">"input_schema"</span>: {
+            <span class="string">"type"</span>: <span class="string">"object"</span>,
+            <span class="string">"properties"</span>: { <span class="string">"topic"</span>: { <span class="string">"type"</span>: <span class="string">"string"</span> } },
+        }
+    },
+    {
+        <span class="string">"name"</span>: <span class="string">"drafting_agent"</span>,
+        <span class="string">"description"</span>: <span class="string">"Write a technical blog article from research summary"</span>,
+        <span class="string">"input_schema"</span>: {
+            <span class="string">"type"</span>: <span class="string">"object"</span>,
+            <span class="string">"properties"</span>: { <span class="string">"research_summary"</span>: { <span class="string">"type"</span>: <span class="string">"string"</span> } },
+        }
+    },
+    {
+        <span class="string">"name"</span>: <span class="string">"fact_check_agent"</span>,
+        <span class="string">"description"</span>: <span class="string">"Validate article claims against source papers"</span>,
+        <span class="string">"input_schema"</span>: {
+            <span class="string">"type"</span>: <span class="string">"object"</span>,
+            <span class="string">"properties"</span>: { <span class="string">"article"</span>: { <span class="string">"type"</span>: <span class="string">"string"</span> } },
+        }
+    },
+]
+
+<span class="comment"># Supervisor LLM decides which agents to call and in what order</span>
+response = client.messages.<span class="function">create</span>(
+    model=<span class="string">"claude-sonnet-4-5-20250929"</span>,
+    max_tokens=<span class="number">4096</span>,
+    system=<span class="string">"You are a content pipeline supervisor. Use the available tools to research, draft, and fact-check an article. If fact-check finds issues, revise the draft."</span>,
+    tools=tools,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Write an article about RAG systems"</span>}]
+)
+
+<span class="comment"># The LLM will return tool_use blocks — you execute them</span>
+<span class="comment"># and send results back in a tool_result message (agentic loop)</span></code></pre>
+      </div>
+
+      <ul>
+        <li><strong>Pros:</strong> LLM autonomously decides routing, can adapt to unexpected situations, most flexible</li>
+        <li><strong>Cons:</strong> Less predictable, higher token usage (supervisor LLM reasons at every step), harder to guarantee execution order</li>
+        <li><strong>Best for:</strong> Open-ended tasks where the optimal agent sequence isn't known in advance</li>
+      </ul>
+
+      <!-- Pattern 5: Blackboard -->
+      <h3>Pattern 5: Blackboard Pattern (Complex Enterprise)</h3>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+  │ Agent A  │ │ Agent B  │ │ Agent C  │ │ Agent D  │
+  │ Research │ │ Draft    │ │ Fact-Chk │ │ SEO      │
+  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘
+       │            │            │            │
+       ▼            ▼            ▼            ▼
+  ┌─────────────────────────────────────────────────┐
+  │          BLACKBOARD (Redis / PostgreSQL)          │
+  │                                                  │
+  │  Key-Value Store:                                │
+  │  topic:          "RAG systems"                   │
+  │  research_done:  true                            │
+  │  research_data:  { summary, sources }            │
+  │  draft_done:     false                           │
+  │  draft_data:     null                            │
+  │  fact_check:     null                            │
+  └──────────────────────┬──────────────────────────┘
+                         │
+                    ┌────▼────┐
+                    │CONTROLLER│  Monitors blackboard
+                    │  (Cron / │  Triggers agents when
+                    │  Events) │  their inputs are ready
+                    └─────────┘</div>
+      </div>
+
+      <ul>
+        <li><strong>Pros:</strong> Agents work independently and in parallel, persistent state survives failures, new agents plug in by reading/writing to blackboard</li>
+        <li><strong>Cons:</strong> Coordination complexity, potential race conditions, need for locking/versioning</li>
+        <li><strong>Best for:</strong> Complex multi-modal pipelines, autonomous systems, systems with many independent agents</li>
+      </ul>
+
+      <!-- Comparison Table -->
+      <h3>Comparison: When to Use Which Pattern</h3>
+
+      <table>
+        <thead>
+          <tr><th>Pattern</th><th>Agents</th><th>Branching</th><th>Loops</th><th>Parallel</th><th>Persistence</th><th>Complexity</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Shared State</strong></td>
+            <td>2-5</td>
+            <td style="color:#ef4444;">No</td>
+            <td style="color:#ef4444;">No</td>
+            <td style="color:#ef4444;">Manual</td>
+            <td style="color:#ef4444;">Frontend</td>
+            <td style="color:#10b981;">Low</td>
+          </tr>
+          <tr>
+            <td><strong>LangGraph</strong></td>
+            <td>3-20+</td>
+            <td style="color:#10b981;">Yes</td>
+            <td style="color:#10b981;">Yes</td>
+            <td style="color:#10b981;">Built-in</td>
+            <td style="color:#10b981;">Checkpoint</td>
+            <td style="color:#f59e0b;">Medium</td>
+          </tr>
+          <tr>
+            <td><strong>Pub/Sub</strong></td>
+            <td>5-100+</td>
+            <td style="color:#10b981;">Yes</td>
+            <td style="color:#10b981;">Yes</td>
+            <td style="color:#10b981;">Native</td>
+            <td style="color:#10b981;">Broker</td>
+            <td style="color:#ef4444;">High</td>
+          </tr>
+          <tr>
+            <td><strong>Tool-Use</strong></td>
+            <td>2-10</td>
+            <td style="color:#10b981;">Dynamic</td>
+            <td style="color:#10b981;">LLM decides</td>
+            <td style="color:#f59e0b;">Sequential</td>
+            <td style="color:#ef4444;">None</td>
+            <td style="color:#f59e0b;">Medium</td>
+          </tr>
+          <tr>
+            <td><strong>Blackboard</strong></td>
+            <td>5-50+</td>
+            <td style="color:#10b981;">Yes</td>
+            <td style="color:#10b981;">Yes</td>
+            <td style="color:#10b981;">Native</td>
+            <td style="color:#10b981;">Database</td>
+            <td style="color:#ef4444;">High</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Upgrade Path -->
+      <h3>How chinnam.AI Would Upgrade with LangGraph</h3>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+  CURRENT: Sequential, no recovery
+  ─────────────────────────────────────
+  Research ──▶ Draft ──▶ Fact-Check ──▶ Done
+
+
+  WITH LANGGRAPH: Supervisor routes dynamically
+  ─────────────────────────────────────────────
+  Research ──▶ Supervisor ──▶ Draft ──▶ Supervisor ──▶ Fact-Check ──▶ Supervisor
+                   ▲                       ▲                            │
+                   │                       │                            │
+                   │                       └── "issues found,          │
+                   │                            revise draft" ◀────────┘
+                   │
+                   └── "needs more research"
+                        (if sources < 3)</div>
+      </div>
+
+      <div class="highlight-box">
+        <h4>What LangGraph Adds Over Shared State</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.8;">
+          <strong style="color:#e8e8f0;">Conditional routing:</strong> If fact-check finds issues, loop back to Draft with specific revision instructions instead of publishing.<br>
+          <strong style="color:#e8e8f0;">State persistence:</strong> Built-in checkpointing to Redis/PostgreSQL — if a step fails, resume from the last checkpoint instead of restarting the entire pipeline.<br>
+          <strong style="color:#e8e8f0;">Parallel branches:</strong> Run Research + Image Search + Table Search as parallel nodes, then join results before passing to Draft.<br>
+          <strong style="color:#e8e8f0;">Human-in-the-loop:</strong> Built-in <code>interrupt_before</code> / <code>interrupt_after</code> hooks — pause the graph before publishing and wait for human approval.<br>
+          <strong style="color:#e8e8f0;">Streaming:</strong> Token-by-token streaming per node — show the article being written in real-time.
+        </p>
+      </div>
+
+      <div class="success-box">
+        <h4>Interview Answer: "Why didn't you use LangGraph?"</h4>
+        <p style="color:#a0a0b8; font-size:0.95rem; line-height:1.9;">
+          "For a 3-agent sequential pipeline, the shared state pattern gives me <strong style="color:#e8e8f0;">full control with zero framework overhead</strong>. I can see exactly what prompt goes to each agent, debug with standard TypeScript tooling, and the code is transparent. LangGraph adds value when you need <strong style="color:#e8e8f0;">conditional routing</strong> (e.g., loop back if fact-check fails), <strong style="color:#e8e8f0;">state persistence</strong> across failures, or <strong style="color:#e8e8f0;">parallel agent execution</strong>. My next iteration would use LangGraph — specifically to add a supervisor that routes back to drafting when fact-check issues are found, and checkpointing so the pipeline can resume from the last successful step after a timeout."
+        </p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ 12. SCALING ═══════════════════ -->
     <div class="article-section" id="scale">
-      <h2><span class="step-badge">11</span> Scaling & Future Enhancements</h2>
+      <h2><span class="step-badge">12</span> Scaling &amp; Future Enhancements</h2>
 
       <h3>Current Limitations</h3>
       <ul>
@@ -1142,7 +1589,7 @@ Usage:
 
     <!-- ═══════════════════ 12. CHEAT SHEET ═══════════════════ -->
     <div class="article-section" id="cheatsheet">
-      <h2><span class="step-badge">12</span> Interview Cheat Sheet</h2>
+      <h2><span class="step-badge">13</span> Interview Cheat Sheet</h2>
 
       <div class="success-box">
         <h4>Quick Pitch (30 seconds)</h4>
