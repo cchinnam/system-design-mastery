@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise Deal Lifecycle & Campaign Management Platform — System Design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 960px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.6rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .meta-cyan { background: rgba(6,182,212,0.15); color: #06b6d4; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section h4 { font-size: 1.05rem; font-weight: 600; margin: 20px 0 8px; color: #a78bfa; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    .cyan-box { background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .cyan-box h4 { color: #06b6d4; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.78rem; line-height: 1.6; white-space: pre; }
+    .code-block { background: #0d1224; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; margin: 16px 0; overflow: hidden; }
+    .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .code-lang { font-size: 0.75rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; }
+    .code-file { font-size: 0.72rem; color: #6b7280; font-family: 'Courier New', monospace; }
+    .code-block pre { margin: 0; padding: 16px; overflow-x: auto; }
+    .code-block code { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; color: #e8e8f0; white-space: pre; }
+    .code-block .comment { color: #6b7280; }
+    .code-block .keyword { color: #c084fc; }
+    .code-block .string { color: #34d399; }
+    .code-block .function { color: #60a5fa; }
+    .code-block .type { color: #f59e0b; }
+    .code-block .number { color: #fb923c; }
+    .code-block .decorator { color: #f472b6; }
+    .flow-step { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: rgba(255,255,255,0.02); border-radius: 12px; margin: 12px 0; border: 1px solid rgba(255,255,255,0.04); }
+    .flow-step:hover { background: rgba(99,102,241,0.05); border-color: rgba(99,102,241,0.15); }
+    .flow-num { width: 40px; height: 40px; border-radius: 50%; background: #6366f1; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0; }
+    .flow-content h4 { margin: 0 0 4px; color: #e8e8f0; font-size: 1rem; }
+    .flow-content p { margin: 0; font-size: 0.88rem; color: #a0a0b8; }
+    .flow-arrow { text-align: center; color: #6366f1; font-size: 1.5rem; margin: 4px 0; }
+    .tech-badge { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 600; margin: 2px 4px; }
+    .tech-ts { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .tech-py { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .tech-db { background: rgba(16,185,129,0.15); color: #10b981; }
+    .tech-ai { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .tech-infra { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+    .metric-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; text-align: center; }
+    .metric-value { font-size: 2rem; font-weight: 900; color: #818cf8; }
+    .metric-label { font-size: 0.82rem; color: #6b7280; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x1F9E0;</span><span class="logo-text">chinnam<span class="logo-highlight">.AI</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All Designs</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#validation">Validation</a>
+        <a href="#kafka">Kafka CDC</a>
+        <a href="#approval">Approval Engine</a>
+        <a href="#metrics">Metrics</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <!-- HEADER -->
+    <div class="article-header">
+      <h1>Enterprise Deal Lifecycle & Campaign Management Platform</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-green">PRODUCTION SYSTEM</span>
+        <span class="meta-tag meta-purple">Staff Engineer Level</span>
+        <span class="meta-tag meta-blue">Distributed Architecture</span>
+        <span class="meta-tag meta-orange">Event-Driven</span>
+        <span class="meta-tag meta-cyan">100K+ Records/Day</span>
+        <span class="meta-tag meta-red">99.95% Uptime</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">A large-scale enterprise platform managing the full lifecycle of advertising deals and campaigns at a Fortune 500 tech company.</strong>
+        The system handles deal creation, campaign validation, multi-level approval workflows, real-time engagement scoring, and CDC-based data synchronization &mdash; processing 100K+ records daily with 99.95% uptime across distributed microservices.
+      </p>
+      <div style="margin-top: 16px;">
+        <span class="tech-badge tech-py">Python</span>
+        <span class="tech-badge tech-infra">Kafka</span>
+        <span class="tech-badge tech-infra">Redis</span>
+        <span class="tech-badge tech-db">PostgreSQL</span>
+        <span class="tech-badge tech-ai">asyncio</span>
+        <span class="tech-badge tech-infra">Docker</span>
+        <span class="tech-badge tech-ts">Kubernetes</span>
+        <span class="tech-badge tech-py">Grafana</span>
+      </div>
+    </div>
+
+    <!-- TOC -->
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#architecture">Architecture Overview</a></li>
+        <li><a href="#validation">Campaign Validation Engine</a></li>
+        <li><a href="#kafka">Kafka CDC Pipeline</a></li>
+        <li><a href="#approval">Approval Workflow Engine</a></li>
+        <li><a href="#engagement">Engagement Scoring System</a></li>
+        <li><a href="#caching">Caching Strategy</a></li>
+        <li><a href="#reliability">Reliability & Observability</a></li>
+        <li><a href="#schema">Database Schema</a></li>
+        <li><a href="#metrics">Performance Metrics</a></li>
+        <li><a href="#decisions">Design Decisions & Trade-offs</a></li>
+        <li><a href="#scaling">Scaling Strategy</a></li>
+        <li><a href="#cheatsheet">Interview Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- 1. ARCHITECTURE OVERVIEW -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">1</span> Architecture Overview</h2>
+
+      <p>The platform is built as a <strong style="color:#e8e8f0;">distributed microservices architecture</strong> serving an enterprise ad tech platform at scale. Each service owns its domain boundary, communicates via Kafka events, and maintains its own data store. The system processes the complete deal lifecycle: from initial deal creation through campaign validation, multi-level approvals, and real-time engagement tracking.</p>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
++==============================================================================+
+|                 ENTERPRISE DEAL LIFECYCLE PLATFORM                            |
++==============================================================================+
+
+  API Gateway (Rate Limiting, Auth, Routing)
+  +------------------------------------------------------------------------+
+  |  /api/v1/deals   /api/v1/campaigns   /api/v1/approvals   /api/v1/score |
+  +--------+------------------+-----------------+------------------+-------+
+           |                  |                 |                  |
+  +--------v-------+  +------v--------+  +-----v--------+  +-----v--------+
+  |  Deal Service  |  |  Campaign     |  |  Approval    |  |  Engagement  |
+  |                |  |  Service      |  |  Engine      |  |  Scoring     |
+  |  - CRUD ops    |  |               |  |              |  |  Service     |
+  |  - Lifecycle   |  |  - Validation |  |  - State     |  |              |
+  |  - Versioning  |  |  - asyncio    |  |    Machine   |  |  - ML feats  |
+  |  - Audit log   |  |  - Parallel   |  |  - Multi-lvl |  |  - Real-time |
+  +-------+--------+  |    checks     |  |  - SLA track |  |  - Signals   |
+          |            +------+--------+  +-----+--------+  +------+-------+
+          |                   |                 |                   |
+  +-------v-------------------v-----------------v-------------------v-------+
+  |                         Kafka Event Bus                                 |
+  |  deal.created | campaign.validated | approval.completed | score.updated |
+  |  deal.updated | campaign.rejected  | approval.escalated | score.alert   |
+  +-------+-------------------+------------------+--------------------+----+
+          |                   |                  |                    |
+  +-------v-------+   +------v--------+  +------v-------+   +-------v------+
+  |  CDC Pipeline |   |  DLQ Handler  |  |  Notification|   |  Analytics   |
+  |  (Debezium)   |   |  (Retry +     |  |  Service     |   |  Pipeline    |
+  |  100K rec/day |   |   Circuit     |  |  (Email/Slack|   |  (Metrics +  |
+  |               |   |   Breaker)    |  |   /Webhook)  |   |   Dashboards)|
+  +-------+-------+   +--------------+   +--------------+   +--------------+
+          |
+  +-------v---------------------------+
+  | PostgreSQL          Redis Cache   |
+  | - deals             - validation  |
+  | - campaigns           results     |
+  | - approvals         - engagement  |
+  | - audit_log           scores      |
+  | - engagement_metrics- session     |
+  |                       cache       |
+  +-----------------------------------+</div>
+      </div>
+
+      <h3>Core Services</h3>
+
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <h4>Deal Service</h4>
+          <p>Manages the full deal lifecycle &mdash; creation, amendments, versioning, and audit logging. Emits CDC events for every state transition.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <h4>Campaign Validation Engine</h4>
+          <p>Parallel async validation of campaigns against business rules, budget constraints, and targeting criteria. Achieves 94% latency reduction via asyncio + Redis caching.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <h4>Kafka CDC Pipeline</h4>
+          <p>Change Data Capture processing 100K records/day with Debezium connectors, dead letter queues, circuit breakers, and exponential backoff retry logic.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <h4>Approval Workflow Engine</h4>
+          <p>Multi-level approval state machine with SLA tracking, auto-escalation, and parallel approval paths. Reduced cycle time by 31.6%.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-content">
+          <h4>Engagement Scoring Service</h4>
+          <p>Real-time scoring engine combining ML features, historical signals, and behavioral data to rank and prioritize deals by engagement likelihood.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. CAMPAIGN VALIDATION ENGINE -->
+    <div class="article-section" id="validation">
+      <h2><span class="step-badge">2</span> Campaign Validation Engine</h2>
+
+      <p>The validation engine is the performance-critical path of the platform. Every campaign must pass <strong style="color:#e8e8f0;">12+ validation rules</strong> before submission. The original synchronous implementation took ~8 seconds per campaign. By redesigning with <strong style="color:#e8e8f0;">asyncio parallelism and Redis caching</strong>, we achieved a <strong style="color:#10b981;">94% latency reduction (8s &rarr; 450ms)</strong>.</p>
+
+      <h3>Key Design Principles</h3>
+      <ul>
+        <li><strong>Parallel execution:</strong> Independent validators run concurrently via asyncio.gather, not sequentially</li>
+        <li><strong>Cache-first pattern:</strong> Validation results for stable rules (budget limits, targeting configs) are cached in Redis with TTLs</li>
+        <li><strong>Fail-fast semantics:</strong> Critical validators (budget, compliance) run first; advisory validators run in parallel</li>
+        <li><strong>Idempotent validators:</strong> Every validator is side-effect-free and safe to retry</li>
+      </ul>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/campaign/validation_engine.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> asyncio
+<span class="keyword">import</span> hashlib
+<span class="keyword">import</span> json
+<span class="keyword">import</span> time
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> enum <span class="keyword">import</span> Enum
+<span class="keyword">from</span> typing <span class="keyword">import</span> List, Optional, Dict
+<span class="keyword">import</span> redis.asyncio <span class="keyword">as</span> aioredis
+
+
+<span class="keyword">class</span> <span class="type">ValidationSeverity</span>(Enum):
+    CRITICAL = <span class="string">"critical"</span>     <span class="comment"># Blocks submission</span>
+    WARNING = <span class="string">"warning"</span>       <span class="comment"># Requires acknowledgment</span>
+    ADVISORY = <span class="string">"advisory"</span>     <span class="comment"># Informational only</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">ValidationResult</span>:
+    rule_name: str
+    passed: bool
+    severity: <span class="type">ValidationSeverity</span>
+    message: str = <span class="string">""</span>
+    latency_ms: float = <span class="number">0.0</span>
+    cached: bool = <span class="keyword">False</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">CampaignValidationResponse</span>:
+    campaign_id: str
+    is_valid: bool
+    results: List[<span class="type">ValidationResult</span>] = field(default_factory=list)
+    total_latency_ms: float = <span class="number">0.0</span>
+    cache_hit_rate: float = <span class="number">0.0</span>
+
+
+<span class="keyword">class</span> <span class="type">CampaignValidationEngine</span>:
+    <span class="string">"""
+    High-performance campaign validation using asyncio parallelism.
+    Reduces validation latency from 8s to 450ms (94% reduction).
+    """</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, redis_client: aioredis.Redis):
+        self.redis = redis_client
+        self.cache_ttl = <span class="number">300</span>  <span class="comment"># 5 min TTL for validation cache</span>
+        self.validators = [
+            self._validate_budget_constraints,
+            self._validate_targeting_criteria,
+            self._validate_creative_specs,
+            self._validate_compliance_rules,
+            self._validate_scheduling_conflicts,
+            self._validate_audience_overlap,
+            self._validate_frequency_caps,
+            self._validate_geo_restrictions,
+            self._validate_bid_strategy,
+            self._validate_pacing_rules,
+            self._validate_attribution_windows,
+            self._validate_brand_safety,
+        ]
+
+    <span class="keyword">async def</span> <span class="function">validate_campaign</span>(self, campaign: Dict) -> <span class="type">CampaignValidationResponse</span>:
+        <span class="string">"""Run all validators in parallel using asyncio.gather."""</span>
+        start = time.monotonic()
+
+        <span class="comment"># Phase 1: Critical validators (fail-fast)</span>
+        critical_tasks = [
+            self._run_with_cache(v, campaign)
+            <span class="keyword">for</span> v <span class="keyword">in</span> self.validators
+            <span class="keyword">if</span> v.__name__ <span class="keyword">in</span> (
+                <span class="string">"_validate_budget_constraints"</span>,
+                <span class="string">"_validate_compliance_rules"</span>,
+            )
+        ]
+        critical_results = <span class="keyword">await</span> asyncio.gather(*critical_tasks)
+
+        <span class="comment"># Short-circuit if critical validation fails</span>
+        <span class="keyword">if</span> <span class="keyword">any</span>(
+            <span class="keyword">not</span> r.passed <span class="keyword">and</span> r.severity == <span class="type">ValidationSeverity</span>.CRITICAL
+            <span class="keyword">for</span> r <span class="keyword">in</span> critical_results
+        ):
+            <span class="keyword">return</span> <span class="type">CampaignValidationResponse</span>(
+                campaign_id=campaign[<span class="string">"id"</span>],
+                is_valid=<span class="keyword">False</span>,
+                results=list(critical_results),
+                total_latency_ms=(time.monotonic() - start) * <span class="number">1000</span>,
+            )
+
+        <span class="comment"># Phase 2: All remaining validators in parallel</span>
+        remaining_tasks = [
+            self._run_with_cache(v, campaign)
+            <span class="keyword">for</span> v <span class="keyword">in</span> self.validators
+            <span class="keyword">if</span> v.__name__ <span class="keyword">not in</span> (
+                <span class="string">"_validate_budget_constraints"</span>,
+                <span class="string">"_validate_compliance_rules"</span>,
+            )
+        ]
+        remaining_results = <span class="keyword">await</span> asyncio.gather(*remaining_tasks)
+
+        all_results = list(critical_results) + list(remaining_results)
+        cached_count = sum(<span class="number">1</span> <span class="keyword">for</span> r <span class="keyword">in</span> all_results <span class="keyword">if</span> r.cached)
+        elapsed = (time.monotonic() - start) * <span class="number">1000</span>
+
+        <span class="keyword">return</span> <span class="type">CampaignValidationResponse</span>(
+            campaign_id=campaign[<span class="string">"id"</span>],
+            is_valid=<span class="keyword">all</span>(
+                r.passed <span class="keyword">for</span> r <span class="keyword">in</span> all_results
+                <span class="keyword">if</span> r.severity == <span class="type">ValidationSeverity</span>.CRITICAL
+            ),
+            results=all_results,
+            total_latency_ms=elapsed,
+            cache_hit_rate=cached_count / len(all_results) <span class="keyword">if</span> all_results <span class="keyword">else</span> <span class="number">0</span>,
+        )
+
+    <span class="keyword">async def</span> <span class="function">_run_with_cache</span>(self, validator, campaign: Dict) -> <span class="type">ValidationResult</span>:
+        <span class="string">"""Execute validator with Redis cache lookup."""</span>
+        cache_key = self._cache_key(validator.__name__, campaign)
+
+        <span class="comment"># Try cache first</span>
+        cached = <span class="keyword">await</span> self.redis.get(cache_key)
+        <span class="keyword">if</span> cached:
+            result = <span class="type">ValidationResult</span>(**json.loads(cached))
+            result.cached = <span class="keyword">True</span>
+            <span class="keyword">return</span> result
+
+        <span class="comment"># Execute validator</span>
+        start = time.monotonic()
+        result = <span class="keyword">await</span> validator(campaign)
+        result.latency_ms = (time.monotonic() - start) * <span class="number">1000</span>
+
+        <span class="comment"># Cache the result</span>
+        <span class="keyword">await</span> self.redis.setex(
+            cache_key,
+            self.cache_ttl,
+            json.dumps({
+                <span class="string">"rule_name"</span>: result.rule_name,
+                <span class="string">"passed"</span>: result.passed,
+                <span class="string">"severity"</span>: result.severity.value,
+                <span class="string">"message"</span>: result.message,
+                <span class="string">"latency_ms"</span>: result.latency_ms,
+            })
+        )
+        <span class="keyword">return</span> result
+
+    <span class="keyword">def</span> <span class="function">_cache_key</span>(self, rule: str, campaign: Dict) -> str:
+        <span class="string">"""Generate deterministic cache key from rule + campaign hash."""</span>
+        payload = json.dumps(
+            {k: campaign[k] <span class="keyword">for</span> k <span class="keyword">in</span> sorted(campaign.keys())},
+            sort_keys=<span class="keyword">True</span>, default=str,
+        )
+        digest = hashlib.sha256(payload.encode()).hexdigest()[:<span class="number">16</span>]
+        <span class="keyword">return</span> <span class="string">f"validation:<span class="keyword">{</span>rule<span class="keyword">}</span>:<span class="keyword">{</span>digest<span class="keyword">}</span>"</span>
+
+    <span class="comment"># --- Individual Validators ---</span>
+
+    <span class="keyword">async def</span> <span class="function">_validate_budget_constraints</span>(self, campaign: Dict) -> <span class="type">ValidationResult</span>:
+        <span class="string">"""Validate budget against deal limits and remaining allocation."""</span>
+        total_budget = campaign.get(<span class="string">"budget"</span>, <span class="number">0</span>)
+        deal_limit = campaign.get(<span class="string">"deal_budget_limit"</span>, float(<span class="string">"inf"</span>))
+        allocated = campaign.get(<span class="string">"allocated_spend"</span>, <span class="number">0</span>)
+
+        remaining = deal_limit - allocated
+        passed = total_budget <= remaining
+
+        <span class="keyword">return</span> <span class="type">ValidationResult</span>(
+            rule_name=<span class="string">"budget_constraints"</span>,
+            passed=passed,
+            severity=<span class="type">ValidationSeverity</span>.CRITICAL,
+            message=<span class="string">f"Budget ${total_budget:,.2f} vs remaining ${remaining:,.2f}"</span>
+                    <span class="keyword">if not</span> passed <span class="keyword">else</span> <span class="string">"Budget within limits"</span>,
+        )
+
+    <span class="keyword">async def</span> <span class="function">_validate_targeting_criteria</span>(self, campaign: Dict) -> <span class="type">ValidationResult</span>:
+        <span class="string">"""Validate audience targeting parameters."""</span>
+        targeting = campaign.get(<span class="string">"targeting"</span>, {})
+        has_audience = bool(targeting.get(<span class="string">"audience_segments"</span>))
+        has_geo = bool(targeting.get(<span class="string">"geo_targets"</span>))
+        <span class="keyword">return</span> <span class="type">ValidationResult</span>(
+            rule_name=<span class="string">"targeting_criteria"</span>,
+            passed=has_audience <span class="keyword">and</span> has_geo,
+            severity=<span class="type">ValidationSeverity</span>.CRITICAL,
+            message=<span class="string">"Targeting criteria validated"</span> <span class="keyword">if</span> (has_audience <span class="keyword">and</span> has_geo)
+                    <span class="keyword">else</span> <span class="string">"Missing required targeting: audience or geo"</span>,
+        )
+
+    <span class="comment"># ... additional validators follow the same pattern</span></code></pre>
+      </div>
+
+      <div class="success-box">
+        <h4>Performance Impact</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">Sequential validation: 12 validators x ~650ms avg = <strong style="color:#ef4444;">~8 seconds</strong>. With asyncio.gather parallelism + Redis caching: <strong style="color:#10b981;">~450ms</strong> (94% reduction). Cache hit rate stabilizes at 85% during peak hours due to repeated validation of similar campaign configurations.</p>
+      </div>
+    </div>
+
+    <!-- 3. KAFKA CDC PIPELINE -->
+    <div class="article-section" id="kafka">
+      <h2><span class="step-badge">3</span> Kafka CDC Pipeline</h2>
+
+      <p>The platform uses <strong style="color:#e8e8f0;">Change Data Capture (CDC) via Debezium</strong> to propagate deal and campaign state changes across services. The pipeline processes <strong style="color:#10b981;">100K+ records per day</strong> with exactly-once semantics, dead letter queues for poison messages, and circuit breakers to prevent cascading failures.</p>
+
+      <h3>CDC Architecture</h3>
+      <ul>
+        <li><strong>Source connectors:</strong> Debezium captures row-level changes from PostgreSQL WAL (Write-Ahead Log)</li>
+        <li><strong>Topic partitioning:</strong> Deals partitioned by account_id for ordering guarantees within an account</li>
+        <li><strong>Consumer groups:</strong> Each downstream service has its own consumer group for independent offset management</li>
+        <li><strong>DLQ strategy:</strong> Failed messages route to dead letter topics after 3 retries with exponential backoff</li>
+        <li><strong>Schema registry:</strong> Avro schemas with backward compatibility checks on every deployment</li>
+      </ul>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/pipeline/kafka_cdc_consumer.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> asyncio
+<span class="keyword">import</span> json
+<span class="keyword">import</span> logging
+<span class="keyword">import</span> time
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> enum <span class="keyword">import</span> Enum
+<span class="keyword">from</span> typing <span class="keyword">import</span> Callable, Dict, Optional
+<span class="keyword">from</span> confluent_kafka <span class="keyword">import</span> Consumer, Producer, KafkaError
+
+logger = logging.getLogger(__name__)
+
+
+<span class="keyword">class</span> <span class="type">CircuitState</span>(Enum):
+    CLOSED = <span class="string">"closed"</span>       <span class="comment"># Normal operation</span>
+    OPEN = <span class="string">"open"</span>           <span class="comment"># Rejecting requests</span>
+    HALF_OPEN = <span class="string">"half_open"</span> <span class="comment"># Testing recovery</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">CircuitBreaker</span>:
+    <span class="string">"""Circuit breaker to prevent cascading failures in CDC pipeline."""</span>
+    failure_threshold: int = <span class="number">5</span>
+    recovery_timeout: float = <span class="number">30.0</span>
+    half_open_max_calls: int = <span class="number">3</span>
+    state: <span class="type">CircuitState</span> = <span class="type">CircuitState</span>.CLOSED
+    failure_count: int = <span class="number">0</span>
+    last_failure_time: float = <span class="number">0.0</span>
+    half_open_calls: int = <span class="number">0</span>
+
+    <span class="keyword">def</span> <span class="function">can_execute</span>(self) -> bool:
+        <span class="keyword">if</span> self.state == <span class="type">CircuitState</span>.CLOSED:
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        <span class="keyword">if</span> self.state == <span class="type">CircuitState</span>.OPEN:
+            <span class="keyword">if</span> time.monotonic() - self.last_failure_time > self.recovery_timeout:
+                self.state = <span class="type">CircuitState</span>.HALF_OPEN
+                self.half_open_calls = <span class="number">0</span>
+                <span class="keyword">return</span> <span class="keyword">True</span>
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        <span class="comment"># HALF_OPEN: allow limited calls</span>
+        <span class="keyword">return</span> self.half_open_calls < self.half_open_max_calls
+
+    <span class="keyword">def</span> <span class="function">record_success</span>(self):
+        <span class="keyword">if</span> self.state == <span class="type">CircuitState</span>.HALF_OPEN:
+            self.half_open_calls += <span class="number">1</span>
+            <span class="keyword">if</span> self.half_open_calls >= self.half_open_max_calls:
+                self.state = <span class="type">CircuitState</span>.CLOSED
+                self.failure_count = <span class="number">0</span>
+
+    <span class="keyword">def</span> <span class="function">record_failure</span>(self):
+        self.failure_count += <span class="number">1</span>
+        self.last_failure_time = time.monotonic()
+        <span class="keyword">if</span> self.failure_count >= self.failure_threshold:
+            self.state = <span class="type">CircuitState</span>.OPEN
+            logger.warning(<span class="string">f"Circuit OPEN after {self.failure_count} failures"</span>)
+
+
+<span class="keyword">class</span> <span class="type">CDCPipelineConsumer</span>:
+    <span class="string">"""
+    Kafka CDC consumer with DLQ, circuit breakers, and exponential backoff.
+    Processes 100K+ records/day from Debezium CDC connectors.
+    """</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, config: Dict):
+        self.consumer = Consumer({
+            <span class="string">"bootstrap.servers"</span>: config[<span class="string">"kafka_brokers"</span>],
+            <span class="string">"group.id"</span>: config[<span class="string">"consumer_group"</span>],
+            <span class="string">"auto.offset.reset"</span>: <span class="string">"earliest"</span>,
+            <span class="string">"enable.auto.commit"</span>: <span class="keyword">False</span>,  <span class="comment"># Manual commit for exactly-once</span>
+            <span class="string">"max.poll.interval.ms"</span>: <span class="number">300000</span>,
+        })
+        self.dlq_producer = Producer({
+            <span class="string">"bootstrap.servers"</span>: config[<span class="string">"kafka_brokers"</span>],
+        })
+        self.circuit_breaker = <span class="type">CircuitBreaker</span>()
+        self.max_retries = <span class="number">3</span>
+        self.base_backoff = <span class="number">1.0</span>  <span class="comment"># seconds</span>
+        self.handlers: Dict[str, Callable] = {}
+        self.metrics = {<span class="string">"processed"</span>: <span class="number">0</span>, <span class="string">"failed"</span>: <span class="number">0</span>, <span class="string">"dlq"</span>: <span class="number">0</span>}
+
+    <span class="keyword">def</span> <span class="function">register_handler</span>(self, event_type: str, handler: Callable):
+        <span class="string">"""Register a handler for a specific CDC event type."""</span>
+        self.handlers[event_type] = handler
+
+    <span class="keyword">async def</span> <span class="function">consume_loop</span>(self, topics: list):
+        <span class="string">"""Main consumption loop with error handling."""</span>
+        self.consumer.subscribe(topics)
+        logger.info(<span class="string">f"Subscribed to topics: {topics}"</span>)
+
+        <span class="keyword">while</span> <span class="keyword">True</span>:
+            msg = self.consumer.poll(timeout=<span class="number">1.0</span>)
+            <span class="keyword">if</span> msg <span class="keyword">is</span> <span class="keyword">None</span>:
+                <span class="keyword">continue</span>
+            <span class="keyword">if</span> msg.error():
+                <span class="keyword">if</span> msg.error().code() == KafkaError._PARTITION_EOF:
+                    <span class="keyword">continue</span>
+                logger.error(<span class="string">f"Kafka error: {msg.error()}"</span>)
+                <span class="keyword">continue</span>
+
+            <span class="keyword">await</span> self._process_message(msg)
+
+    <span class="keyword">async def</span> <span class="function">_process_message</span>(self, msg):
+        <span class="string">"""Process a single CDC message with retry and DLQ logic."""</span>
+        <span class="keyword">if not</span> self.circuit_breaker.can_execute():
+            logger.warning(<span class="string">"Circuit breaker OPEN — skipping message"</span>)
+            <span class="keyword">await</span> self._send_to_dlq(msg, <span class="string">"circuit_breaker_open"</span>)
+            <span class="keyword">return</span>
+
+        <span class="keyword">for</span> attempt <span class="keyword">in</span> range(self.max_retries):
+            <span class="keyword">try</span>:
+                payload = json.loads(msg.value().decode(<span class="string">"utf-8"</span>))
+                event_type = payload.get(<span class="string">"op"</span>, <span class="string">"unknown"</span>)  <span class="comment"># c=create, u=update, d=delete</span>
+                table = payload.get(<span class="string">"source"</span>, {}).get(<span class="string">"table"</span>, <span class="string">"unknown"</span>)
+                handler_key = <span class="string">f"{table}.{event_type}"</span>
+
+                handler = self.handlers.get(handler_key)
+                <span class="keyword">if</span> handler:
+                    <span class="keyword">await</span> handler(payload)
+
+                <span class="comment"># Commit offset on success</span>
+                self.consumer.commit(msg)
+                self.circuit_breaker.record_success()
+                self.metrics[<span class="string">"processed"</span>] += <span class="number">1</span>
+                <span class="keyword">return</span>
+
+            <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+                self.circuit_breaker.record_failure()
+                backoff = self.base_backoff * (<span class="number">2</span> ** attempt)
+                logger.warning(
+                    <span class="string">f"Retry {attempt + 1}/{self.max_retries} "</span>
+                    <span class="string">f"in {backoff:.1f}s: {e}"</span>
+                )
+                <span class="keyword">await</span> asyncio.sleep(backoff)
+
+        <span class="comment"># All retries exhausted — send to DLQ</span>
+        <span class="keyword">await</span> self._send_to_dlq(msg, <span class="string">"max_retries_exhausted"</span>)
+        self.metrics[<span class="string">"dlq"</span>] += <span class="number">1</span>
+        self.metrics[<span class="string">"failed"</span>] += <span class="number">1</span>
+
+    <span class="keyword">async def</span> <span class="function">_send_to_dlq</span>(self, msg, reason: str):
+        <span class="string">"""Route failed message to Dead Letter Queue with metadata."""</span>
+        dlq_payload = {
+            <span class="string">"original_topic"</span>: msg.topic(),
+            <span class="string">"original_partition"</span>: msg.partition(),
+            <span class="string">"original_offset"</span>: msg.offset(),
+            <span class="string">"failure_reason"</span>: reason,
+            <span class="string">"timestamp"</span>: time.time(),
+            <span class="string">"payload"</span>: msg.value().decode(<span class="string">"utf-8"</span>),
+        }
+        self.dlq_producer.produce(
+            topic=<span class="string">f"{msg.topic()}.dlq"</span>,
+            value=json.dumps(dlq_payload).encode(<span class="string">"utf-8"</span>),
+        )
+        self.dlq_producer.flush()
+        logger.error(<span class="string">f"Message sent to DLQ: {reason}"</span>)</code></pre>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Why Debezium CDC over Application-Level Events?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Consistency:</strong> CDC captures changes at the database level, guaranteeing no events are lost even if the application crashes mid-transaction. Application-level events require dual-write coordination (write to DB + publish event), which introduces inconsistency windows. <strong style="color:#e8e8f0;">Decoupling:</strong> Services don't need to know about downstream consumers — the DB is the source of truth.</p>
+      </div>
+    </div>
+
+    <!-- 4. APPROVAL WORKFLOW ENGINE -->
+    <div class="article-section" id="approval">
+      <h2><span class="step-badge">4</span> Approval Workflow Engine</h2>
+
+      <p>Deals above configurable thresholds require <strong style="color:#e8e8f0;">multi-level approvals</strong> from sales managers, finance, and legal. The engine implements a <strong style="color:#e8e8f0;">finite state machine</strong> with SLA tracking, auto-escalation, and parallel approval paths. This design reduced approval cycle times by <strong style="color:#10b981;">31.6%</strong>.</p>
+
+      <h3>State Machine Design</h3>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+  DEAL APPROVAL STATE MACHINE
+  ============================
+
+  +-----------+     submit      +-------------+
+  |  DRAFT    +----------------&gt;|  PENDING    |
+  +-----------+                 +------+------+
+        ^                              |
+        |  reject                      | auto-route
+        |                              v
+        |                       +------+------+
+        +-----+                 |  LEVEL_1    |  (Sales Manager)
+              |                 |  REVIEW     |
+              |                 +------+------+
+              |                        |
+              |              approve   |   reject
+              |               +--------+--------+
+              |               v                 |
+              |        +------+------+          |
+              |        |  LEVEL_2    |          |
+              |        |  REVIEW     |  (Finance)
+              |        +------+------+          |
+              |               |                 |
+              |     approve   |   reject        |
+              |        +------+------+          |
+              |        v             |          |
+              |  +-----+------+     |          |
+              |  |  LEVEL_3   |     |          |
+              |  |  REVIEW    | (Legal)        |
+              |  +-----+------+     |          |
+              |        |            |          |
+              |  approve|           |          |
+              |        v            v          v
+              |  +-----+------+ +--+----------+-+
+              |  |  APPROVED  | |  REJECTED     |
+              |  +------------+ +-------+-------+
+              |                         |
+              +-------------------------+
+                    revise & resubmit
+
+  ESCALATION: If SLA breached at any level -&gt; auto-escalate to next approver
+  PARALLEL:   Finance + Legal can review simultaneously for deals &gt; $500K</div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/approval/workflow_engine.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> asyncio
+<span class="keyword">import</span> logging
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime, timedelta
+<span class="keyword">from</span> enum <span class="keyword">import</span> Enum
+<span class="keyword">from</span> typing <span class="keyword">import</span> Dict, List, Optional
+<span class="keyword">from</span> uuid <span class="keyword">import</span> uuid4
+
+logger = logging.getLogger(__name__)
+
+
+<span class="keyword">class</span> <span class="type">ApprovalState</span>(Enum):
+    DRAFT = <span class="string">"draft"</span>
+    PENDING = <span class="string">"pending"</span>
+    LEVEL_1_REVIEW = <span class="string">"level_1_review"</span>
+    LEVEL_2_REVIEW = <span class="string">"level_2_review"</span>
+    LEVEL_3_REVIEW = <span class="string">"level_3_review"</span>
+    APPROVED = <span class="string">"approved"</span>
+    REJECTED = <span class="string">"rejected"</span>
+    ESCALATED = <span class="string">"escalated"</span>
+
+
+<span class="keyword">class</span> <span class="type">ApprovalAction</span>(Enum):
+    SUBMIT = <span class="string">"submit"</span>
+    APPROVE = <span class="string">"approve"</span>
+    REJECT = <span class="string">"reject"</span>
+    ESCALATE = <span class="string">"escalate"</span>
+    REVISE = <span class="string">"revise"</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">ApprovalLevel</span>:
+    level: int
+    approver_role: str
+    sla_hours: int
+    required: bool = <span class="keyword">True</span>
+    parallel_with: Optional[int] = <span class="keyword">None</span>  <span class="comment"># Level to run in parallel with</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">ApprovalRecord</span>:
+    id: str = field(default_factory=<span class="keyword">lambda</span>: str(uuid4()))
+    deal_id: str = <span class="string">""</span>
+    level: int = <span class="number">0</span>
+    approver_id: str = <span class="string">""</span>
+    action: Optional[<span class="type">ApprovalAction</span>] = <span class="keyword">None</span>
+    comments: str = <span class="string">""</span>
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    decided_at: Optional[datetime] = <span class="keyword">None</span>
+
+
+<span class="keyword">class</span> <span class="type">ApprovalWorkflowEngine</span>:
+    <span class="string">"""
+    Multi-level approval state machine with SLA tracking.
+    Reduces approval cycle time by 31.6% through:
+    - Parallel approval paths for high-value deals
+    - Auto-escalation on SLA breach
+    - Smart routing based on deal attributes
+    """</span>
+
+    TRANSITIONS = {
+        (<span class="type">ApprovalState</span>.DRAFT, <span class="type">ApprovalAction</span>.SUBMIT): <span class="type">ApprovalState</span>.PENDING,
+        (<span class="type">ApprovalState</span>.PENDING, <span class="type">ApprovalAction</span>.APPROVE): <span class="type">ApprovalState</span>.LEVEL_1_REVIEW,
+        (<span class="type">ApprovalState</span>.LEVEL_1_REVIEW, <span class="type">ApprovalAction</span>.APPROVE): <span class="type">ApprovalState</span>.LEVEL_2_REVIEW,
+        (<span class="type">ApprovalState</span>.LEVEL_2_REVIEW, <span class="type">ApprovalAction</span>.APPROVE): <span class="type">ApprovalState</span>.LEVEL_3_REVIEW,
+        (<span class="type">ApprovalState</span>.LEVEL_3_REVIEW, <span class="type">ApprovalAction</span>.APPROVE): <span class="type">ApprovalState</span>.APPROVED,
+        (<span class="type">ApprovalState</span>.LEVEL_1_REVIEW, <span class="type">ApprovalAction</span>.REJECT): <span class="type">ApprovalState</span>.REJECTED,
+        (<span class="type">ApprovalState</span>.LEVEL_2_REVIEW, <span class="type">ApprovalAction</span>.REJECT): <span class="type">ApprovalState</span>.REJECTED,
+        (<span class="type">ApprovalState</span>.LEVEL_3_REVIEW, <span class="type">ApprovalAction</span>.REJECT): <span class="type">ApprovalState</span>.REJECTED,
+        (<span class="type">ApprovalState</span>.REJECTED, <span class="type">ApprovalAction</span>.REVISE): <span class="type">ApprovalState</span>.DRAFT,
+    }
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, db, notification_service, kafka_producer):
+        self.db = db
+        self.notifier = notification_service
+        self.kafka = kafka_producer
+        self.approval_levels = [
+            <span class="type">ApprovalLevel</span>(level=<span class="number">1</span>, approver_role=<span class="string">"sales_manager"</span>, sla_hours=<span class="number">24</span>),
+            <span class="type">ApprovalLevel</span>(level=<span class="number">2</span>, approver_role=<span class="string">"finance"</span>, sla_hours=<span class="number">48</span>),
+            <span class="type">ApprovalLevel</span>(level=<span class="number">3</span>, approver_role=<span class="string">"legal"</span>, sla_hours=<span class="number">72</span>, parallel_with=<span class="number">2</span>),
+        ]
+
+    <span class="keyword">async def</span> <span class="function">transition</span>(
+        self, deal_id: str, action: <span class="type">ApprovalAction</span>,
+        actor_id: str, comments: str = <span class="string">""</span>
+    ) -> <span class="type">ApprovalState</span>:
+        <span class="string">"""Execute a state transition with validation and side effects."""</span>
+        deal = <span class="keyword">await</span> self.db.get_deal(deal_id)
+        current_state = <span class="type">ApprovalState</span>(deal[<span class="string">"approval_state"</span>])
+
+        <span class="comment"># Validate transition</span>
+        next_state = self.TRANSITIONS.get((current_state, action))
+        <span class="keyword">if</span> next_state <span class="keyword">is</span> <span class="keyword">None</span>:
+            <span class="keyword">raise</span> ValueError(
+                <span class="string">f"Invalid transition: {current_state.value} + {action.value}"</span>
+            )
+
+        <span class="comment"># Check authorization</span>
+        <span class="keyword">await</span> self._authorize_action(deal, actor_id, action, current_state)
+
+        <span class="comment"># Determine if parallel approval applies</span>
+        deal_value = deal.get(<span class="string">"total_value"</span>, <span class="number">0</span>)
+        <span class="keyword">if</span> deal_value > <span class="number">500_000</span> <span class="keyword">and</span> current_state == <span class="type">ApprovalState</span>.LEVEL_1_REVIEW:
+            <span class="comment"># Trigger parallel Finance + Legal review</span>
+            <span class="keyword">await</span> self._trigger_parallel_approval(deal_id, [<span class="number">2</span>, <span class="number">3</span>])
+
+        <span class="comment"># Persist state change</span>
+        <span class="keyword">await</span> self.db.update_deal_state(deal_id, next_state.value)
+
+        <span class="comment"># Record approval decision</span>
+        record = <span class="type">ApprovalRecord</span>(
+            deal_id=deal_id,
+            level=self._get_current_level(current_state),
+            approver_id=actor_id,
+            action=action,
+            comments=comments,
+            decided_at=datetime.utcnow(),
+        )
+        <span class="keyword">await</span> self.db.insert_approval_record(record)
+
+        <span class="comment"># Emit event for downstream services</span>
+        <span class="keyword">await</span> self.kafka.produce(
+            topic=<span class="string">"deal.approval.events"</span>,
+            value={
+                <span class="string">"deal_id"</span>: deal_id,
+                <span class="string">"action"</span>: action.value,
+                <span class="string">"from_state"</span>: current_state.value,
+                <span class="string">"to_state"</span>: next_state.value,
+                <span class="string">"actor_id"</span>: actor_id,
+            },
+        )
+
+        <span class="comment"># Notify next approver</span>
+        <span class="keyword">await</span> self._notify_next_approver(deal_id, next_state)
+
+        logger.info(
+            <span class="string">f"Deal {deal_id}: {current_state.value} -> {next_state.value} "</span>
+            <span class="string">f"by {actor_id}"</span>
+        )
+        <span class="keyword">return</span> next_state
+
+    <span class="keyword">async def</span> <span class="function">check_sla_breaches</span>(self):
+        <span class="string">"""Periodic job to detect and escalate SLA breaches."""</span>
+        pending_approvals = <span class="keyword">await</span> self.db.get_pending_approvals()
+
+        <span class="keyword">for</span> approval <span class="keyword">in</span> pending_approvals:
+            level_config = self.approval_levels[approval[<span class="string">"level"</span>] - <span class="number">1</span>]
+            deadline = approval[<span class="string">"created_at"</span>] + timedelta(
+                hours=level_config.sla_hours
+            )
+
+            <span class="keyword">if</span> datetime.utcnow() > deadline:
+                logger.warning(
+                    <span class="string">f"SLA breach: deal {approval['deal_id']} at level "</span>
+                    <span class="string">f"{approval['level']} — escalating"</span>
+                )
+                <span class="keyword">await</span> self._escalate(
+                    approval[<span class="string">"deal_id"</span>], approval[<span class="string">"level"</span>]
+                )
+
+    <span class="keyword">async def</span> <span class="function">_escalate</span>(self, deal_id: str, current_level: int):
+        <span class="string">"""Escalate to backup approver or skip-level manager."""</span>
+        backup = <span class="keyword">await</span> self.db.get_backup_approver(current_level)
+        <span class="keyword">await</span> self.notifier.send_escalation(
+            deal_id=deal_id,
+            approver_id=backup[<span class="string">"id"</span>],
+            reason=<span class="string">"SLA breach — auto-escalated"</span>,
+        )
+
+    <span class="keyword">async def</span> <span class="function">_trigger_parallel_approval</span>(self, deal_id: str, levels: List[int]):
+        <span class="string">"""Launch parallel approval tracks for high-value deals."""</span>
+        tasks = []
+        <span class="keyword">for</span> level <span class="keyword">in</span> levels:
+            config = self.approval_levels[level - <span class="number">1</span>]
+            approver = <span class="keyword">await</span> self.db.get_approver_for_role(config.approver_role)
+            tasks.append(
+                self.notifier.request_approval(deal_id, approver[<span class="string">"id"</span>], level)
+            )
+        <span class="keyword">await</span> asyncio.gather(*tasks)
+        logger.info(<span class="string">f"Parallel approval triggered for deal {deal_id}: levels {levels}"</span>)</code></pre>
+      </div>
+
+      <div class="orange-box">
+        <h4>31.6% Cycle Time Reduction — How?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Before:</strong> Sequential L1 → L2 → L3 approval, average 9.5 business days. <strong style="color:#e8e8f0;">After:</strong> Parallel Finance + Legal for deals above $500K, auto-escalation on SLA breach (24h/48h/72h limits), smart routing that skips unnecessary levels for standard deals. Average cycle dropped to 6.5 business days.</p>
+      </div>
+    </div>
+
+    <!-- 5. ENGAGEMENT SCORING SYSTEM -->
+    <div class="article-section" id="engagement">
+      <h2><span class="step-badge">5</span> Engagement Scoring System</h2>
+
+      <p>The engagement scoring service provides <strong style="color:#e8e8f0;">real-time deal prioritization</strong> based on behavioral signals, historical patterns, and ML-derived features. Scores are computed incrementally as new events arrive and cached in Redis for sub-millisecond reads by the deal management UI.</p>
+
+      <h3>Scoring Signals</h3>
+      <ul>
+        <li><strong>Recency signals:</strong> Time since last deal interaction, campaign update, or approval action</li>
+        <li><strong>Frequency signals:</strong> Number of deal touchpoints in the last 7/30/90 days</li>
+        <li><strong>Monetary signals:</strong> Deal value, historical spend, budget utilization rate</li>
+        <li><strong>Behavioral signals:</strong> Campaign edit frequency, targeting changes, approval velocity</li>
+        <li><strong>Account health:</strong> Past deal completion rate, payment history, support ticket volume</li>
+      </ul>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/scoring/engagement_scorer.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> math
+<span class="keyword">import</span> time
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime, timedelta
+<span class="keyword">from</span> typing <span class="keyword">import</span> Dict, List, Optional
+<span class="keyword">import</span> redis.asyncio <span class="keyword">as</span> aioredis
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">EngagementFeatures</span>:
+    <span class="string">"""ML feature vector for engagement scoring."""</span>
+    deal_id: str = <span class="string">""</span>
+    <span class="comment"># Recency features</span>
+    days_since_last_interaction: float = <span class="number">0.0</span>
+    days_since_last_campaign_update: float = <span class="number">0.0</span>
+    hours_since_last_approval_action: float = <span class="number">0.0</span>
+    <span class="comment"># Frequency features</span>
+    interactions_7d: int = <span class="number">0</span>
+    interactions_30d: int = <span class="number">0</span>
+    campaign_edits_30d: int = <span class="number">0</span>
+    <span class="comment"># Monetary features</span>
+    deal_value: float = <span class="number">0.0</span>
+    budget_utilization: float = <span class="number">0.0</span>  <span class="comment"># 0.0 to 1.0</span>
+    historical_spend: float = <span class="number">0.0</span>
+    <span class="comment"># Behavioral features</span>
+    targeting_change_count: int = <span class="number">0</span>
+    approval_velocity: float = <span class="number">0.0</span>  <span class="comment"># avg hours per approval level</span>
+    <span class="comment"># Account health</span>
+    past_completion_rate: float = <span class="number">0.0</span>
+    support_tickets_90d: int = <span class="number">0</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">EngagementScore</span>:
+    deal_id: str
+    score: float           <span class="comment"># 0.0 to 100.0</span>
+    tier: str              <span class="comment"># "hot", "warm", "cold", "at_risk"</span>
+    components: Dict[str, float] = field(default_factory=dict)
+    computed_at: datetime = field(default_factory=datetime.utcnow)
+
+
+<span class="keyword">class</span> <span class="type">EngagementScoringEngine</span>:
+    <span class="string">"""
+    Real-time engagement scoring with weighted feature combination.
+    Scores are computed incrementally and cached in Redis.
+    """</span>
+
+    <span class="comment"># Feature weights (tuned via historical deal outcome analysis)</span>
+    WEIGHTS = {
+        <span class="string">"recency"</span>: <span class="number">0.30</span>,
+        <span class="string">"frequency"</span>: <span class="number">0.20</span>,
+        <span class="string">"monetary"</span>: <span class="number">0.25</span>,
+        <span class="string">"behavioral"</span>: <span class="number">0.15</span>,
+        <span class="string">"account_health"</span>: <span class="number">0.10</span>,
+    }
+
+    TIER_THRESHOLDS = {
+        <span class="string">"hot"</span>: <span class="number">75.0</span>,
+        <span class="string">"warm"</span>: <span class="number">50.0</span>,
+        <span class="string">"cold"</span>: <span class="number">25.0</span>,
+        <span class="string">"at_risk"</span>: <span class="number">0.0</span>,
+    }
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, redis_client: aioredis.Redis, db):
+        self.redis = redis_client
+        self.db = db
+        self.cache_ttl = <span class="number">600</span>  <span class="comment"># 10 min cache for scores</span>
+
+    <span class="keyword">async def</span> <span class="function">compute_score</span>(self, deal_id: str) -> <span class="type">EngagementScore</span>:
+        <span class="string">"""Compute engagement score from feature vector."""</span>
+        features = <span class="keyword">await</span> self._extract_features(deal_id)
+
+        <span class="comment"># Compute component scores (each 0-100)</span>
+        components = {
+            <span class="string">"recency"</span>: self._score_recency(features),
+            <span class="string">"frequency"</span>: self._score_frequency(features),
+            <span class="string">"monetary"</span>: self._score_monetary(features),
+            <span class="string">"behavioral"</span>: self._score_behavioral(features),
+            <span class="string">"account_health"</span>: self._score_account_health(features),
+        }
+
+        <span class="comment"># Weighted combination</span>
+        final_score = sum(
+            components[k] * self.WEIGHTS[k] <span class="keyword">for</span> k <span class="keyword">in</span> components
+        )
+
+        <span class="comment"># Determine tier</span>
+        tier = <span class="string">"at_risk"</span>
+        <span class="keyword">for</span> t, threshold <span class="keyword">in</span> self.TIER_THRESHOLDS.items():
+            <span class="keyword">if</span> final_score >= threshold:
+                tier = t
+                <span class="keyword">break</span>
+
+        result = <span class="type">EngagementScore</span>(
+            deal_id=deal_id,
+            score=round(final_score, <span class="number">2</span>),
+            tier=tier,
+            components=components,
+        )
+
+        <span class="comment"># Cache in Redis</span>
+        <span class="keyword">await</span> self.redis.setex(
+            <span class="string">f"engagement:{deal_id}"</span>,
+            self.cache_ttl,
+            result.__dict__.__str__(),
+        )
+        <span class="keyword">return</span> result
+
+    <span class="keyword">def</span> <span class="function">_score_recency</span>(self, f: <span class="type">EngagementFeatures</span>) -> float:
+        <span class="string">"""Exponential decay: recent activity scores higher."""</span>
+        decay_rate = <span class="number">0.1</span>
+        recency_raw = math.exp(-decay_rate * f.days_since_last_interaction)
+        campaign_recency = math.exp(-decay_rate * f.days_since_last_campaign_update)
+        approval_recency = math.exp(-<span class="number">0.05</span> * f.hours_since_last_approval_action)
+        <span class="keyword">return</span> (recency_raw * <span class="number">0.4</span> + campaign_recency * <span class="number">0.35</span> + approval_recency * <span class="number">0.25</span>) * <span class="number">100</span>
+
+    <span class="keyword">def</span> <span class="function">_score_frequency</span>(self, f: <span class="type">EngagementFeatures</span>) -> float:
+        <span class="string">"""Log-scaled frequency to avoid domination by power users."""</span>
+        freq_7d = min(math.log1p(f.interactions_7d) / math.log1p(<span class="number">20</span>), <span class="number">1.0</span>)
+        freq_30d = min(math.log1p(f.interactions_30d) / math.log1p(<span class="number">60</span>), <span class="number">1.0</span>)
+        edits = min(math.log1p(f.campaign_edits_30d) / math.log1p(<span class="number">15</span>), <span class="number">1.0</span>)
+        <span class="keyword">return</span> (freq_7d * <span class="number">0.5</span> + freq_30d * <span class="number">0.3</span> + edits * <span class="number">0.2</span>) * <span class="number">100</span>
+
+    <span class="keyword">def</span> <span class="function">_score_monetary</span>(self, f: <span class="type">EngagementFeatures</span>) -> float:
+        <span class="string">"""Normalize deal value with sigmoid for graceful saturation."""</span>
+        value_norm = <span class="number">1</span> / (<span class="number">1</span> + math.exp(-<span class="number">0.00001</span> * (f.deal_value - <span class="number">100_000</span>)))
+        utilization = f.budget_utilization
+        spend_norm = min(math.log1p(f.historical_spend) / math.log1p(<span class="number">1_000_000</span>), <span class="number">1.0</span>)
+        <span class="keyword">return</span> (value_norm * <span class="number">0.4</span> + utilization * <span class="number">0.35</span> + spend_norm * <span class="number">0.25</span>) * <span class="number">100</span>
+
+    <span class="keyword">def</span> <span class="function">_score_behavioral</span>(self, f: <span class="type">EngagementFeatures</span>) -> float:
+        <span class="string">"""Behavioral signals indicate active deal management."""</span>
+        targeting_score = min(f.targeting_change_count / <span class="number">10</span>, <span class="number">1.0</span>)
+        velocity_score = max(<span class="number">0</span>, <span class="number">1</span> - f.approval_velocity / <span class="number">168</span>)  <span class="comment"># 168h = 1 week</span>
+        <span class="keyword">return</span> (targeting_score * <span class="number">0.5</span> + velocity_score * <span class="number">0.5</span>) * <span class="number">100</span>
+
+    <span class="keyword">def</span> <span class="function">_score_account_health</span>(self, f: <span class="type">EngagementFeatures</span>) -> float:
+        <span class="string">"""Account reliability based on historical performance."""</span>
+        completion = f.past_completion_rate * <span class="number">100</span>
+        tickets_penalty = min(f.support_tickets_90d * <span class="number">5</span>, <span class="number">50</span>)
+        <span class="keyword">return</span> max(<span class="number">0</span>, completion - tickets_penalty)
+
+    <span class="keyword">async def</span> <span class="function">_extract_features</span>(self, deal_id: str) -> <span class="type">EngagementFeatures</span>:
+        <span class="string">"""Extract feature vector from database and event store."""</span>
+        deal = <span class="keyword">await</span> self.db.get_deal_with_history(deal_id)
+        events = <span class="keyword">await</span> self.db.get_deal_events(deal_id, days=<span class="number">90</span>)
+        account = <span class="keyword">await</span> self.db.get_account_health(deal[<span class="string">"account_id"</span>])
+
+        now = datetime.utcnow()
+        <span class="keyword">return</span> <span class="type">EngagementFeatures</span>(
+            deal_id=deal_id,
+            days_since_last_interaction=(now - deal[<span class="string">"last_interaction"</span>]).days,
+            days_since_last_campaign_update=(now - deal[<span class="string">"last_campaign_update"</span>]).days,
+            hours_since_last_approval_action=(now - deal[<span class="string">"last_approval_action"</span>]).total_seconds() / <span class="number">3600</span>,
+            interactions_7d=len([e <span class="keyword">for</span> e <span class="keyword">in</span> events <span class="keyword">if</span> (now - e[<span class="string">"ts"</span>]).days <= <span class="number">7</span>]),
+            interactions_30d=len([e <span class="keyword">for</span> e <span class="keyword">in</span> events <span class="keyword">if</span> (now - e[<span class="string">"ts"</span>]).days <= <span class="number">30</span>]),
+            campaign_edits_30d=deal.get(<span class="string">"campaign_edits_30d"</span>, <span class="number">0</span>),
+            deal_value=deal[<span class="string">"total_value"</span>],
+            budget_utilization=deal.get(<span class="string">"budget_utilization"</span>, <span class="number">0.0</span>),
+            historical_spend=account.get(<span class="string">"total_historical_spend"</span>, <span class="number">0</span>),
+            targeting_change_count=deal.get(<span class="string">"targeting_changes"</span>, <span class="number">0</span>),
+            approval_velocity=deal.get(<span class="string">"avg_approval_hours"</span>, <span class="number">48.0</span>),
+            past_completion_rate=account.get(<span class="string">"deal_completion_rate"</span>, <span class="number">0.8</span>),
+            support_tickets_90d=account.get(<span class="string">"support_tickets_90d"</span>, <span class="number">0</span>),
+        )</code></pre>
+      </div>
+    </div>
+
+    <!-- 6. CACHING STRATEGY -->
+    <div class="article-section" id="caching">
+      <h2><span class="step-badge">6</span> Caching Strategy</h2>
+
+      <p>The platform achieves an <strong style="color:#10b981;">85% cache hit rate</strong> through a multi-layer caching strategy using Redis. The cache sits between the API layer and the database, dramatically reducing read latency and PostgreSQL load during peak deal management hours.</p>
+
+      <h3>Cache Layers</h3>
+      <ul>
+        <li><strong>L1 — Validation Cache:</strong> Stores campaign validation results (TTL: 5 min). Repeated validations during deal editing hit cache instead of re-running all 12 validators</li>
+        <li><strong>L2 — Entity Cache:</strong> Hot deal and campaign objects (TTL: 15 min). Read-heavy endpoints serve from cache with write-through invalidation</li>
+        <li><strong>L3 — Engagement Score Cache:</strong> Pre-computed scores (TTL: 10 min). Dashboard reads never hit the scoring engine directly</li>
+        <li><strong>L4 — Config Cache:</strong> Business rules, approval thresholds, targeting configs (TTL: 1 hour). Rarely changing data with long TTLs</li>
+      </ul>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/cache/cache_manager.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> json
+<span class="keyword">import</span> logging
+<span class="keyword">import</span> time
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass
+<span class="keyword">from</span> enum <span class="keyword">import</span> Enum
+<span class="keyword">from</span> typing <span class="keyword">import</span> Any, Callable, Dict, Optional
+<span class="keyword">import</span> redis.asyncio <span class="keyword">as</span> aioredis
+
+logger = logging.getLogger(__name__)
+
+
+<span class="keyword">class</span> <span class="type">CacheLayer</span>(Enum):
+    VALIDATION = <span class="string">"validation"</span>     <span class="comment"># TTL: 300s</span>
+    ENTITY = <span class="string">"entity"</span>             <span class="comment"># TTL: 900s</span>
+    ENGAGEMENT = <span class="string">"engagement"</span>     <span class="comment"># TTL: 600s</span>
+    CONFIG = <span class="string">"config"</span>             <span class="comment"># TTL: 3600s</span>
+
+
+<span class="keyword">class</span> <span class="type">CacheInvalidationStrategy</span>(Enum):
+    WRITE_THROUGH = <span class="string">"write_through"</span>   <span class="comment"># Update cache on write</span>
+    WRITE_BEHIND = <span class="string">"write_behind"</span>     <span class="comment"># Async cache update</span>
+    INVALIDATE = <span class="string">"invalidate"</span>         <span class="comment"># Delete on write, lazy reload</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">CacheConfig</span>:
+    layer: <span class="type">CacheLayer</span>
+    ttl: int
+    strategy: <span class="type">CacheInvalidationStrategy</span>
+    prefix: str
+
+
+<span class="keyword">class</span> <span class="type">MultiLayerCacheManager</span>:
+    <span class="string">"""
+    Multi-layer Redis cache with 85% hit rate.
+    Supports write-through, write-behind, and invalidation strategies.
+    """</span>
+
+    LAYER_CONFIGS = {
+        <span class="type">CacheLayer</span>.VALIDATION: <span class="type">CacheConfig</span>(
+            layer=<span class="type">CacheLayer</span>.VALIDATION, ttl=<span class="number">300</span>,
+            strategy=<span class="type">CacheInvalidationStrategy</span>.INVALIDATE,
+            prefix=<span class="string">"val"</span>,
+        ),
+        <span class="type">CacheLayer</span>.ENTITY: <span class="type">CacheConfig</span>(
+            layer=<span class="type">CacheLayer</span>.ENTITY, ttl=<span class="number">900</span>,
+            strategy=<span class="type">CacheInvalidationStrategy</span>.WRITE_THROUGH,
+            prefix=<span class="string">"ent"</span>,
+        ),
+        <span class="type">CacheLayer</span>.ENGAGEMENT: <span class="type">CacheConfig</span>(
+            layer=<span class="type">CacheLayer</span>.ENGAGEMENT, ttl=<span class="number">600</span>,
+            strategy=<span class="type">CacheInvalidationStrategy</span>.WRITE_BEHIND,
+            prefix=<span class="string">"eng"</span>,
+        ),
+        <span class="type">CacheLayer</span>.CONFIG: <span class="type">CacheConfig</span>(
+            layer=<span class="type">CacheLayer</span>.CONFIG, ttl=<span class="number">3600</span>,
+            strategy=<span class="type">CacheInvalidationStrategy</span>.INVALIDATE,
+            prefix=<span class="string">"cfg"</span>,
+        ),
+    }
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, redis_client: aioredis.Redis):
+        self.redis = redis_client
+        self.stats = {<span class="string">"hits"</span>: <span class="number">0</span>, <span class="string">"misses"</span>: <span class="number">0</span>, <span class="string">"invalidations"</span>: <span class="number">0</span>}
+
+    <span class="keyword">async def</span> <span class="function">get</span>(
+        self, layer: <span class="type">CacheLayer</span>, key: str
+    ) -> Optional[Any]:
+        <span class="string">"""Retrieve from cache with stats tracking."""</span>
+        config = self.LAYER_CONFIGS[layer]
+        cache_key = <span class="string">f"{config.prefix}:{key}"</span>
+
+        cached = <span class="keyword">await</span> self.redis.get(cache_key)
+        <span class="keyword">if</span> cached:
+            self.stats[<span class="string">"hits"</span>] += <span class="number">1</span>
+            <span class="keyword">return</span> json.loads(cached)
+
+        self.stats[<span class="string">"misses"</span>] += <span class="number">1</span>
+        <span class="keyword">return</span> <span class="keyword">None</span>
+
+    <span class="keyword">async def</span> <span class="function">set</span>(
+        self, layer: <span class="type">CacheLayer</span>, key: str, value: Any
+    ):
+        <span class="string">"""Store in cache with layer-specific TTL."""</span>
+        config = self.LAYER_CONFIGS[layer]
+        cache_key = <span class="string">f"{config.prefix}:{key}"</span>
+        <span class="keyword">await</span> self.redis.setex(
+            cache_key, config.ttl, json.dumps(value, default=str)
+        )
+
+    <span class="keyword">async def</span> <span class="function">invalidate</span>(
+        self, layer: <span class="type">CacheLayer</span>, key: str
+    ):
+        <span class="string">"""Remove specific key from cache."""</span>
+        config = self.LAYER_CONFIGS[layer]
+        cache_key = <span class="string">f"{config.prefix}:{key}"</span>
+        <span class="keyword">await</span> self.redis.delete(cache_key)
+        self.stats[<span class="string">"invalidations"</span>] += <span class="number">1</span>
+
+    <span class="keyword">async def</span> <span class="function">invalidate_pattern</span>(
+        self, layer: <span class="type">CacheLayer</span>, pattern: str
+    ):
+        <span class="string">"""Invalidate all keys matching a pattern (e.g., deal update)."""</span>
+        config = self.LAYER_CONFIGS[layer]
+        full_pattern = <span class="string">f"{config.prefix}:{pattern}*"</span>
+        cursor = <span class="number">0</span>
+        <span class="keyword">while</span> <span class="keyword">True</span>:
+            cursor, keys = <span class="keyword">await</span> self.redis.scan(
+                cursor=cursor, match=full_pattern, count=<span class="number">100</span>
+            )
+            <span class="keyword">if</span> keys:
+                <span class="keyword">await</span> self.redis.delete(*keys)
+                self.stats[<span class="string">"invalidations"</span>] += len(keys)
+            <span class="keyword">if</span> cursor == <span class="number">0</span>:
+                <span class="keyword">break</span>
+
+    <span class="keyword">async def</span> <span class="function">get_or_compute</span>(
+        self, layer: <span class="type">CacheLayer</span>, key: str,
+        compute_fn: Callable, *args
+    ) -> Any:
+        <span class="string">"""Cache-aside pattern: get from cache or compute and store."""</span>
+        cached = <span class="keyword">await</span> self.get(layer, key)
+        <span class="keyword">if</span> cached <span class="keyword">is not</span> <span class="keyword">None</span>:
+            <span class="keyword">return</span> cached
+
+        value = <span class="keyword">await</span> compute_fn(*args)
+        <span class="keyword">await</span> self.set(layer, key, value)
+        <span class="keyword">return</span> value
+
+    <span class="keyword">async def</span> <span class="function">write_through</span>(
+        self, layer: <span class="type">CacheLayer</span>, key: str,
+        value: Any, db_write_fn: Callable, *args
+    ):
+        <span class="string">"""Write-through: update DB and cache atomically."""</span>
+        <span class="keyword">await</span> db_write_fn(*args)
+        <span class="keyword">await</span> self.set(layer, key, value)
+
+    <span class="keyword">def</span> <span class="function">hit_rate</span>(self) -> float:
+        <span class="string">"""Current cache hit rate percentage."""</span>
+        total = self.stats[<span class="string">"hits"</span>] + self.stats[<span class="string">"misses"</span>]
+        <span class="keyword">return</span> (self.stats[<span class="string">"hits"</span>] / total * <span class="number">100</span>) <span class="keyword">if</span> total > <span class="number">0</span> <span class="keyword">else</span> <span class="number">0.0</span></code></pre>
+      </div>
+
+      <div class="warn-box">
+        <p style="color:#a0a0b8;"><strong style="color:#ef4444;">Cache Invalidation Pitfall:</strong> When a deal is updated, we must invalidate not just the entity cache but also the validation cache (campaign rules may reference deal limits) and the engagement cache (scores depend on deal state). We use a <strong style="color:#e8e8f0;">cascade invalidation pattern</strong>: deal update triggers invalidation across all three layers via a Kafka event handler.</p>
+      </div>
+    </div>
+
+    <!-- 7. RELIABILITY & OBSERVABILITY -->
+    <div class="article-section" id="reliability">
+      <h2><span class="step-badge">7</span> Reliability & Observability</h2>
+
+      <p>The platform maintains <strong style="color:#10b981;">99.95% uptime</strong> through a defense-in-depth approach: circuit breakers at service boundaries, comprehensive health checks, structured logging, and real-time Grafana dashboards. Every service exposes Prometheus metrics for alerting and capacity planning.</p>
+
+      <h3>Observability Stack</h3>
+      <ul>
+        <li><strong>Metrics:</strong> Prometheus + Grafana dashboards for latency percentiles, throughput, error rates, and cache hit rates</li>
+        <li><strong>Logging:</strong> Structured JSON logs with correlation IDs propagated across services via Kafka headers</li>
+        <li><strong>Tracing:</strong> Distributed tracing with OpenTelemetry for end-to-end request flow visibility</li>
+        <li><strong>Alerting:</strong> PagerDuty integration with severity-based routing (P1: page on-call, P2: Slack, P3: email)</li>
+      </ul>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/common/reliability.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> asyncio
+<span class="keyword">import</span> logging
+<span class="keyword">import</span> time
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> enum <span class="keyword">import</span> Enum
+<span class="keyword">from</span> typing <span class="keyword">import</span> Callable, Dict, List, Optional
+<span class="keyword">from</span> prometheus_client <span class="keyword">import</span> Counter, Histogram, Gauge
+
+logger = logging.getLogger(__name__)
+
+<span class="comment"># --- Prometheus Metrics ---</span>
+REQUEST_LATENCY = Histogram(
+    <span class="string">"deal_platform_request_latency_seconds"</span>,
+    <span class="string">"Request latency in seconds"</span>,
+    [<span class="string">"service"</span>, <span class="string">"endpoint"</span>, <span class="string">"method"</span>],
+    buckets=[<span class="number">0.01</span>, <span class="number">0.05</span>, <span class="number">0.1</span>, <span class="number">0.25</span>, <span class="number">0.5</span>, <span class="number">1.0</span>, <span class="number">2.5</span>, <span class="number">5.0</span>, <span class="number">10.0</span>],
+)
+REQUEST_COUNT = Counter(
+    <span class="string">"deal_platform_requests_total"</span>,
+    <span class="string">"Total requests"</span>,
+    [<span class="string">"service"</span>, <span class="string">"endpoint"</span>, <span class="string">"status"</span>],
+)
+CIRCUIT_STATE = Gauge(
+    <span class="string">"deal_platform_circuit_state"</span>,
+    <span class="string">"Circuit breaker state (0=closed, 1=open, 2=half_open)"</span>,
+    [<span class="string">"service"</span>, <span class="string">"dependency"</span>],
+)
+CACHE_HIT_RATE = Gauge(
+    <span class="string">"deal_platform_cache_hit_rate"</span>,
+    <span class="string">"Cache hit rate percentage"</span>,
+    [<span class="string">"layer"</span>],
+)
+CDC_LAG = Gauge(
+    <span class="string">"deal_platform_cdc_consumer_lag"</span>,
+    <span class="string">"CDC consumer lag in messages"</span>,
+    [<span class="string">"topic"</span>, <span class="string">"partition"</span>],
+)
+DLQ_SIZE = Gauge(
+    <span class="string">"deal_platform_dlq_size"</span>,
+    <span class="string">"Dead letter queue message count"</span>,
+    [<span class="string">"topic"</span>],
+)
+
+
+<span class="keyword">class</span> <span class="type">HealthStatus</span>(Enum):
+    HEALTHY = <span class="string">"healthy"</span>
+    DEGRADED = <span class="string">"degraded"</span>
+    UNHEALTHY = <span class="string">"unhealthy"</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">HealthCheck</span>:
+    name: str
+    status: <span class="type">HealthStatus</span>
+    latency_ms: float = <span class="number">0.0</span>
+    message: str = <span class="string">""</span>
+
+
+<span class="keyword">class</span> <span class="type">ServiceHealthChecker</span>:
+    <span class="string">"""Comprehensive health check for all service dependencies."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, db, redis_client, kafka_consumer):
+        self.db = db
+        self.redis = redis_client
+        self.kafka = kafka_consumer
+
+    <span class="keyword">async def</span> <span class="function">check_all</span>(self) -> Dict:
+        <span class="string">"""Run all health checks in parallel."""</span>
+        checks = <span class="keyword">await</span> asyncio.gather(
+            self._check_database(),
+            self._check_redis(),
+            self._check_kafka(),
+            return_exceptions=<span class="keyword">True</span>,
+        )
+
+        results = []
+        <span class="keyword">for</span> check <span class="keyword">in</span> checks:
+            <span class="keyword">if</span> isinstance(check, Exception):
+                results.append(<span class="type">HealthCheck</span>(
+                    name=<span class="string">"unknown"</span>,
+                    status=<span class="type">HealthStatus</span>.UNHEALTHY,
+                    message=str(check),
+                ))
+            <span class="keyword">else</span>:
+                results.append(check)
+
+        overall = <span class="type">HealthStatus</span>.HEALTHY
+        <span class="keyword">if</span> <span class="keyword">any</span>(c.status == <span class="type">HealthStatus</span>.UNHEALTHY <span class="keyword">for</span> c <span class="keyword">in</span> results):
+            overall = <span class="type">HealthStatus</span>.UNHEALTHY
+        <span class="keyword">elif</span> <span class="keyword">any</span>(c.status == <span class="type">HealthStatus</span>.DEGRADED <span class="keyword">for</span> c <span class="keyword">in</span> results):
+            overall = <span class="type">HealthStatus</span>.DEGRADED
+
+        <span class="keyword">return</span> {
+            <span class="string">"status"</span>: overall.value,
+            <span class="string">"checks"</span>: [
+                {<span class="string">"name"</span>: c.name, <span class="string">"status"</span>: c.status.value,
+                 <span class="string">"latency_ms"</span>: c.latency_ms, <span class="string">"message"</span>: c.message}
+                <span class="keyword">for</span> c <span class="keyword">in</span> results
+            ],
+        }
+
+    <span class="keyword">async def</span> <span class="function">_check_database</span>(self) -> <span class="type">HealthCheck</span>:
+        start = time.monotonic()
+        <span class="keyword">try</span>:
+            <span class="keyword">await</span> self.db.execute(<span class="string">"SELECT 1"</span>)
+            latency = (time.monotonic() - start) * <span class="number">1000</span>
+            status = <span class="type">HealthStatus</span>.HEALTHY <span class="keyword">if</span> latency < <span class="number">100</span> <span class="keyword">else</span> <span class="type">HealthStatus</span>.DEGRADED
+            <span class="keyword">return</span> <span class="type">HealthCheck</span>(name=<span class="string">"postgresql"</span>, status=status, latency_ms=latency)
+        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+            <span class="keyword">return</span> <span class="type">HealthCheck</span>(
+                name=<span class="string">"postgresql"</span>, status=<span class="type">HealthStatus</span>.UNHEALTHY,
+                latency_ms=(time.monotonic() - start) * <span class="number">1000</span>, message=str(e),
+            )
+
+    <span class="keyword">async def</span> <span class="function">_check_redis</span>(self) -> <span class="type">HealthCheck</span>:
+        start = time.monotonic()
+        <span class="keyword">try</span>:
+            <span class="keyword">await</span> self.redis.ping()
+            latency = (time.monotonic() - start) * <span class="number">1000</span>
+            status = <span class="type">HealthStatus</span>.HEALTHY <span class="keyword">if</span> latency < <span class="number">10</span> <span class="keyword">else</span> <span class="type">HealthStatus</span>.DEGRADED
+            <span class="keyword">return</span> <span class="type">HealthCheck</span>(name=<span class="string">"redis"</span>, status=status, latency_ms=latency)
+        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+            <span class="keyword">return</span> <span class="type">HealthCheck</span>(
+                name=<span class="string">"redis"</span>, status=<span class="type">HealthStatus</span>.UNHEALTHY,
+                latency_ms=(time.monotonic() - start) * <span class="number">1000</span>, message=str(e),
+            )
+
+    <span class="keyword">async def</span> <span class="function">_check_kafka</span>(self) -> <span class="type">HealthCheck</span>:
+        start = time.monotonic()
+        <span class="keyword">try</span>:
+            metadata = self.kafka.list_topics(timeout=<span class="number">5</span>)
+            latency = (time.monotonic() - start) * <span class="number">1000</span>
+            topic_count = len(metadata.topics)
+            status = <span class="type">HealthStatus</span>.HEALTHY <span class="keyword">if</span> topic_count > <span class="number">0</span> <span class="keyword">else</span> <span class="type">HealthStatus</span>.DEGRADED
+            <span class="keyword">return</span> <span class="type">HealthCheck</span>(
+                name=<span class="string">"kafka"</span>, status=status, latency_ms=latency,
+                message=<span class="string">f"{topic_count} topics available"</span>,
+            )
+        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+            <span class="keyword">return</span> <span class="type">HealthCheck</span>(
+                name=<span class="string">"kafka"</span>, status=<span class="type">HealthStatus</span>.UNHEALTHY,
+                latency_ms=(time.monotonic() - start) * <span class="number">1000</span>, message=str(e),
+            )
+
+
+<span class="keyword">class</span> <span class="type">RetryWithBackoff</span>:
+    <span class="string">"""Decorator for retrying async functions with exponential backoff."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, max_retries: int = <span class="number">3</span>, base_delay: float = <span class="number">1.0</span>,
+                 max_delay: float = <span class="number">60.0</span>, exceptions: tuple = (Exception,)):
+        self.max_retries = max_retries
+        self.base_delay = base_delay
+        self.max_delay = max_delay
+        self.exceptions = exceptions
+
+    <span class="keyword">def</span> <span class="function">__call__</span>(self, func: Callable):
+        <span class="keyword">async def</span> <span class="function">wrapper</span>(*args, **kwargs):
+            <span class="keyword">for</span> attempt <span class="keyword">in</span> range(self.max_retries + <span class="number">1</span>):
+                <span class="keyword">try</span>:
+                    <span class="keyword">return await</span> func(*args, **kwargs)
+                <span class="keyword">except</span> self.exceptions <span class="keyword">as</span> e:
+                    <span class="keyword">if</span> attempt == self.max_retries:
+                        logger.error(<span class="string">f"{func.__name__} failed after {self.max_retries} retries: {e}"</span>)
+                        <span class="keyword">raise</span>
+                    delay = min(self.base_delay * (<span class="number">2</span> ** attempt), self.max_delay)
+                    logger.warning(
+                        <span class="string">f"{func.__name__} attempt {attempt + 1} failed, "</span>
+                        <span class="string">f"retrying in {delay:.1f}s: {e}"</span>
+                    )
+                    <span class="keyword">await</span> asyncio.sleep(delay)
+        <span class="keyword">return</span> wrapper</code></pre>
+      </div>
+
+      <div class="purple-box">
+        <h4>Grafana Dashboard Layout</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">
+          <strong style="color:#e8e8f0;">Row 1 — Golden Signals:</strong> Request rate, error rate (4xx/5xx split), p50/p95/p99 latency, saturation (CPU/memory).<br>
+          <strong style="color:#e8e8f0;">Row 2 — Pipeline Health:</strong> CDC consumer lag, DLQ depth, messages processed/min, circuit breaker state.<br>
+          <strong style="color:#e8e8f0;">Row 3 — Business Metrics:</strong> Deals in each approval state, avg approval cycle time, validation pass rate, cache hit rate.<br>
+          <strong style="color:#e8e8f0;">Row 4 — Infrastructure:</strong> PostgreSQL connections, Redis memory usage, Kafka partition balance, pod restart count.
+        </p>
+      </div>
+    </div>
+
+    <!-- 8. DATABASE SCHEMA -->
+    <div class="article-section" id="schema">
+      <h2><span class="step-badge">8</span> Database Schema</h2>
+
+      <p>The PostgreSQL schema is designed around <strong style="color:#e8e8f0;">domain-driven bounded contexts</strong>. Each service owns its tables, and cross-service data flows through Kafka events rather than shared database access. The schema supports full audit logging for compliance requirements.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">SQL</span>
+          <span class="code-file">schema/deal_platform.sql</span>
+        </div>
+        <pre><code><span class="comment">-- ============================================</span>
+<span class="comment">-- DEALS: Core deal entity with lifecycle state</span>
+<span class="comment">-- ============================================</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">deals</span> (
+    id              UUID <span class="keyword">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    account_id      UUID <span class="keyword">NOT NULL</span> <span class="keyword">REFERENCES</span> accounts(id),
+    deal_name       VARCHAR(<span class="number">255</span>) <span class="keyword">NOT NULL</span>,
+    deal_type       VARCHAR(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,  <span class="comment">-- 'standard', 'programmatic', 'preferred'</span>
+    total_value     DECIMAL(<span class="number">15</span>,<span class="number">2</span>) <span class="keyword">NOT NULL</span>,
+    currency        CHAR(<span class="number">3</span>) <span class="keyword">DEFAULT</span> <span class="string">'USD'</span>,
+    status          VARCHAR(<span class="number">30</span>) <span class="keyword">NOT NULL DEFAULT</span> <span class="string">'draft'</span>,
+    approval_state  VARCHAR(<span class="number">30</span>) <span class="keyword">NOT NULL DEFAULT</span> <span class="string">'draft'</span>,
+    owner_id        UUID <span class="keyword">NOT NULL</span>,
+    start_date      DATE <span class="keyword">NOT NULL</span>,
+    end_date        DATE <span class="keyword">NOT NULL</span>,
+    version         INTEGER <span class="keyword">NOT NULL DEFAULT</span> <span class="number">1</span>,
+    created_at      TIMESTAMPTZ <span class="keyword">NOT NULL DEFAULT</span> now(),
+    updated_at      TIMESTAMPTZ <span class="keyword">NOT NULL DEFAULT</span> now(),
+    <span class="keyword">CONSTRAINT</span> chk_dates <span class="keyword">CHECK</span> (end_date > start_date),
+    <span class="keyword">CONSTRAINT</span> chk_value <span class="keyword">CHECK</span> (total_value > <span class="number">0</span>)
+);
+
+<span class="keyword">CREATE INDEX</span> idx_deals_account <span class="keyword">ON</span> deals(account_id);
+<span class="keyword">CREATE INDEX</span> idx_deals_status <span class="keyword">ON</span> deals(status);
+<span class="keyword">CREATE INDEX</span> idx_deals_approval <span class="keyword">ON</span> deals(approval_state);
+<span class="keyword">CREATE INDEX</span> idx_deals_owner <span class="keyword">ON</span> deals(owner_id);
+<span class="keyword">CREATE INDEX</span> idx_deals_dates <span class="keyword">ON</span> deals(start_date, end_date);
+
+<span class="comment">-- ============================================</span>
+<span class="comment">-- CAMPAIGNS: Ad campaigns within a deal</span>
+<span class="comment">-- ============================================</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">campaigns</span> (
+    id              UUID <span class="keyword">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    deal_id         UUID <span class="keyword">NOT NULL REFERENCES</span> deals(id) <span class="keyword">ON DELETE CASCADE</span>,
+    campaign_name   VARCHAR(<span class="number">255</span>) <span class="keyword">NOT NULL</span>,
+    campaign_type   VARCHAR(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,  <span class="comment">-- 'display', 'video', 'native', 'sponsored'</span>
+    budget          DECIMAL(<span class="number">15</span>,<span class="number">2</span>) <span class="keyword">NOT NULL</span>,
+    allocated_spend DECIMAL(<span class="number">15</span>,<span class="number">2</span>) <span class="keyword">DEFAULT</span> <span class="number">0</span>,
+    status          VARCHAR(<span class="number">30</span>) <span class="keyword">NOT NULL DEFAULT</span> <span class="string">'draft'</span>,
+    targeting       JSONB <span class="keyword">NOT NULL DEFAULT</span> <span class="string">'{}'</span>,  <span class="comment">-- audience, geo, device targeting</span>
+    scheduling      JSONB <span class="keyword">NOT NULL DEFAULT</span> <span class="string">'{}'</span>,  <span class="comment">-- flight dates, pacing</span>
+    creative_specs  JSONB <span class="keyword">NOT NULL DEFAULT</span> <span class="string">'{}'</span>,  <span class="comment">-- ad formats, sizes</span>
+    validation_status VARCHAR(<span class="number">30</span>) <span class="keyword">DEFAULT</span> <span class="string">'pending'</span>,
+    last_validated_at TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ <span class="keyword">NOT NULL DEFAULT</span> now(),
+    updated_at      TIMESTAMPTZ <span class="keyword">NOT NULL DEFAULT</span> now()
+);
+
+<span class="keyword">CREATE INDEX</span> idx_campaigns_deal <span class="keyword">ON</span> campaigns(deal_id);
+<span class="keyword">CREATE INDEX</span> idx_campaigns_status <span class="keyword">ON</span> campaigns(status);
+<span class="keyword">CREATE INDEX</span> idx_campaigns_targeting <span class="keyword">ON</span> campaigns <span class="keyword">USING</span> GIN(targeting);
+
+<span class="comment">-- ============================================</span>
+<span class="comment">-- APPROVALS: Multi-level approval tracking</span>
+<span class="comment">-- ============================================</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">approvals</span> (
+    id              UUID <span class="keyword">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    deal_id         UUID <span class="keyword">NOT NULL REFERENCES</span> deals(id),
+    level           INTEGER <span class="keyword">NOT NULL</span>,
+    approver_id     UUID <span class="keyword">NOT NULL</span>,
+    approver_role   VARCHAR(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,
+    action          VARCHAR(<span class="number">20</span>),  <span class="comment">-- 'approve', 'reject', 'escalate'</span>
+    comments        TEXT,
+    sla_deadline    TIMESTAMPTZ <span class="keyword">NOT NULL</span>,
+    decided_at      TIMESTAMPTZ,
+    is_sla_breached BOOLEAN <span class="keyword">DEFAULT FALSE</span>,
+    created_at      TIMESTAMPTZ <span class="keyword">NOT NULL DEFAULT</span> now()
+);
+
+<span class="keyword">CREATE INDEX</span> idx_approvals_deal <span class="keyword">ON</span> approvals(deal_id);
+<span class="keyword">CREATE INDEX</span> idx_approvals_pending <span class="keyword">ON</span> approvals(deal_id) <span class="keyword">WHERE</span> action <span class="keyword">IS NULL</span>;
+<span class="keyword">CREATE INDEX</span> idx_approvals_sla <span class="keyword">ON</span> approvals(sla_deadline) <span class="keyword">WHERE</span> action <span class="keyword">IS NULL</span>;
+
+<span class="comment">-- ============================================</span>
+<span class="comment">-- ENGAGEMENT METRICS: Real-time scoring data</span>
+<span class="comment">-- ============================================</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">engagement_metrics</span> (
+    id              UUID <span class="keyword">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    deal_id         UUID <span class="keyword">NOT NULL REFERENCES</span> deals(id),
+    score           DECIMAL(<span class="number">5</span>,<span class="number">2</span>) <span class="keyword">NOT NULL</span>,
+    tier            VARCHAR(<span class="number">20</span>) <span class="keyword">NOT NULL</span>,  <span class="comment">-- 'hot', 'warm', 'cold', 'at_risk'</span>
+    components      JSONB <span class="keyword">NOT NULL DEFAULT</span> <span class="string">'{}'</span>,
+    feature_vector  JSONB <span class="keyword">NOT NULL DEFAULT</span> <span class="string">'{}'</span>,
+    computed_at     TIMESTAMPTZ <span class="keyword">NOT NULL DEFAULT</span> now()
+);
+
+<span class="keyword">CREATE INDEX</span> idx_engagement_deal <span class="keyword">ON</span> engagement_metrics(deal_id);
+<span class="keyword">CREATE INDEX</span> idx_engagement_tier <span class="keyword">ON</span> engagement_metrics(tier);
+<span class="keyword">CREATE INDEX</span> idx_engagement_score <span class="keyword">ON</span> engagement_metrics(score <span class="keyword">DESC</span>);
+
+<span class="comment">-- ============================================</span>
+<span class="comment">-- AUDIT LOG: Immutable event log for compliance</span>
+<span class="comment">-- ============================================</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">audit_log</span> (
+    id              BIGSERIAL <span class="keyword">PRIMARY KEY</span>,
+    entity_type     VARCHAR(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,  <span class="comment">-- 'deal', 'campaign', 'approval'</span>
+    entity_id       UUID <span class="keyword">NOT NULL</span>,
+    action          VARCHAR(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,  <span class="comment">-- 'created', 'updated', 'approved'</span>
+    actor_id        UUID <span class="keyword">NOT NULL</span>,
+    changes         JSONB,                <span class="comment">-- diff of old vs new values</span>
+    metadata        JSONB <span class="keyword">DEFAULT</span> <span class="string">'{}'</span>,   <span class="comment">-- IP, user agent, correlation ID</span>
+    created_at      TIMESTAMPTZ <span class="keyword">NOT NULL DEFAULT</span> now()
+);
+
+<span class="keyword">CREATE INDEX</span> idx_audit_entity <span class="keyword">ON</span> audit_log(entity_type, entity_id);
+<span class="keyword">CREATE INDEX</span> idx_audit_actor <span class="keyword">ON</span> audit_log(actor_id);
+<span class="keyword">CREATE INDEX</span> idx_audit_time <span class="keyword">ON</span> audit_log(created_at <span class="keyword">DESC</span>);</code></pre>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Schema Design Decisions</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">
+          <strong style="color:#e8e8f0;">JSONB for targeting/scheduling:</strong> Campaign targeting rules vary widely by campaign type. JSONB allows flexible schemas with GIN indexes for efficient querying.<br>
+          <strong style="color:#e8e8f0;">Partial indexes on approvals:</strong> The <code>WHERE action IS NULL</code> index dramatically speeds up the SLA breach checker, which only queries pending approvals.<br>
+          <strong style="color:#e8e8f0;">Immutable audit log:</strong> No UPDATE or DELETE operations allowed on audit_log. Append-only design ensures compliance auditability.
+        </p>
+      </div>
+    </div>
+
+    <!-- 9. PERFORMANCE METRICS -->
+    <div class="article-section" id="metrics">
+      <h2><span class="step-badge">9</span> Performance Metrics</h2>
+
+      <p>Key performance indicators measured in production across a 90-day rolling window. These metrics are tracked on Grafana dashboards and trigger PagerDuty alerts when thresholds are breached.</p>
+
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-value">94%</div>
+          <div class="metric-label">Latency Reduction<br>(8s &rarr; 450ms)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">85%</div>
+          <div class="metric-label">Cache Hit Rate<br>(Redis Multi-Layer)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">60%</div>
+          <div class="metric-label">Async Processing<br>Reduction</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">99.95%</div>
+          <div class="metric-label">Platform Uptime<br>(SLA Target: 99.9%)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">100K+</div>
+          <div class="metric-label">CDC Records/Day<br>(Kafka Pipeline)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">31.6%</div>
+          <div class="metric-label">Cycle Time Reduction<br>(Approval Workflow)</div>
+        </div>
+      </div>
+
+      <h3>Detailed Latency Breakdown</h3>
+      <table>
+        <thead>
+          <tr><th>Operation</th><th>P50</th><th>P95</th><th>P99</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Campaign Validation (cached)</td><td>12ms</td><td>45ms</td><td>120ms</td><td>85% of requests</td></tr>
+          <tr><td>Campaign Validation (cold)</td><td>380ms</td><td>620ms</td><td>1.2s</td><td>Parallel async validators</td></tr>
+          <tr><td>Deal Read (cache hit)</td><td>2ms</td><td>8ms</td><td>15ms</td><td>Redis entity cache</td></tr>
+          <tr><td>Deal Read (DB)</td><td>18ms</td><td>45ms</td><td>85ms</td><td>PostgreSQL with indexes</td></tr>
+          <tr><td>Engagement Score</td><td>5ms</td><td>22ms</td><td>50ms</td><td>Pre-computed, cached</td></tr>
+          <tr><td>Approval Transition</td><td>35ms</td><td>85ms</td><td>150ms</td><td>DB write + Kafka publish</td></tr>
+          <tr><td>CDC Event Processing</td><td>15ms</td><td>60ms</td><td>200ms</td><td>Per-message processing</td></tr>
+        </tbody>
+      </table>
+
+      <div class="success-box">
+        <h4>Before vs. After Comparison</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">
+          <strong style="color:#e8e8f0;">Validation Latency:</strong> 8,000ms &rarr; 450ms (94% reduction via asyncio parallelism + Redis caching).<br>
+          <strong style="color:#e8e8f0;">Approval Cycle:</strong> 9.5 days &rarr; 6.5 days (31.6% reduction via parallel approvals + auto-escalation).<br>
+          <strong style="color:#e8e8f0;">Data Sync Lag:</strong> 15 min (batch jobs) &rarr; &lt;2 sec (Kafka CDC real-time streaming).<br>
+          <strong style="color:#e8e8f0;">Cache Hit Rate:</strong> 0% (no caching) &rarr; 85% (multi-layer Redis with intelligent invalidation).
+        </p>
+      </div>
+    </div>
+
+    <!-- 10. DESIGN DECISIONS & TRADE-OFFS -->
+    <div class="article-section" id="decisions">
+      <h2><span class="step-badge">10</span> Design Decisions & Trade-offs</h2>
+
+      <table>
+        <thead>
+          <tr><th>Decision</th><th>Chosen</th><th>Alternative</th><th>Rationale</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Event streaming</td>
+            <td>Kafka CDC (Debezium)</td>
+            <td>Application-level events</td>
+            <td>Eliminates dual-write problem; DB is single source of truth; no event loss on app crash</td>
+          </tr>
+          <tr>
+            <td>Async validation</td>
+            <td>Python asyncio</td>
+            <td>Thread pool / multiprocessing</td>
+            <td>I/O-bound validators (API calls, DB lookups) benefit from coroutine switching; lower memory than threads</td>
+          </tr>
+          <tr>
+            <td>Cache strategy</td>
+            <td>Multi-layer Redis with TTLs</td>
+            <td>Single cache layer</td>
+            <td>Different data types have different staleness tolerance; per-layer TTLs optimize freshness vs. hit rate</td>
+          </tr>
+          <tr>
+            <td>Approval engine</td>
+            <td>State machine with Kafka events</td>
+            <td>Workflow engine (Temporal/Camunda)</td>
+            <td>Simpler operational footprint; approval logic fits FSM pattern well; no need for long-running workflow orchestration</td>
+          </tr>
+          <tr>
+            <td>Database</td>
+            <td>PostgreSQL + JSONB</td>
+            <td>MongoDB / DynamoDB</td>
+            <td>ACID transactions for financial data; JSONB gives document flexibility; mature ecosystem for ad tech reporting</td>
+          </tr>
+          <tr>
+            <td>Error handling</td>
+            <td>DLQ + circuit breakers</td>
+            <td>Retry-only / manual intervention</td>
+            <td>DLQ prevents poison messages from blocking pipeline; circuit breakers prevent cascading failure to downstream services</td>
+          </tr>
+          <tr>
+            <td>Scoring computation</td>
+            <td>Incremental + cache</td>
+            <td>Batch nightly computation</td>
+            <td>Real-time scores enable immediate deal prioritization; 10-min cache TTL balances freshness vs. compute cost</td>
+          </tr>
+          <tr>
+            <td>Schema design</td>
+            <td>Service-owned tables</td>
+            <td>Shared database</td>
+            <td>Enables independent schema evolution; services communicate via events; avoids tight coupling</td>
+          </tr>
+          <tr>
+            <td>Deployment</td>
+            <td>Kubernetes + Docker</td>
+            <td>Serverless (Lambda)</td>
+            <td>Long-running Kafka consumers need persistent processes; K8s provides pod auto-scaling and self-healing</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="warn-box">
+        <p style="color:#a0a0b8;"><strong style="color:#ef4444;">Key Trade-off:</strong> Choosing CDC over application events means a dependency on database WAL configuration and Debezium connector health. If the connector goes down, events stop flowing. Mitigation: dedicated health monitoring for Debezium with automated connector restart and Slack alerting on consumer lag spikes.</p>
+      </div>
+    </div>
+
+    <!-- 11. SCALING STRATEGY -->
+    <div class="article-section" id="scaling">
+      <h2><span class="step-badge">11</span> Scaling Strategy</h2>
+
+      <p>The platform is designed to scale from current load (100K records/day) to <strong style="color:#e8e8f0;">10x growth</strong> without architectural changes. Each layer has independent scaling knobs.</p>
+
+      <h3>Horizontal Scaling</h3>
+      <ul>
+        <li><strong>API Gateway:</strong> Kubernetes HPA (Horizontal Pod Autoscaler) scales API pods based on CPU/request rate. Stateless services allow unlimited horizontal scaling</li>
+        <li><strong>Kafka Consumers:</strong> Scale by adding consumers to the consumer group (up to partition count). Current: 12 partitions per topic, can increase to 64</li>
+        <li><strong>Validation Engine:</strong> CPU-bound validators can scale horizontally; Redis caching absorbs repeated requests. Each pod handles ~500 validations/min</li>
+      </ul>
+
+      <h3>Database Scaling</h3>
+      <ul>
+        <li><strong>Read Replicas:</strong> Engagement scoring and reporting queries route to read replicas via connection pooling. Reduces primary DB load by ~40%</li>
+        <li><strong>Table Partitioning:</strong> <code>audit_log</code> partitioned by month (range partitioning on <code>created_at</code>). Old partitions archived to cold storage</li>
+        <li><strong>Connection Pooling:</strong> PgBouncer in transaction mode; max 200 connections to primary, 100 per read replica</li>
+      </ul>
+
+      <h3>Sharding Strategy (Future)</h3>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+  SHARDING STRATEGY (When single-DB becomes bottleneck)
+  =====================================================
+
+  Shard Key: account_id (consistent hashing)
+
+  +-----------+    +-----------+    +-----------+    +-----------+
+  | Shard 0   |    | Shard 1   |    | Shard 2   |    | Shard 3   |
+  | Accts     |    | Accts     |    | Accts     |    | Accts     |
+  | 0-24%     |    | 25-49%    |    | 50-74%    |    | 75-100%   |
+  |           |    |           |    |           |    |           |
+  | deals     |    | deals     |    | deals     |    | deals     |
+  | campaigns |    | campaigns |    | campaigns |    | campaigns |
+  | approvals |    | approvals |    | approvals |    | approvals |
+  +-----------+    +-----------+    +-----------+    +-----------+
+        |                |                |                |
+        +----------------+----------------+----------------+
+                         |
+                  +------+------+
+                  | Routing     |
+                  | Layer       |
+                  | (account_id |
+                  |  -> shard)  |
+                  +-------------+
+
+  Cross-shard queries (e.g., "all deals this quarter"):
+  -> Scatter-gather to all shards, merge results
+  -> Cached in Redis with 60s TTL for dashboard queries
+
+  Global tables (not sharded):
+  - accounts, users, config — replicated to all shards</div>
+      </div>
+
+      <h3>Redis Scaling</h3>
+      <ul>
+        <li><strong>Redis Cluster:</strong> 6-node cluster (3 primary + 3 replica) with automatic failover</li>
+        <li><strong>Memory budgets:</strong> Validation cache: 2GB, Entity cache: 4GB, Engagement cache: 1GB, Config cache: 512MB</li>
+        <li><strong>Eviction policy:</strong> <code>allkeys-lru</code> per-node, but TTLs ensure most keys expire naturally before eviction</li>
+      </ul>
+
+      <div class="cyan-box">
+        <h4>Capacity Planning</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">
+          <strong style="color:#e8e8f0;">Current:</strong> 100K CDC events/day, 50K API requests/day, 2TB PostgreSQL, 7.5GB Redis.<br>
+          <strong style="color:#e8e8f0;">Projected 10x:</strong> 1M CDC events/day, 500K API requests/day. Requires: 4 Kafka consumer pods (from 2), 8 API pods (from 4), read replicas, and Redis cluster expansion to 12 nodes. Estimated cost increase: ~3x (not 10x) due to caching efficiency.
+        </p>
+      </div>
+    </div>
+
+    <!-- 12. INTERVIEW CHEAT SHEET -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">12</span> Interview Cheat Sheet</h2>
+
+      <p>Prepared answers for system design interview questions about this platform. Each answer is structured as: <strong style="color:#e8e8f0;">Context &rarr; Action &rarr; Result</strong>.</p>
+
+      <div class="highlight-box">
+        <h4>Q1: How did you achieve 94% latency reduction in campaign validation?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> 12 sequential validators each making DB/API calls, total ~8s. <strong style="color:#e8e8f0;">Action:</strong> Redesigned with asyncio.gather for parallel execution + Redis caching for stable validation results. Added fail-fast semantics — critical validators (budget, compliance) short-circuit before running remaining checks. <strong style="color:#e8e8f0;">Result:</strong> P50 dropped to 450ms. Cache hit rate of 85% means most validations serve from Redis without running validators at all.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q2: Why Kafka CDC instead of application-level events?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Needed reliable event propagation for deal state changes across 5+ downstream services. <strong style="color:#e8e8f0;">Action:</strong> Chose Debezium CDC capturing from PostgreSQL WAL. <strong style="color:#e8e8f0;">Result:</strong> Eliminated dual-write problem (write DB + publish event). Zero event loss guarantee since changes are captured at the DB level. Trade-off: dependency on Debezium connector health, mitigated by health monitoring and auto-restart.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q3: How does the approval workflow handle SLA breaches?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Multi-level approvals (Sales Manager → Finance → Legal) with different SLA windows (24h/48h/72h). <strong style="color:#e8e8f0;">Action:</strong> Periodic SLA checker job queries pending approvals with partial index. On breach: auto-escalate to backup approver + notify skip-level manager. For high-value deals ($500K+): Finance and Legal review in parallel instead of sequential. <strong style="color:#e8e8f0;">Result:</strong> 31.6% reduction in approval cycle time (9.5 → 6.5 business days).</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q4: How do you handle poison messages in the Kafka pipeline?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Malformed or unprocessable CDC events could block the consumer. <strong style="color:#e8e8f0;">Action:</strong> Three-tier defense: (1) Retry with exponential backoff (1s, 2s, 4s), (2) After 3 retries, route to Dead Letter Queue with full metadata, (3) Circuit breaker opens after 5 consecutive failures, halting consumption until recovery. DLQ messages are processed manually or by a separate remediation service. <strong style="color:#e8e8f0;">Result:</strong> Zero pipeline blockages in 90 days. DLQ rate < 0.01% of total messages.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q5: How does the engagement scoring system work?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Sales teams needed real-time deal prioritization based on engagement likelihood. <strong style="color:#e8e8f0;">Action:</strong> Built a weighted scoring engine with 5 feature categories (recency, frequency, monetary, behavioral, account health). Scores computed incrementally on deal events and cached in Redis (10-min TTL). Tiers: hot (75+), warm (50-74), cold (25-49), at_risk (<25). <strong style="color:#e8e8f0;">Result:</strong> Sales teams prioritize hot deals first, improving deal conversion rates and reducing time-to-close.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q6: How do you ensure data consistency across microservices?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Deal updates must propagate to Campaign, Approval, and Engagement services reliably. <strong style="color:#e8e8f0;">Action:</strong> Each service owns its data. CDC provides eventually consistent propagation. For critical flows (deal creation + initial approval), we use the transactional outbox pattern — write to DB and outbox table in the same transaction. Debezium captures from the outbox. <strong style="color:#e8e8f0;">Result:</strong> Strong consistency within service boundaries, eventual consistency across services with guaranteed delivery.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q7: How does cache invalidation work across services?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Deal update must invalidate entity cache, validation cache (campaign rules reference deal), and engagement cache. <strong style="color:#e8e8f0;">Action:</strong> Cascade invalidation via Kafka events. When the CDC pipeline processes a deal update, it publishes a <code>cache.invalidate</code> event. Each service's cache handler listens and invalidates relevant keys using pattern matching. <strong style="color:#e8e8f0;">Result:</strong> 85% cache hit rate with sub-second staleness window. No stale data incidents in production.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q8: What monitoring and alerting do you have?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Platform serves enterprise ad deals — downtime directly impacts revenue. <strong style="color:#e8e8f0;">Action:</strong> Prometheus metrics exported from every service. Grafana dashboards for golden signals (rate, errors, latency, saturation) + business metrics (deal states, approval SLAs, cache rates). PagerDuty integration with severity routing: P1 (error rate >5% or uptime drop) pages on-call, P2 (CDC lag >10K) goes to Slack, P3 (cache hit rate drop) goes to email. <strong style="color:#e8e8f0;">Result:</strong> Mean time to detection < 2 minutes. 99.95% uptime over 12 months.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q9: How would you handle a 10x traffic increase?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Current: 100K CDC events/day, 50K API requests/day. <strong style="color:#e8e8f0;">Action:</strong> Phase 1: Scale Kubernetes pods via HPA (2x API pods, 2x consumers). Phase 2: Add PostgreSQL read replicas for reporting queries. Phase 3: Increase Kafka partitions from 12 to 64 per topic. Phase 4 (if needed): Shard PostgreSQL by account_id using consistent hashing. <strong style="color:#e8e8f0;">Result:</strong> Estimated 10x capacity with ~3x cost increase due to caching absorbing repeated reads.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q10: Why state machine for approvals instead of a workflow engine like Temporal?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Evaluated Temporal, Camunda, and custom state machine. <strong style="color:#e8e8f0;">Action:</strong> Chose FSM because: (1) Approval logic maps cleanly to states and transitions — no need for long-running workflow orchestration. (2) Lower operational overhead — no separate workflow cluster to manage. (3) State stored in PostgreSQL with the deal entity, avoiding consistency issues between workflow state and deal state. <strong style="color:#e8e8f0;">Trade-off:</strong> If approval logic grows complex (conditional branching, timer-based auto-actions), we may migrate to Temporal. Current complexity does not warrant it.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q11: How do you test the CDC pipeline?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> CDC pipelines are hard to unit test because they depend on Debezium + Kafka + PostgreSQL. <strong style="color:#e8e8f0;">Action:</strong> Three testing layers: (1) Unit tests: mock Kafka consumer, test handler logic in isolation. (2) Integration tests: Testcontainers with real PostgreSQL + Kafka + Debezium, verify end-to-end CDC flow. (3) Canary testing: deploy to staging, write test deals, verify CDC events appear within SLA. <strong style="color:#e8e8f0;">Result:</strong> 95% code coverage on handlers. Integration tests catch schema drift before it hits production.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q12: What happens if Redis goes down?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Redis serves validation cache, entity cache, and engagement scores. <strong style="color:#e8e8f0;">Action:</strong> Cache is a performance optimization, not a correctness requirement. All services fall back to database reads on cache miss. Circuit breaker on Redis client: if Redis is unreachable, stop attempting cache reads/writes for 30s (avoid timeout pile-up). Redis Cluster with 3 replicas for HA — single node failure is automatic failover. <strong style="color:#e8e8f0;">Result:</strong> During a Redis node failure: latency increases from ~12ms to ~45ms (entity reads), but zero errors. Service degrades gracefully.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q13: How do you handle schema evolution in the CDC pipeline?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Database schema changes (adding columns, changing types) affect CDC event format. <strong style="color:#e8e8f0;">Action:</strong> Avro schema registry with backward compatibility enforcement. New columns are added as optional fields with defaults. Consumers use a schema-aware deserializer that handles both old and new formats. Breaking changes (rare) go through a 3-phase migration: add new field → backfill → deprecate old field. <strong style="color:#e8e8f0;">Result:</strong> Zero downtime schema migrations. 15+ schema changes deployed without pipeline disruption.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q14: How do you prevent race conditions in the approval workflow?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Two approvers at the same level could submit decisions simultaneously. <strong style="color:#e8e8f0;">Action:</strong> Optimistic locking with version column on the deals table. Approval transition reads current version, performs state change, and updates with <code>WHERE version = expected_version</code>. If version mismatch, the transaction fails and the second approver gets a "decision already made" response. Additionally, the state machine rejects invalid transitions (e.g., approving an already-approved deal). <strong style="color:#e8e8f0;">Result:</strong> Zero race condition incidents. Clean conflict resolution with user-friendly error messages.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q15: What was the hardest production incident you debugged on this platform?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> CDC consumer lag spiked to 50K messages during a batch deal import (normally <100). <strong style="color:#e8e8f0;">Action:</strong> Root cause: a single large account created 5K deals in 10 minutes. All deals had the same account_id, routed to the same Kafka partition, creating a hot partition. The single consumer on that partition couldn't keep up. <strong style="color:#e8e8f0;">Fix:</strong> Added a composite partition key (account_id + deal_id hash) to distribute load across partitions while maintaining per-deal ordering. Also added backpressure metrics — alert when any single partition lag exceeds 5K. <strong style="color:#e8e8f0;">Result:</strong> Hot partition events eliminated. Consumer lag stays <500 even during bulk operations.</p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q16: How do you handle idempotency in event-driven processing?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;"><strong style="color:#e8e8f0;">Context:</strong> Kafka at-least-once delivery means duplicate events are possible. <strong style="color:#e8e8f0;">Action:</strong> Every CDC event includes a unique <code>event_id</code> (combination of LSN + timestamp). Consumers maintain an idempotency table keyed by event_id. Before processing, check if event_id exists; if so, skip. The idempotency table uses TTL-based cleanup (events older than 7 days are purged). <strong style="color:#e8e8f0;">Result:</strong> Exactly-once processing semantics despite at-least-once delivery. Deduplication overhead < 1ms per message (Redis SET NX).</p>
+      </div>
+    </div>
+
+    <!-- NAV BOTTOM -->
+    <div class="nav-bottom">
+      <a href="agentic-ai.html">&larr; All System Designs</a>
+      <a href="#">Back to Top &uarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

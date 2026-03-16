@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Powered Contract Intelligence System — System Design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 960px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.6rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .meta-cyan { background: rgba(6,182,212,0.15); color: #06b6d4; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section h4 { font-size: 1.05rem; font-weight: 600; margin: 20px 0 8px; color: #a78bfa; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    .cyan-box { background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .cyan-box h4 { color: #06b6d4; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.78rem; line-height: 1.6; white-space: pre; }
+    .code-block { background: #0d1224; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; margin: 16px 0; overflow: hidden; }
+    .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .code-lang { font-size: 0.75rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; }
+    .code-file { font-size: 0.72rem; color: #6b7280; font-family: 'Courier New', monospace; }
+    .code-block pre { margin: 0; padding: 16px; overflow-x: auto; }
+    .code-block code { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; color: #e8e8f0; white-space: pre; }
+    .code-block .comment { color: #6b7280; }
+    .code-block .keyword { color: #c084fc; }
+    .code-block .string { color: #34d399; }
+    .code-block .function { color: #60a5fa; }
+    .code-block .type { color: #f59e0b; }
+    .code-block .number { color: #fb923c; }
+    .code-block .decorator { color: #f472b6; }
+    .flow-step { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: rgba(255,255,255,0.02); border-radius: 12px; margin: 12px 0; border: 1px solid rgba(255,255,255,0.04); }
+    .flow-step:hover { background: rgba(99,102,241,0.05); border-color: rgba(99,102,241,0.15); }
+    .flow-num { width: 40px; height: 40px; border-radius: 50%; background: #6366f1; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0; }
+    .flow-content h4 { margin: 0 0 4px; color: #e8e8f0; font-size: 1rem; }
+    .flow-content p { margin: 0; font-size: 0.88rem; color: #a0a0b8; }
+    .flow-arrow { text-align: center; color: #6366f1; font-size: 1.5rem; margin: 4px 0; }
+    .tech-badge { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 600; margin: 2px 4px; }
+    .tech-ts { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .tech-py { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .tech-db { background: rgba(16,185,129,0.15); color: #10b981; }
+    .tech-ai { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .tech-infra { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+    .metric-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; text-align: center; }
+    .metric-value { font-size: 2rem; font-weight: 900; color: #818cf8; }
+    .metric-label { font-size: 0.82rem; color: #6b7280; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x1F9E0;</span><span class="logo-text">chinnam<span class="logo-highlight">.AI</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All Designs</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#llm-analysis">LLM Analysis</a>
+        <a href="#multi-agent">Multi-Agent</a>
+        <a href="#compliance">Compliance</a>
+        <a href="#cheatsheet">Cheat Sheet</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <!-- HEADER -->
+    <div class="article-header">
+      <h1>AI-Powered Contract Intelligence System</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-green">ENTERPRISE SYSTEM</span>
+        <span class="meta-tag meta-purple">Multi-Agent LLM</span>
+        <span class="meta-tag meta-blue">RAG + pgvector</span>
+        <span class="meta-tag meta-orange">Compliance Engine</span>
+        <span class="meta-tag meta-cyan">Contract Lifecycle</span>
+        <span class="meta-tag meta-red">Staff-Level Design</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">An enterprise-grade system that uses LLMs and multi-agent orchestration to automatically analyze, extract, validate, and manage legal contracts at scale.</strong>
+        The platform ingests contracts in PDF/DOCX format, extracts clauses and obligations using Claude/GPT, validates compliance against regulatory frameworks, and provides real-time alerts for expiring terms and risk threshold breaches. Designed for a Fortune 500 tech company processing 10,000+ contracts per day.
+      </p>
+      <div style="margin-top:16px;">
+        <span class="tech-badge tech-py">Python</span>
+        <span class="tech-badge tech-ts">TypeScript</span>
+        <span class="tech-badge tech-db">PostgreSQL</span>
+        <span class="tech-badge tech-db">pgvector</span>
+        <span class="tech-badge tech-ai">Claude API</span>
+        <span class="tech-badge tech-infra">Kafka</span>
+        <span class="tech-badge tech-infra">Redis</span>
+        <span class="tech-badge tech-infra">Docker</span>
+      </div>
+    </div>
+
+    <!-- TOC -->
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#architecture">Architecture Overview</a></li>
+        <li><a href="#ingestion">Document Ingestion Pipeline</a></li>
+        <li><a href="#llm-analysis">LLM-Powered Document Analysis</a></li>
+        <li><a href="#rag-contracts">RAG for Legal Contracts</a></li>
+        <li><a href="#compliance">Compliance Validation Engine</a></li>
+        <li><a href="#multi-agent">Multi-Agent Architecture</a></li>
+        <li><a href="#lifecycle">Contract Lifecycle Management</a></li>
+        <li><a href="#alerts">Real-time Alerts & Notifications</a></li>
+        <li><a href="#schema">Database Schema</a></li>
+        <li><a href="#metrics">Performance Metrics</a></li>
+        <li><a href="#security">Security & Access Control</a></li>
+        <li><a href="#decisions">Design Decisions & Trade-offs</a></li>
+        <li><a href="#cheatsheet">Interview Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- 1. ARCHITECTURE OVERVIEW -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">1</span> Architecture Overview</h2>
+
+      <p>The Contract Intelligence System follows an <strong style="color:#e8e8f0;">event-driven microservices architecture</strong> with a multi-agent LLM layer for document understanding. The system is designed to handle the full contract lifecycle — from ingestion and analysis to compliance validation and expiry alerting — while maintaining strict audit trails required for enterprise legal operations.</p>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                    AI-Powered Contract Intelligence System                       │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+  INGESTION LAYER                 PROCESSING LAYER                  DATA LAYER
+  ┌─────────────────┐            ┌──────────────────────┐          ┌──────────────┐
+  │  Document        │           │  LLM Analysis Engine  │          │  PostgreSQL  │
+  │  Ingestion       │           │  ┌────────────────┐   │          │  + pgvector  │
+  │  ┌─────────────┐ │    ┌──┐   │  │ Extraction     │   │          │              │
+  │  │ PDF Parser   │─┼───▶│  │──▶│  │ Agent          │   │    ┌───▶│ contracts    │
+  │  │ (PyMuPDF)    │ │   │K │   │  └────────┬───────┘   │    │    │ clauses      │
+  │  └─────────────┘ │   │a │   │  ┌────────▼───────┐   │    │    │ obligations  │
+  │  ┌─────────────┐ │   │f │   │  │ Risk           │   │    │    │ risk_scores  │
+  │  │ DOCX Parser │─┼───▶│k │──▶│  │ Agent          │   │────┘    │ embeddings   │
+  │  │ (python-docx)│ │   │a │   │  └────────┬───────┘   │         │ audit_logs   │
+  │  └─────────────┘ │   │  │   │  ┌────────▼───────┐   │         └──────┬───────┘
+  │  ┌─────────────┐ │   │  │   │  │ Compliance     │   │                │
+  │  │ OCR Engine  │─┼───▶│  │──▶│  │ Agent          │   │         ┌──────▼───────┐
+  │  │ (Tesseract) │ │   └──┘   │  └────────┬───────┘   │         │  Redis Cache │
+  │  └─────────────┘ │           │  ┌────────▼───────┐   │         │  - Sessions  │
+  └─────────────────┘            │  │ Summary        │   │         │  - Rate Limit│
+                                  │  │ Agent          │   │         │  - Results   │
+  ┌─────────────────┐            │  └────────────────┘   │         └──────────────┘
+  │  RAG Pipeline    │           └──────────────────────┘
+  │  ┌─────────────┐ │                     │               ┌──────────────────────┐
+  │  │ Chunker     │ │           ┌─────────▼──────────┐    │  Notification        │
+  │  │ (structure- │ │           │  Orchestrator       │    │  Service             │
+  │  │  aware)     │ │           │  (State Machine)    │    │  ┌────────────────┐  │
+  │  └──────┬──────┘ │           │  - Routes tasks     │    │  │ Expiry Alerts  │  │
+  │  ┌──────▼──────┐ │           │  - Manages retries  │───▶│  │ Risk Breaches  │  │
+  │  │ Embeddings  │ │           │  - Audit logging    │    │  │ Obligation Due │  │
+  │  │ (OpenAI)    │ │           └────────────────────┘    │  │ Compliance Fail│  │
+  │  └──────┬──────┘ │                                      │  └────────────────┘  │
+  │  ┌──────▼──────┐ │           ┌────────────────────┐    └──────────────────────┘
+  │  │ pgvector    │ │           │  Compliance         │
+  │  │ Storage     │─┼──────────▶│  Validator           │
+  │  └─────────────┘ │           │  (Rule Engine + LLM) │
+  └─────────────────┘            └────────────────────┘</div>
+      </div>
+
+      <h3>Tech Stack</h3>
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Document Processing</td><td><span class="tech-badge tech-py">Python</span> <span class="tech-badge tech-py">PyMuPDF</span> <span class="tech-badge tech-py">Tesseract</span></td><td>PDF/DOCX parsing, OCR, structure extraction</td></tr>
+          <tr><td>LLM Layer</td><td><span class="tech-badge tech-ai">Claude API</span> <span class="tech-badge tech-ai">OpenAI Embeddings</span></td><td>Clause extraction, risk assessment, compliance checking</td></tr>
+          <tr><td>Backend</td><td><span class="tech-badge tech-ts">TypeScript</span> <span class="tech-badge tech-py">Python</span></td><td>API services, agent orchestration, business logic</td></tr>
+          <tr><td>Database</td><td><span class="tech-badge tech-db">PostgreSQL</span> <span class="tech-badge tech-db">pgvector</span></td><td>Contracts, clauses, embeddings, audit trails</td></tr>
+          <tr><td>Messaging</td><td><span class="tech-badge tech-infra">Kafka</span> <span class="tech-badge tech-infra">Redis</span></td><td>Event streaming, caching, rate limiting</td></tr>
+          <tr><td>Infrastructure</td><td><span class="tech-badge tech-infra">Docker</span> <span class="tech-badge tech-infra">Kubernetes</span></td><td>Container orchestration, horizontal scaling</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 2. DOCUMENT INGESTION PIPELINE -->
+    <div class="article-section" id="ingestion">
+      <h2><span class="step-badge">2</span> Document Ingestion Pipeline</h2>
+
+      <p>The ingestion pipeline handles the critical first step: converting unstructured legal documents (PDFs, DOCX, scanned images) into structured, searchable data. At enterprise scale, this pipeline processes <strong style="color:#e8e8f0;">10,000+ documents daily</strong> with 99.5% parsing accuracy.</p>
+
+      <h3>Pipeline Flow</h3>
+
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <h4>Document Upload & Classification</h4>
+          <p>Incoming documents are classified by type (NDA, MSA, SOW, Amendment) using a lightweight classifier before entering the parsing pipeline.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&#x2193;</div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <h4>Format-Aware Parsing</h4>
+          <p>PDFs use PyMuPDF for native text extraction; scanned documents route through Tesseract OCR. DOCX files are parsed with python-docx preserving heading structure.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&#x2193;</div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <h4>Structure-Aware Chunking</h4>
+          <p>Legal documents are chunked by clause boundaries (not arbitrary token windows) using regex patterns for section headers, numbered clauses, and defined terms.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&#x2193;</div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <h4>Embedding & Storage</h4>
+          <p>Each clause chunk is embedded via OpenAI text-embedding-3-small (1536d) and stored in pgvector alongside metadata (contract ID, section, page number).</p>
+        </div>
+      </div>
+
+      <h3>Ingestion Code</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/ingestion/contract_parser.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> fitz  <span class="comment"># PyMuPDF</span>
+<span class="keyword">import</span> re
+<span class="keyword">import</span> pytesseract
+<span class="keyword">from</span> PIL <span class="keyword">import</span> Image
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass
+<span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span>, <span class="type">Optional</span>
+<span class="keyword">import</span> tiktoken
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">ContractChunk</span>:
+    text: <span class="type">str</span>
+    section_title: <span class="type">str</span>
+    clause_number: <span class="type">Optional</span>[<span class="type">str</span>]
+    page_number: <span class="type">int</span>
+    chunk_type: <span class="type">str</span>  <span class="comment"># "clause" | "definition" | "schedule" | "recital"</span>
+    token_count: <span class="type">int</span>
+
+
+<span class="keyword">class</span> <span class="type">ContractParser</span>:
+    <span class="string">"""Structure-aware contract parser with OCR fallback."""</span>
+
+    CLAUSE_PATTERN = re.<span class="function">compile</span>(
+        <span class="string">r'^(\d+\.?\d*\.?\d*)\s+([A-Z][A-Za-z\s&,]+)'</span>
+    )
+    DEFINITION_PATTERN = re.<span class="function">compile</span>(
+        <span class="string">r'"([^"]+)"\s+(means|shall mean|refers to)'</span>
+    )
+    MAX_CHUNK_TOKENS = <span class="number">512</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.tokenizer = tiktoken.<span class="function">encoding_for_model</span>(<span class="string">"gpt-4"</span>)
+
+    <span class="keyword">def</span> <span class="function">parse_pdf</span>(self, pdf_path: <span class="type">str</span>) -> <span class="type">List</span>[<span class="type">ContractChunk</span>]:
+        <span class="string">"""Extract text from PDF with OCR fallback."""</span>
+        doc = fitz.<span class="function">open</span>(pdf_path)
+        chunks = []
+
+        <span class="keyword">for</span> page_num, page <span class="keyword">in</span> <span class="function">enumerate</span>(doc, <span class="number">1</span>):
+            text = page.<span class="function">get_text</span>(<span class="string">"text"</span>)
+
+            <span class="comment"># OCR fallback for scanned pages</span>
+            <span class="keyword">if</span> <span class="function">len</span>(text.strip()) < <span class="number">50</span>:
+                pix = page.<span class="function">get_pixmap</span>(dpi=<span class="number">300</span>)
+                img = Image.<span class="function">frombytes</span>(
+                    <span class="string">"RGB"</span>, [pix.width, pix.height], pix.samples
+                )
+                text = pytesseract.<span class="function">image_to_string</span>(img)
+
+            page_chunks = self.<span class="function">_structure_aware_chunk</span>(text, page_num)
+            chunks.<span class="function">extend</span>(page_chunks)
+
+        <span class="keyword">return</span> self.<span class="function">_merge_small_chunks</span>(chunks)
+
+    <span class="keyword">def</span> <span class="function">_structure_aware_chunk</span>(
+        self, text: <span class="type">str</span>, page_num: <span class="type">int</span>
+    ) -> <span class="type">List</span>[<span class="type">ContractChunk</span>]:
+        <span class="string">"""Split text by clause boundaries, not arbitrary windows."""</span>
+        lines = text.<span class="function">split</span>(<span class="string">'\n'</span>)
+        chunks = []
+        current_section = <span class="string">""</span>
+        current_clause = <span class="type">None</span>
+        current_text = []
+
+        <span class="keyword">for</span> line <span class="keyword">in</span> lines:
+            clause_match = self.CLAUSE_PATTERN.<span class="function">match</span>(line.strip())
+
+            <span class="keyword">if</span> clause_match:
+                <span class="comment"># Save previous chunk</span>
+                <span class="keyword">if</span> current_text:
+                    joined = <span class="string">'\n'</span>.<span class="function">join</span>(current_text)
+                    tokens = <span class="function">len</span>(self.tokenizer.<span class="function">encode</span>(joined))
+                    chunks.<span class="function">append</span>(<span class="type">ContractChunk</span>(
+                        text=joined,
+                        section_title=current_section,
+                        clause_number=current_clause,
+                        page_number=page_num,
+                        chunk_type=self.<span class="function">_classify_chunk</span>(joined),
+                        token_count=tokens,
+                    ))
+
+                current_clause = clause_match.<span class="function">group</span>(<span class="number">1</span>)
+                current_section = clause_match.<span class="function">group</span>(<span class="number">2</span>).strip()
+                current_text = [line]
+            <span class="keyword">else</span>:
+                current_text.<span class="function">append</span>(line)
+
+        <span class="comment"># Don't forget the last chunk</span>
+        <span class="keyword">if</span> current_text:
+            joined = <span class="string">'\n'</span>.<span class="function">join</span>(current_text)
+            tokens = <span class="function">len</span>(self.tokenizer.<span class="function">encode</span>(joined))
+            chunks.<span class="function">append</span>(<span class="type">ContractChunk</span>(
+                text=joined,
+                section_title=current_section,
+                clause_number=current_clause,
+                page_number=page_num,
+                chunk_type=self.<span class="function">_classify_chunk</span>(joined),
+                token_count=tokens,
+            ))
+
+        <span class="keyword">return</span> chunks
+
+    <span class="keyword">def</span> <span class="function">_classify_chunk</span>(self, text: <span class="type">str</span>) -> <span class="type">str</span>:
+        <span class="string">"""Classify chunk type based on content patterns."""</span>
+        <span class="keyword">if</span> self.DEFINITION_PATTERN.<span class="function">search</span>(text):
+            <span class="keyword">return</span> <span class="string">"definition"</span>
+        <span class="keyword">if</span> re.<span class="function">search</span>(<span class="string">r'SCHEDULE|EXHIBIT|APPENDIX'</span>, text, re.IGNORECASE):
+            <span class="keyword">return</span> <span class="string">"schedule"</span>
+        <span class="keyword">if</span> re.<span class="function">search</span>(<span class="string">r'WHEREAS|RECITAL'</span>, text, re.IGNORECASE):
+            <span class="keyword">return</span> <span class="string">"recital"</span>
+        <span class="keyword">return</span> <span class="string">"clause"</span>
+
+    <span class="keyword">def</span> <span class="function">_merge_small_chunks</span>(
+        self, chunks: <span class="type">List</span>[<span class="type">ContractChunk</span>]
+    ) -> <span class="type">List</span>[<span class="type">ContractChunk</span>]:
+        <span class="string">"""Merge chunks smaller than 64 tokens with neighbors."""</span>
+        merged = []
+        <span class="keyword">for</span> chunk <span class="keyword">in</span> chunks:
+            <span class="keyword">if</span> (merged <span class="keyword">and</span> chunk.token_count < <span class="number">64</span>
+                <span class="keyword">and</span> merged[-<span class="number">1</span>].token_count + chunk.token_count
+                    < self.MAX_CHUNK_TOKENS):
+                merged[-<span class="number">1</span>].text += <span class="string">'\n'</span> + chunk.text
+                merged[-<span class="number">1</span>].token_count += chunk.token_count
+            <span class="keyword">else</span>:
+                merged.<span class="function">append</span>(chunk)
+        <span class="keyword">return</span> merged</code></pre>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Why Structure-Aware Chunking Matters for Contracts</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">Naive fixed-window chunking (e.g., every 500 tokens) splits clauses mid-sentence, destroying legal context. A clause like "The Vendor shall indemnify..." might be split from its conditions. Structure-aware chunking preserves clause boundaries so the LLM always sees complete legal provisions during analysis.</p>
+      </div>
+    </div>
+
+    <!-- 3. LLM-POWERED DOCUMENT ANALYSIS -->
+    <div class="article-section" id="llm-analysis">
+      <h2><span class="step-badge">3</span> LLM-Powered Document Analysis</h2>
+
+      <p>The core intelligence layer uses LLMs (Claude and GPT-4) for three critical tasks: <strong style="color:#e8e8f0;">clause extraction</strong>, <strong style="color:#e8e8f0;">risk assessment</strong>, and <strong style="color:#e8e8f0;">obligation tracking</strong>. Each task uses carefully engineered prompts with structured output schemas to ensure consistency across thousands of contracts.</p>
+
+      <h3>Clause Extraction Engine</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/analysis/clause_extractor.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> anthropic
+<span class="keyword">import</span> json
+<span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span>, <span class="type">Dict</span>
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> <span class="type">BaseModel</span>, <span class="type">Field</span>
+<span class="keyword">from</span> enum <span class="keyword">import</span> <span class="type">Enum</span>
+
+
+<span class="keyword">class</span> <span class="type">ClauseType</span>(<span class="type">Enum</span>):
+    INDEMNIFICATION = <span class="string">"indemnification"</span>
+    LIMITATION_OF_LIABILITY = <span class="string">"limitation_of_liability"</span>
+    TERMINATION = <span class="string">"termination"</span>
+    CONFIDENTIALITY = <span class="string">"confidentiality"</span>
+    INTELLECTUAL_PROPERTY = <span class="string">"intellectual_property"</span>
+    DATA_PROTECTION = <span class="string">"data_protection"</span>
+    PAYMENT_TERMS = <span class="string">"payment_terms"</span>
+    WARRANTY = <span class="string">"warranty"</span>
+    FORCE_MAJEURE = <span class="string">"force_majeure"</span>
+    NON_COMPETE = <span class="string">"non_compete"</span>
+    GOVERNING_LAW = <span class="string">"governing_law"</span>
+    ASSIGNMENT = <span class="string">"assignment"</span>
+
+
+<span class="keyword">class</span> <span class="type">ExtractedClause</span>(<span class="type">BaseModel</span>):
+    clause_type: <span class="type">ClauseType</span>
+    text: <span class="type">str</span>
+    section_ref: <span class="type">str</span>
+    obligations: <span class="type">List</span>[<span class="type">str</span>] = <span class="type">Field</span>(default_factory=list)
+    key_dates: <span class="type">List</span>[<span class="type">str</span>] = <span class="type">Field</span>(default_factory=list)
+    monetary_values: <span class="type">List</span>[<span class="type">str</span>] = <span class="type">Field</span>(default_factory=list)
+    risk_indicators: <span class="type">List</span>[<span class="type">str</span>] = <span class="type">Field</span>(default_factory=list)
+
+
+<span class="keyword">class</span> <span class="type">ClauseExtractor</span>:
+    <span class="string">"""LLM-powered clause extraction with structured output."""</span>
+
+    EXTRACTION_PROMPT = <span class="string">"""You are a senior contract analyst. Extract all
+legal clauses from this contract section. For each clause, identify:
+
+1. clause_type: One of: {clause_types}
+2. text: The exact clause text
+3. section_ref: Section number reference (e.g., "3.2.1")
+4. obligations: List of obligations imposed on each party
+5. key_dates: Any dates, deadlines, or time periods mentioned
+6. monetary_values: Dollar amounts, percentages, caps
+7. risk_indicators: Red flags or unusual terms
+
+Return valid JSON array of extracted clauses.
+
+CONTRACT SECTION:
+{contract_text}"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.client = anthropic.<span class="function">Anthropic</span>()
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">extract_clauses</span>(
+        self, contract_text: <span class="type">str</span>
+    ) -> <span class="type">List</span>[<span class="type">ExtractedClause</span>]:
+        <span class="string">"""Extract structured clause data using Claude."""</span>
+
+        prompt = self.EXTRACTION_PROMPT.<span class="function">format</span>(
+            clause_types=<span class="string">", "</span>.<span class="function">join</span>(
+                [ct.value <span class="keyword">for</span> ct <span class="keyword">in</span> <span class="type">ClauseType</span>]
+            ),
+            contract_text=contract_text,
+        )
+
+        response = self.client.messages.<span class="function">create</span>(
+            model=<span class="string">"claude-sonnet-4-20250514"</span>,
+            max_tokens=<span class="number">4096</span>,
+            messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}],
+            <span class="comment"># Force structured JSON output</span>
+            system=<span class="string">"Respond only with a valid JSON array. No markdown."</span>,
+        )
+
+        raw = json.<span class="function">loads</span>(response.content[<span class="number">0</span>].text)
+        <span class="keyword">return</span> [<span class="type">ExtractedClause</span>(**clause) <span class="keyword">for</span> clause <span class="keyword">in</span> raw]</code></pre>
+      </div>
+
+      <h3>Risk Assessment Engine</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/analysis/risk_assessor.py</span>
+        </div>
+        <pre><code><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass
+<span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span>, <span class="type">Dict</span>
+<span class="keyword">import</span> anthropic
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">RiskAssessment</span>:
+    overall_score: <span class="type">float</span>       <span class="comment"># 0.0 (low risk) to 1.0 (critical)</span>
+    category_scores: <span class="type">Dict</span>[<span class="type">str</span>, <span class="type">float</span>]
+    high_risk_clauses: <span class="type">List</span>[<span class="type">Dict</span>]
+    missing_protections: <span class="type">List</span>[<span class="type">str</span>]
+    recommendations: <span class="type">List</span>[<span class="type">str</span>]
+
+
+<span class="keyword">class</span> <span class="type">RiskAssessor</span>:
+    <span class="string">"""Multi-dimensional risk scoring for contracts."""</span>
+
+    RISK_CATEGORIES = [
+        <span class="string">"financial_exposure"</span>,
+        <span class="string">"liability_scope"</span>,
+        <span class="string">"ip_protection"</span>,
+        <span class="string">"data_privacy"</span>,
+        <span class="string">"termination_risk"</span>,
+        <span class="string">"regulatory_compliance"</span>,
+    ]
+
+    RISK_PROMPT = <span class="string">"""You are an enterprise legal risk analyst.
+Assess the following contract clauses across these risk dimensions:
+{categories}
+
+For each dimension, provide:
+- score (0.0 = no risk, 1.0 = critical risk)
+- rationale (1-2 sentences)
+- specific clause references
+
+Also identify:
+1. High-risk clauses that need immediate legal review
+2. Standard protections MISSING from this contract
+3. Specific recommendations to reduce risk
+
+Contract clauses:
+{clauses_json}
+
+Respond with valid JSON."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.client = anthropic.<span class="function">Anthropic</span>()
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">assess_risk</span>(
+        self, clauses: <span class="type">List</span>[<span class="type">Dict</span>]
+    ) -> <span class="type">RiskAssessment</span>:
+        <span class="string">"""Run multi-dimensional risk assessment via LLM."""</span>
+
+        prompt = self.RISK_PROMPT.<span class="function">format</span>(
+            categories=<span class="string">"\n"</span>.<span class="function">join</span>(
+                f<span class="string">"- {cat}"</span> <span class="keyword">for</span> cat <span class="keyword">in</span> self.RISK_CATEGORIES
+            ),
+            clauses_json=json.<span class="function">dumps</span>(clauses, indent=<span class="number">2</span>),
+        )
+
+        response = self.client.messages.<span class="function">create</span>(
+            model=<span class="string">"claude-sonnet-4-20250514"</span>,
+            max_tokens=<span class="number">4096</span>,
+            messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}],
+        )
+
+        result = json.<span class="function">loads</span>(response.content[<span class="number">0</span>].text)
+
+        <span class="comment"># Compute weighted overall score</span>
+        weights = {<span class="string">"financial_exposure"</span>: <span class="number">0.25</span>, <span class="string">"liability_scope"</span>: <span class="number">0.20</span>,
+                   <span class="string">"ip_protection"</span>: <span class="number">0.15</span>, <span class="string">"data_privacy"</span>: <span class="number">0.20</span>,
+                   <span class="string">"termination_risk"</span>: <span class="number">0.10</span>, <span class="string">"regulatory_compliance"</span>: <span class="number">0.10</span>}
+
+        overall = <span class="function">sum</span>(
+            result[<span class="string">"category_scores"</span>].get(cat, <span class="number">0</span>) * w
+            <span class="keyword">for</span> cat, w <span class="keyword">in</span> weights.<span class="function">items</span>()
+        )
+
+        <span class="keyword">return</span> <span class="type">RiskAssessment</span>(
+            overall_score=<span class="function">round</span>(overall, <span class="number">3</span>),
+            category_scores=result[<span class="string">"category_scores"</span>],
+            high_risk_clauses=result[<span class="string">"high_risk_clauses"</span>],
+            missing_protections=result[<span class="string">"missing_protections"</span>],
+            recommendations=result[<span class="string">"recommendations"</span>],
+        )</code></pre>
+      </div>
+
+      <div class="warn-box">
+        <p><strong style="color:#ef4444;">Critical Design Decision:</strong> Never auto-approve contracts based solely on LLM analysis. The system flags risks and provides recommendations, but a human legal reviewer must make the final decision. LLMs can miss context-dependent nuances in legal language.</p>
+      </div>
+    </div>
+
+    <!-- 4. RAG FOR LEGAL CONTRACTS -->
+    <div class="article-section" id="rag-contracts">
+      <h2><span class="step-badge">4</span> RAG for Legal Contracts</h2>
+
+      <p>The RAG pipeline enables <strong style="color:#e8e8f0;">precedent matching</strong> — finding similar clauses across the entire contract corpus. When reviewing a new indemnification clause, the system retrieves comparable clauses from previously approved contracts, enabling legal teams to spot deviations from standard language instantly.</p>
+
+      <h3>Vector Search Architecture</h3>
+
+      <div class="highlight-box">
+        <h4>Why pgvector Over Dedicated Vector DBs?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">We evaluated Pinecone, Weaviate, and Qdrant but chose pgvector because: (1) contracts already live in PostgreSQL — same transactional boundary; (2) hybrid search combining vector similarity with SQL filters (contract_type, jurisdiction, date range) is trivial; (3) HNSW indexing in pgvector 0.5+ provides comparable performance at our scale (~2M clause embeddings).</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/rag/vector_search.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> openai
+<span class="keyword">import</span> asyncpg
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span>, <span class="type">Dict</span>, <span class="type">Optional</span>
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">SimilarClause</span>:
+    clause_id: <span class="type">str</span>
+    contract_id: <span class="type">str</span>
+    text: <span class="type">str</span>
+    clause_type: <span class="type">str</span>
+    similarity_score: <span class="type">float</span>
+    contract_title: <span class="type">str</span>
+    jurisdiction: <span class="type">str</span>
+
+
+<span class="keyword">class</span> <span class="type">ContractVectorSearch</span>:
+    <span class="string">"""RAG-based clause similarity search using pgvector."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, db_url: <span class="type">str</span>):
+        self.db_url = db_url
+        self.openai = openai.<span class="function">AsyncOpenAI</span>()
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">embed_text</span>(self, text: <span class="type">str</span>) -> <span class="type">List</span>[<span class="type">float</span>]:
+        <span class="string">"""Generate embedding via OpenAI."""</span>
+        response = <span class="keyword">await</span> self.openai.embeddings.<span class="function">create</span>(
+            model=<span class="string">"text-embedding-3-small"</span>,
+            input=text,
+        )
+        <span class="keyword">return</span> response.data[<span class="number">0</span>].embedding
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">find_similar_clauses</span>(
+        self,
+        query_text: <span class="type">str</span>,
+        clause_type: <span class="type">Optional</span>[<span class="type">str</span>] = <span class="type">None</span>,
+        jurisdiction: <span class="type">Optional</span>[<span class="type">str</span>] = <span class="type">None</span>,
+        top_k: <span class="type">int</span> = <span class="number">10</span>,
+        min_similarity: <span class="type">float</span> = <span class="number">0.75</span>,
+    ) -> <span class="type">List</span>[<span class="type">SimilarClause</span>]:
+        <span class="string">"""Hybrid search: vector similarity + SQL filters."""</span>
+
+        query_embedding = <span class="keyword">await</span> self.<span class="function">embed_text</span>(query_text)
+
+        <span class="comment"># Build dynamic WHERE clause for filtering</span>
+        conditions = [<span class="string">"1 = 1"</span>]
+        params = [<span class="function">str</span>(query_embedding), top_k]
+
+        <span class="keyword">if</span> clause_type:
+            conditions.<span class="function">append</span>(f<span class="string">"c.clause_type = ${len(params) + 1}"</span>)
+            params.<span class="function">append</span>(clause_type)
+
+        <span class="keyword">if</span> jurisdiction:
+            conditions.<span class="function">append</span>(f<span class="string">"ct.jurisdiction = ${len(params) + 1}"</span>)
+            params.<span class="function">append</span>(jurisdiction)
+
+        where = <span class="string">" AND "</span>.<span class="function">join</span>(conditions)
+
+        query = f<span class="string">"""
+            SELECT
+                c.id AS clause_id,
+                c.contract_id,
+                c.text,
+                c.clause_type,
+                1 - (c.embedding <=> $1::vector) AS similarity,
+                ct.title AS contract_title,
+                ct.jurisdiction
+            FROM clause_embeddings c
+            JOIN contracts ct ON ct.id = c.contract_id
+            WHERE {where}
+              AND 1 - (c.embedding <=> $1::vector) >= {min_similarity}
+            ORDER BY c.embedding <=> $1::vector
+            LIMIT $2
+        """</span>
+
+        conn = <span class="keyword">await</span> asyncpg.<span class="function">connect</span>(self.db_url)
+        <span class="keyword">try</span>:
+            rows = <span class="keyword">await</span> conn.<span class="function">fetch</span>(query, *params)
+            <span class="keyword">return</span> [
+                <span class="type">SimilarClause</span>(
+                    clause_id=<span class="function">str</span>(row[<span class="string">"clause_id"</span>]),
+                    contract_id=<span class="function">str</span>(row[<span class="string">"contract_id"</span>]),
+                    text=row[<span class="string">"text"</span>],
+                    clause_type=row[<span class="string">"clause_type"</span>],
+                    similarity_score=<span class="function">float</span>(row[<span class="string">"similarity"</span>]),
+                    contract_title=row[<span class="string">"contract_title"</span>],
+                    jurisdiction=row[<span class="string">"jurisdiction"</span>],
+                )
+                <span class="keyword">for</span> row <span class="keyword">in</span> rows
+            ]
+        <span class="keyword">finally</span>:
+            <span class="keyword">await</span> conn.<span class="function">close</span>()
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">detect_deviations</span>(
+        self, clause_text: <span class="type">str</span>, clause_type: <span class="type">str</span>
+    ) -> <span class="type">Dict</span>:
+        <span class="string">"""Compare clause against corpus standard to find deviations."""</span>
+
+        <span class="comment"># Find the most similar approved clauses</span>
+        similar = <span class="keyword">await</span> self.<span class="function">find_similar_clauses</span>(
+            clause_text,
+            clause_type=clause_type,
+            top_k=<span class="number">5</span>,
+            min_similarity=<span class="number">0.70</span>,
+        )
+
+        <span class="keyword">if</span> <span class="keyword">not</span> similar:
+            <span class="keyword">return</span> {
+                <span class="string">"status"</span>: <span class="string">"no_precedent"</span>,
+                <span class="string">"message"</span>: <span class="string">"No similar clauses found — manual review required"</span>,
+            }
+
+        avg_similarity = np.<span class="function">mean</span>(
+            [s.similarity_score <span class="keyword">for</span> s <span class="keyword">in</span> similar]
+        )
+
+        <span class="keyword">return</span> {
+            <span class="string">"status"</span>: <span class="string">"deviation"</span> <span class="keyword">if</span> avg_similarity < <span class="number">0.85</span> <span class="keyword">else</span> <span class="string">"standard"</span>,
+            <span class="string">"avg_similarity"</span>: <span class="function">round</span>(<span class="function">float</span>(avg_similarity), <span class="number">3</span>),
+            <span class="string">"closest_precedent"</span>: similar[<span class="number">0</span>].text,
+            <span class="string">"precedent_contract"</span>: similar[<span class="number">0</span>].contract_title,
+            <span class="string">"all_matches"</span>: <span class="function">len</span>(similar),
+        }</code></pre>
+      </div>
+
+      <div class="purple-box">
+        <h4>Precedent Matching in Practice</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">When a new MSA arrives with an unusual indemnification clause, the RAG pipeline retrieves the 5 most similar indemnification clauses from previously approved contracts. If the average similarity drops below 0.85, the system flags it as a "deviation from standard" and routes it for senior legal review — catching non-standard terms that would otherwise take hours to identify manually.</p>
+      </div>
+    </div>
+
+    <!-- 5. COMPLIANCE VALIDATION ENGINE -->
+    <div class="article-section" id="compliance">
+      <h2><span class="step-badge">5</span> Compliance Validation Engine</h2>
+
+      <p>The compliance engine uses a <strong style="color:#e8e8f0;">hybrid rule-engine + LLM approach</strong>. Deterministic rules handle known regulatory requirements (GDPR data processing clauses, SOX financial controls), while the LLM handles nuanced interpretation of novel or ambiguous language.</p>
+
+      <h3>Why Hybrid, Not Pure LLM?</h3>
+      <ul>
+        <li><strong>Deterministic rules</strong> — guaranteed coverage of mandatory regulatory requirements; auditable, version-controlled</li>
+        <li><strong>LLM interpretation</strong> — handles edge cases, non-standard language, and cross-clause reasoning that rules cannot capture</li>
+        <li><strong>Combined confidence</strong> — rule engine provides baseline; LLM boosts coverage by 35% on ambiguous clauses</li>
+      </ul>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/compliance/validator.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> re
+<span class="keyword">import</span> anthropic
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span>, <span class="type">Dict</span>, <span class="type">Optional</span>
+<span class="keyword">from</span> enum <span class="keyword">import</span> <span class="type">Enum</span>
+
+
+<span class="keyword">class</span> <span class="type">ComplianceFramework</span>(<span class="type">Enum</span>):
+    GDPR = <span class="string">"gdpr"</span>
+    SOX = <span class="string">"sox"</span>
+    HIPAA = <span class="string">"hipaa"</span>
+    SOC2 = <span class="string">"soc2"</span>
+    CCPA = <span class="string">"ccpa"</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">ComplianceRule</span>:
+    rule_id: <span class="type">str</span>
+    framework: <span class="type">ComplianceFramework</span>
+    description: <span class="type">str</span>
+    required_patterns: <span class="type">List</span>[<span class="type">str</span>]    <span class="comment"># regex patterns that MUST exist</span>
+    prohibited_patterns: <span class="type">List</span>[<span class="type">str</span>]  <span class="comment"># regex patterns that MUST NOT exist</span>
+    severity: <span class="type">str</span>  <span class="comment"># "critical" | "high" | "medium" | "low"</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">ComplianceResult</span>:
+    rule_id: <span class="type">str</span>
+    passed: <span class="type">bool</span>
+    confidence: <span class="type">float</span>
+    source: <span class="type">str</span>  <span class="comment"># "rule_engine" | "llm" | "hybrid"</span>
+    details: <span class="type">str</span>
+    clause_ref: <span class="type">Optional</span>[<span class="type">str</span>] = <span class="type">None</span>
+
+
+<span class="keyword">class</span> <span class="type">ComplianceValidator</span>:
+    <span class="string">"""Hybrid rule-engine + LLM compliance checker."""</span>
+
+    <span class="comment"># Deterministic rules for known requirements</span>
+    RULES: <span class="type">List</span>[<span class="type">ComplianceRule</span>] = [
+        <span class="type">ComplianceRule</span>(
+            rule_id=<span class="string">"GDPR-001"</span>,
+            framework=<span class="type">ComplianceFramework</span>.GDPR,
+            description=<span class="string">"Must include data processing agreement"</span>,
+            required_patterns=[
+                <span class="string">r"data\s+process(ing|or)\s+agreement"</span>,
+                <span class="string">r"sub-?processor"</span>,
+            ],
+            prohibited_patterns=[],
+            severity=<span class="string">"critical"</span>,
+        ),
+        <span class="type">ComplianceRule</span>(
+            rule_id=<span class="string">"GDPR-002"</span>,
+            framework=<span class="type">ComplianceFramework</span>.GDPR,
+            description=<span class="string">"Must specify data retention period"</span>,
+            required_patterns=[
+                <span class="string">r"retention\s+period"</span>,
+                <span class="string">r"delet(e|ion)\s+.{0,30}(data|records)"</span>,
+            ],
+            prohibited_patterns=[
+                <span class="string">r"retain\s+(indefinitely|forever|permanently)"</span>,
+            ],
+            severity=<span class="string">"critical"</span>,
+        ),
+        <span class="type">ComplianceRule</span>(
+            rule_id=<span class="string">"SOX-001"</span>,
+            framework=<span class="type">ComplianceFramework</span>.SOX,
+            description=<span class="string">"Must include audit rights clause"</span>,
+            required_patterns=[
+                <span class="string">r"audit\s+right"</span>,
+                <span class="string">r"(inspect|examin)\w*\s+.{0,20}(books|records)"</span>,
+            ],
+            prohibited_patterns=[],
+            severity=<span class="string">"high"</span>,
+        ),
+    ]
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.client = anthropic.<span class="function">Anthropic</span>()
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">validate</span>(
+        self,
+        contract_text: <span class="type">str</span>,
+        frameworks: <span class="type">List</span>[<span class="type">ComplianceFramework</span>],
+    ) -> <span class="type">List</span>[<span class="type">ComplianceResult</span>]:
+        <span class="string">"""Run hybrid compliance validation."""</span>
+        results = []
+
+        <span class="comment"># Phase 1: Deterministic rule checks</span>
+        applicable_rules = [
+            r <span class="keyword">for</span> r <span class="keyword">in</span> self.RULES
+            <span class="keyword">if</span> r.framework <span class="keyword">in</span> frameworks
+        ]
+
+        <span class="keyword">for</span> rule <span class="keyword">in</span> applicable_rules:
+            result = self.<span class="function">_check_rule</span>(rule, contract_text)
+            results.<span class="function">append</span>(result)
+
+        <span class="comment"># Phase 2: LLM for nuanced checks rules can't cover</span>
+        llm_results = <span class="keyword">await</span> self.<span class="function">_llm_compliance_check</span>(
+            contract_text, frameworks
+        )
+        results.<span class="function">extend</span>(llm_results)
+
+        <span class="keyword">return</span> results
+
+    <span class="keyword">def</span> <span class="function">_check_rule</span>(
+        self, rule: <span class="type">ComplianceRule</span>, text: <span class="type">str</span>
+    ) -> <span class="type">ComplianceResult</span>:
+        <span class="string">"""Deterministic regex-based rule check."""</span>
+        text_lower = text.lower()
+
+        <span class="comment"># Check required patterns</span>
+        required_found = <span class="function">all</span>(
+            re.<span class="function">search</span>(pattern, text_lower)
+            <span class="keyword">for</span> pattern <span class="keyword">in</span> rule.required_patterns
+        )
+
+        <span class="comment"># Check prohibited patterns</span>
+        prohibited_found = <span class="function">any</span>(
+            re.<span class="function">search</span>(pattern, text_lower)
+            <span class="keyword">for</span> pattern <span class="keyword">in</span> rule.prohibited_patterns
+        )
+
+        passed = required_found <span class="keyword">and</span> <span class="keyword">not</span> prohibited_found
+
+        <span class="keyword">return</span> <span class="type">ComplianceResult</span>(
+            rule_id=rule.rule_id,
+            passed=passed,
+            confidence=<span class="number">1.0</span>,  <span class="comment"># deterministic = full confidence</span>
+            source=<span class="string">"rule_engine"</span>,
+            details=rule.description,
+        )
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">_llm_compliance_check</span>(
+        self,
+        contract_text: <span class="type">str</span>,
+        frameworks: <span class="type">List</span>[<span class="type">ComplianceFramework</span>],
+    ) -> <span class="type">List</span>[<span class="type">ComplianceResult</span>]:
+        <span class="string">"""LLM-based check for nuanced compliance requirements."""</span>
+
+        prompt = f<span class="string">"""As a regulatory compliance expert, analyze this
+contract for compliance with: {', '.join(f.value.upper() for f in frameworks)}
+
+Focus on requirements that simple keyword matching would MISS:
+1. Implied obligations without explicit language
+2. Contradictory clauses that create compliance gaps
+3. Missing standard protections for the framework
+4. Ambiguous language that could be interpreted non-compliantly
+
+Contract text:
+{contract_text[:8000]}
+
+Return JSON array with fields: rule_id, passed, confidence (0-1),
+details, clause_ref"""</span>
+
+        response = self.client.messages.<span class="function">create</span>(
+            model=<span class="string">"claude-sonnet-4-20250514"</span>,
+            max_tokens=<span class="number">4096</span>,
+            messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}],
+        )
+
+        raw = json.<span class="function">loads</span>(response.content[<span class="number">0</span>].text)
+        <span class="keyword">return</span> [
+            <span class="type">ComplianceResult</span>(
+                rule_id=r[<span class="string">"rule_id"</span>],
+                passed=r[<span class="string">"passed"</span>],
+                confidence=r[<span class="string">"confidence"</span>],
+                source=<span class="string">"llm"</span>,
+                details=r[<span class="string">"details"</span>],
+                clause_ref=r.get(<span class="string">"clause_ref"</span>),
+            )
+            <span class="keyword">for</span> r <span class="keyword">in</span> raw
+        ]</code></pre>
+      </div>
+    </div>
+
+    <!-- 6. MULTI-AGENT ARCHITECTURE -->
+    <div class="article-section" id="multi-agent">
+      <h2><span class="step-badge">6</span> Multi-Agent Architecture</h2>
+
+      <p>The system employs five specialized agents coordinated by a <strong style="color:#e8e8f0;">state-machine orchestrator</strong>. Each agent is an expert in its domain and communicates through a shared context object. The orchestrator manages transitions, retries, and ensures deterministic execution order.</p>
+
+      <h3>Agent Roles</h3>
+
+      <div class="flow-step">
+        <div class="flow-num" style="background:#6366f1;">O</div>
+        <div class="flow-content">
+          <h4>Orchestrator (State Machine)</h4>
+          <p>Routes the contract through the agent pipeline, manages state transitions, handles errors and retries, maintains the shared context.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&#x2193;</div>
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <h4>Extraction Agent</h4>
+          <p>Parses raw text into structured clauses, identifies parties, dates, monetary values, and defined terms.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&#x2193;</div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <h4>Risk Agent</h4>
+          <p>Scores each clause across 6 risk dimensions, identifies high-risk provisions, flags missing standard protections.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&#x2193;</div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <h4>Compliance Agent</h4>
+          <p>Validates against applicable regulatory frameworks (GDPR, SOX, HIPAA). Combines rule engine with LLM interpretation.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">&#x2193;</div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <h4>Summary Agent</h4>
+          <p>Generates executive summary, key terms table, obligation timeline, and risk-prioritized action items for legal reviewers.</p>
+        </div>
+      </div>
+
+      <h3>Orchestrator State Machine</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/orchestrator/state_machine.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> asyncio
+<span class="keyword">import</span> logging
+<span class="keyword">from</span> enum <span class="keyword">import</span> <span class="type">Enum</span>
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">Dict</span>, <span class="type">Any</span>, <span class="type">Optional</span>, <span class="type">List</span>
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+logger = logging.<span class="function">getLogger</span>(__name__)
+
+
+<span class="keyword">class</span> <span class="type">PipelineState</span>(<span class="type">Enum</span>):
+    PENDING = <span class="string">"pending"</span>
+    EXTRACTING = <span class="string">"extracting"</span>
+    ASSESSING_RISK = <span class="string">"assessing_risk"</span>
+    CHECKING_COMPLIANCE = <span class="string">"checking_compliance"</span>
+    SUMMARIZING = <span class="string">"summarizing"</span>
+    COMPLETED = <span class="string">"completed"</span>
+    FAILED = <span class="string">"failed"</span>
+    NEEDS_REVIEW = <span class="string">"needs_review"</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">PipelineContext</span>:
+    <span class="string">"""Shared context passed between agents."""</span>
+    contract_id: <span class="type">str</span>
+    raw_text: <span class="type">str</span>
+    contract_type: <span class="type">str</span>
+    state: <span class="type">PipelineState</span> = <span class="type">PipelineState</span>.PENDING
+    extracted_clauses: <span class="type">List</span>[<span class="type">Dict</span>] = field(default_factory=list)
+    risk_assessment: <span class="type">Optional</span>[<span class="type">Dict</span>] = <span class="type">None</span>
+    compliance_results: <span class="type">List</span>[<span class="type">Dict</span>] = field(default_factory=list)
+    summary: <span class="type">Optional</span>[<span class="type">str</span>] = <span class="type">None</span>
+    errors: <span class="type">List</span>[<span class="type">Dict</span>] = field(default_factory=list)
+    started_at: datetime = field(default_factory=datetime.utcnow)
+    audit_log: <span class="type">List</span>[<span class="type">Dict</span>] = field(default_factory=list)
+
+
+<span class="keyword">class</span> <span class="type">ContractOrchestrator</span>:
+    <span class="string">"""State machine orchestrator for multi-agent pipeline."""</span>
+
+    <span class="comment"># Valid state transitions</span>
+    TRANSITIONS = {
+        <span class="type">PipelineState</span>.PENDING: [<span class="type">PipelineState</span>.EXTRACTING],
+        <span class="type">PipelineState</span>.EXTRACTING: [
+            <span class="type">PipelineState</span>.ASSESSING_RISK,
+            <span class="type">PipelineState</span>.FAILED,
+        ],
+        <span class="type">PipelineState</span>.ASSESSING_RISK: [
+            <span class="type">PipelineState</span>.CHECKING_COMPLIANCE,
+            <span class="type">PipelineState</span>.NEEDS_REVIEW,
+            <span class="type">PipelineState</span>.FAILED,
+        ],
+        <span class="type">PipelineState</span>.CHECKING_COMPLIANCE: [
+            <span class="type">PipelineState</span>.SUMMARIZING,
+            <span class="type">PipelineState</span>.NEEDS_REVIEW,
+            <span class="type">PipelineState</span>.FAILED,
+        ],
+        <span class="type">PipelineState</span>.SUMMARIZING: [
+            <span class="type">PipelineState</span>.COMPLETED,
+            <span class="type">PipelineState</span>.FAILED,
+        ],
+    }
+
+    MAX_RETRIES = <span class="number">3</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, extraction_agent, risk_agent,
+                 compliance_agent, summary_agent):
+        self.agents = {
+            <span class="type">PipelineState</span>.EXTRACTING: extraction_agent,
+            <span class="type">PipelineState</span>.ASSESSING_RISK: risk_agent,
+            <span class="type">PipelineState</span>.CHECKING_COMPLIANCE: compliance_agent,
+            <span class="type">PipelineState</span>.SUMMARIZING: summary_agent,
+        }
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">run_pipeline</span>(
+        self, ctx: <span class="type">PipelineContext</span>
+    ) -> <span class="type">PipelineContext</span>:
+        <span class="string">"""Execute the full agent pipeline with retry logic."""</span>
+
+        pipeline_order = [
+            <span class="type">PipelineState</span>.EXTRACTING,
+            <span class="type">PipelineState</span>.ASSESSING_RISK,
+            <span class="type">PipelineState</span>.CHECKING_COMPLIANCE,
+            <span class="type">PipelineState</span>.SUMMARIZING,
+        ]
+
+        <span class="keyword">for</span> target_state <span class="keyword">in</span> pipeline_order:
+            <span class="comment"># Validate transition</span>
+            allowed = self.TRANSITIONS.get(ctx.state, [])
+            <span class="keyword">if</span> target_state <span class="keyword">not</span> <span class="keyword">in</span> allowed:
+                logger.<span class="function">error</span>(
+                    f<span class="string">"Invalid transition: {ctx.state} -> {target_state}"</span>
+                )
+                ctx.state = <span class="type">PipelineState</span>.FAILED
+                <span class="keyword">break</span>
+
+            <span class="comment"># Execute agent with retries</span>
+            success = <span class="keyword">await</span> self.<span class="function">_execute_with_retry</span>(
+                ctx, target_state
+            )
+
+            <span class="keyword">if</span> <span class="keyword">not</span> success:
+                ctx.state = <span class="type">PipelineState</span>.FAILED
+                <span class="keyword">break</span>
+
+            <span class="comment"># Check if high-risk triggers manual review</span>
+            <span class="keyword">if</span> (target_state == <span class="type">PipelineState</span>.ASSESSING_RISK
+                <span class="keyword">and</span> ctx.risk_assessment
+                <span class="keyword">and</span> ctx.risk_assessment.get(<span class="string">"overall_score"</span>, <span class="number">0</span>) > <span class="number">0.8</span>):
+                ctx.state = <span class="type">PipelineState</span>.NEEDS_REVIEW
+                self.<span class="function">_log_audit</span>(
+                    ctx, <span class="string">"HIGH_RISK_ESCALATION"</span>,
+                    <span class="string">"Risk score > 0.8 — routing to senior review"</span>,
+                )
+                <span class="keyword">break</span>
+
+        <span class="keyword">if</span> ctx.state == <span class="type">PipelineState</span>.SUMMARIZING:
+            ctx.state = <span class="type">PipelineState</span>.COMPLETED
+
+        <span class="keyword">return</span> ctx
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">_execute_with_retry</span>(
+        self, ctx: <span class="type">PipelineContext</span>, state: <span class="type">PipelineState</span>
+    ) -> <span class="type">bool</span>:
+        <span class="string">"""Execute an agent with exponential backoff retry."""</span>
+        agent = self.agents[state]
+
+        <span class="keyword">for</span> attempt <span class="keyword">in</span> <span class="function">range</span>(self.MAX_RETRIES):
+            <span class="keyword">try</span>:
+                ctx.state = state
+                self.<span class="function">_log_audit</span>(
+                    ctx, <span class="string">"AGENT_START"</span>,
+                    f<span class="string">"Starting {state.value} (attempt {attempt + 1})"</span>,
+                )
+
+                <span class="keyword">await</span> agent.<span class="function">execute</span>(ctx)
+
+                self.<span class="function">_log_audit</span>(
+                    ctx, <span class="string">"AGENT_COMPLETE"</span>,
+                    f<span class="string">"Completed {state.value}"</span>,
+                )
+                <span class="keyword">return</span> <span class="type">True</span>
+
+            <span class="keyword">except</span> <span class="type">Exception</span> <span class="keyword">as</span> e:
+                wait = <span class="number">2</span> ** attempt
+                logger.<span class="function">warning</span>(
+                    f<span class="string">"Agent {state.value} failed (attempt {attempt + 1}): {e}"</span>
+                )
+                ctx.errors.<span class="function">append</span>({
+                    <span class="string">"agent"</span>: state.value,
+                    <span class="string">"attempt"</span>: attempt + <span class="number">1</span>,
+                    <span class="string">"error"</span>: <span class="function">str</span>(e),
+                })
+                <span class="keyword">if</span> attempt < self.MAX_RETRIES - <span class="number">1</span>:
+                    <span class="keyword">await</span> asyncio.<span class="function">sleep</span>(wait)
+
+        <span class="keyword">return</span> <span class="type">False</span>
+
+    <span class="keyword">def</span> <span class="function">_log_audit</span>(
+        self, ctx: <span class="type">PipelineContext</span>,
+        event: <span class="type">str</span>, details: <span class="type">str</span>
+    ):
+        ctx.audit_log.<span class="function">append</span>({
+            <span class="string">"timestamp"</span>: datetime.<span class="function">utcnow</span>().<span class="function">isoformat</span>(),
+            <span class="string">"contract_id"</span>: ctx.contract_id,
+            <span class="string">"event"</span>: event,
+            <span class="string">"state"</span>: ctx.state.value,
+            <span class="string">"details"</span>: details,
+        })</code></pre>
+      </div>
+
+      <div class="success-box">
+        <h4>Key Design Principle: Fail-Safe Escalation</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">When the risk score exceeds 0.8, the orchestrator halts the pipeline and routes to NEEDS_REVIEW state. This ensures no high-risk contract completes the automated pipeline without senior legal oversight. The state machine prevents skipping steps or re-entering completed states.</p>
+      </div>
+    </div>
+
+    <!-- 7. CONTRACT LIFECYCLE MANAGEMENT -->
+    <div class="article-section" id="lifecycle">
+      <h2><span class="step-badge">7</span> Contract Lifecycle Management</h2>
+
+      <p>Enterprise contracts are living documents. The system tracks the full lifecycle from draft through execution to expiry, including <strong style="color:#e8e8f0;">version control</strong>, <strong style="color:#e8e8f0;">approval workflows</strong>, <strong style="color:#e8e8f0;">amendment tracking</strong>, and <strong style="color:#e8e8f0;">complete audit trails</strong>.</p>
+
+      <h3>Lifecycle States</h3>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+  ┌────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+  │ DRAFT  │───▶│ IN_REVIEW│───▶│ APPROVED │───▶│ EXECUTED │───▶│ EXPIRED  │
+  └────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
+       │              │               │               │
+       │              │               │               ▼
+       │              ▼               │         ┌──────────┐
+       │        ┌──────────┐         │         │ RENEWED  │
+       │        │ REJECTED │         │         └──────────┘
+       │        └──────────┘         │
+       │                             ▼
+       │                       ┌──────────┐
+       └──────────────────────▶│ AMENDED  │──▶ (re-enters IN_REVIEW)
+                               └──────────┘</div>
+      </div>
+
+      <h3>Version Control & Amendment Tracking</h3>
+      <ul>
+        <li><strong>Immutable versions</strong> — Every contract modification creates a new version; previous versions are never overwritten</li>
+        <li><strong>Diff generation</strong> — LLM-powered semantic diff highlights meaningful changes between versions (not just text diff)</li>
+        <li><strong>Amendment chain</strong> — Amendments link to parent contract via foreign key; the system resolves the "effective terms" by applying amendments in order</li>
+        <li><strong>Approval workflow</strong> — Configurable approval chains based on contract value, risk score, and type (e.g., contracts over $1M require VP-level approval)</li>
+      </ul>
+
+      <h3>Approval Workflow Engine</h3>
+      <table>
+        <thead>
+          <tr><th>Contract Value</th><th>Risk Score</th><th>Approval Chain</th><th>SLA</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>&lt; $100K</td><td>&lt; 0.3 (Low)</td><td>Legal Analyst</td><td>24 hours</td></tr>
+          <tr><td>$100K - $1M</td><td>0.3 - 0.6 (Medium)</td><td>Senior Counsel → Legal Director</td><td>48 hours</td></tr>
+          <tr><td>$1M - $10M</td><td>0.6 - 0.8 (High)</td><td>Legal Director → VP Legal → CFO</td><td>5 business days</td></tr>
+          <tr><td>&gt; $10M</td><td>&gt; 0.8 (Critical)</td><td>VP Legal → GC → CEO + Board</td><td>10 business days</td></tr>
+        </tbody>
+      </table>
+
+      <div class="orange-box">
+        <h4>Audit Trail Requirements</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">Every action on a contract is logged immutably: who viewed it, who approved it, what the AI analysis said, what changed between versions, and when. This is non-negotiable for SOX compliance and is the reason we chose PostgreSQL (ACID transactions) over a document store — audit records must never be lost or inconsistent.</p>
+      </div>
+    </div>
+
+    <!-- 8. REAL-TIME ALERTS & NOTIFICATIONS -->
+    <div class="article-section" id="alerts">
+      <h2><span class="step-badge">8</span> Real-time Alerts & Notifications</h2>
+
+      <p>The notification service monitors active contracts and fires alerts for <strong style="color:#e8e8f0;">upcoming expirations</strong>, <strong style="color:#e8e8f0;">obligation deadlines</strong>, <strong style="color:#e8e8f0;">risk threshold breaches</strong>, and <strong style="color:#e8e8f0;">compliance failures</strong>. It uses a combination of cron-based scanners and Kafka event-driven triggers.</p>
+
+      <h3>Alert Types</h3>
+      <table>
+        <thead>
+          <tr><th>Alert Type</th><th>Trigger</th><th>Channel</th><th>Priority</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Contract Expiry</td><td>90, 60, 30, 7 days before expiry</td><td>Email + Slack + Dashboard</td><td>High</td></tr>
+          <tr><td>Obligation Due</td><td>14, 7, 3, 1 day(s) before deadline</td><td>Email + Assignee Dashboard</td><td>Medium-High</td></tr>
+          <tr><td>Risk Threshold Breach</td><td>Risk score exceeds configured threshold</td><td>Email to Legal Lead + PagerDuty</td><td>Critical</td></tr>
+          <tr><td>Compliance Failure</td><td>Rule engine or LLM detects violation</td><td>Email + Slack + Compliance Dashboard</td><td>Critical</td></tr>
+          <tr><td>Amendment Filed</td><td>Counterparty submits contract amendment</td><td>Email + Dashboard notification</td><td>Medium</td></tr>
+          <tr><td>Approval Pending</td><td>Contract awaiting approver action &gt; SLA</td><td>Email + Slack reminder</td><td>Medium</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Event-Driven Alert Architecture</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">services/notifications/alert_service.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> asyncio
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime, timedelta
+<span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span>, <span class="type">Dict</span>
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass
+<span class="keyword">from</span> enum <span class="keyword">import</span> <span class="type">Enum</span>
+<span class="keyword">import</span> aiohttp
+
+
+<span class="keyword">class</span> <span class="type">AlertPriority</span>(<span class="type">Enum</span>):
+    LOW = <span class="string">"low"</span>
+    MEDIUM = <span class="string">"medium"</span>
+    HIGH = <span class="string">"high"</span>
+    CRITICAL = <span class="string">"critical"</span>
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">Alert</span>:
+    alert_type: <span class="type">str</span>
+    contract_id: <span class="type">str</span>
+    priority: <span class="type">AlertPriority</span>
+    message: <span class="type">str</span>
+    recipients: <span class="type">List</span>[<span class="type">str</span>]
+    metadata: <span class="type">Dict</span>
+
+
+<span class="keyword">class</span> <span class="type">ContractAlertService</span>:
+    <span class="string">"""Monitors contracts and fires alerts via multiple channels."""</span>
+
+    EXPIRY_WINDOWS = [<span class="number">90</span>, <span class="number">60</span>, <span class="number">30</span>, <span class="number">7</span>]  <span class="comment"># days before expiry</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, db, kafka_producer, slack_client):
+        self.db = db
+        self.kafka = kafka_producer
+        self.slack = slack_client
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">scan_expiring_contracts</span>(self):
+        <span class="string">"""Cron job: scan for contracts approaching expiry."""</span>
+
+        <span class="keyword">for</span> window <span class="keyword">in</span> self.EXPIRY_WINDOWS:
+            target_date = datetime.<span class="function">utcnow</span>() + <span class="function">timedelta</span>(days=window)
+
+            contracts = <span class="keyword">await</span> self.db.<span class="function">fetch</span>(<span class="string">"""
+                SELECT id, title, expiry_date, owner_email,
+                       contract_value
+                FROM contracts
+                WHERE expiry_date::date = $1::date
+                  AND status = 'executed'
+                  AND auto_renew = FALSE
+            """</span>, target_date)
+
+            <span class="keyword">for</span> contract <span class="keyword">in</span> contracts:
+                alert = <span class="type">Alert</span>(
+                    alert_type=<span class="string">"CONTRACT_EXPIRY"</span>,
+                    contract_id=<span class="function">str</span>(contract[<span class="string">"id"</span>]),
+                    priority=(
+                        <span class="type">AlertPriority</span>.CRITICAL <span class="keyword">if</span> window <= <span class="number">7</span>
+                        <span class="keyword">else</span> <span class="type">AlertPriority</span>.HIGH
+                    ),
+                    message=(
+                        f<span class="string">"Contract '{contract['title']}' expires "</span>
+                        f<span class="string">"in {window} days ({contract['expiry_date']})"</span>
+                    ),
+                    recipients=[contract[<span class="string">"owner_email"</span>]],
+                    metadata={
+                        <span class="string">"days_until_expiry"</span>: window,
+                        <span class="string">"contract_value"</span>: <span class="function">str</span>(
+                            contract[<span class="string">"contract_value"</span>]
+                        ),
+                    },
+                )
+                <span class="keyword">await</span> self.<span class="function">_dispatch_alert</span>(alert)
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">_dispatch_alert</span>(self, alert: <span class="type">Alert</span>):
+        <span class="string">"""Route alert to appropriate channels based on priority."""</span>
+
+        <span class="comment"># Always publish to Kafka for audit trail</span>
+        <span class="keyword">await</span> self.kafka.<span class="function">send</span>(
+            <span class="string">"contract-alerts"</span>,
+            key=alert.contract_id,
+            value=alert.__dict__,
+        )
+
+        <span class="comment"># Email for all priorities</span>
+        <span class="keyword">await</span> self.<span class="function">_send_email</span>(alert)
+
+        <span class="comment"># Slack for high and critical</span>
+        <span class="keyword">if</span> alert.priority <span class="keyword">in</span> (
+            <span class="type">AlertPriority</span>.HIGH, <span class="type">AlertPriority</span>.CRITICAL
+        ):
+            <span class="keyword">await</span> self.<span class="function">_send_slack</span>(alert)
+
+        <span class="comment"># PagerDuty for critical only</span>
+        <span class="keyword">if</span> alert.priority == <span class="type">AlertPriority</span>.CRITICAL:
+            <span class="keyword">await</span> self.<span class="function">_trigger_pagerduty</span>(alert)</code></pre>
+      </div>
+    </div>
+
+    <!-- 9. DATABASE SCHEMA -->
+    <div class="article-section" id="schema">
+      <h2><span class="step-badge">9</span> Database Schema</h2>
+
+      <p>The PostgreSQL schema is designed for <strong style="color:#e8e8f0;">referential integrity</strong>, <strong style="color:#e8e8f0;">audit compliance</strong>, and <strong style="color:#e8e8f0;">efficient vector search</strong>. All tables include created_at/updated_at timestamps with trigger-based auto-update. Soft deletes are used throughout — no contract data is ever physically removed.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">SQL</span>
+          <span class="code-file">migrations/001_contract_intelligence.sql</span>
+        </div>
+        <pre><code><span class="comment">-- Enable pgvector extension</span>
+<span class="keyword">CREATE EXTENSION IF NOT EXISTS</span> vector;
+
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="comment">-- Core: Contracts</span>
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">contracts</span> (
+    id              UUID <span class="keyword">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    title           <span class="type">VARCHAR</span>(<span class="number">500</span>) <span class="keyword">NOT NULL</span>,
+    contract_type   <span class="type">VARCHAR</span>(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,  <span class="comment">-- NDA, MSA, SOW, etc.</span>
+    status          <span class="type">VARCHAR</span>(<span class="number">20</span>) <span class="keyword">NOT NULL DEFAULT</span> <span class="string">'draft'</span>,
+    version         <span class="type">INTEGER</span> <span class="keyword">NOT NULL DEFAULT</span> <span class="number">1</span>,
+    parent_id       UUID <span class="keyword">REFERENCES</span> contracts(id),  <span class="comment">-- for amendments</span>
+    parties         <span class="type">JSONB</span> <span class="keyword">NOT NULL</span>,  <span class="comment">-- [{name, role, contact}]</span>
+    effective_date  <span class="type">DATE</span>,
+    expiry_date     <span class="type">DATE</span>,
+    contract_value  <span class="type">DECIMAL</span>(<span class="number">15</span>,<span class="number">2</span>),
+    currency        <span class="type">VARCHAR</span>(<span class="number">3</span>) <span class="keyword">DEFAULT</span> <span class="string">'USD'</span>,
+    jurisdiction    <span class="type">VARCHAR</span>(<span class="number">100</span>),
+    governing_law   <span class="type">VARCHAR</span>(<span class="number">100</span>),
+    auto_renew      <span class="type">BOOLEAN</span> <span class="keyword">DEFAULT</span> <span class="keyword">FALSE</span>,
+    renewal_term    <span class="type">INTERVAL</span>,
+    raw_text        <span class="type">TEXT</span>,
+    file_url        <span class="type">VARCHAR</span>(<span class="number">1000</span>),
+    owner_id        UUID <span class="keyword">NOT NULL</span>,
+    owner_email     <span class="type">VARCHAR</span>(<span class="number">255</span>),
+    created_at      <span class="type">TIMESTAMPTZ</span> <span class="keyword">DEFAULT</span> now(),
+    updated_at      <span class="type">TIMESTAMPTZ</span> <span class="keyword">DEFAULT</span> now(),
+    deleted_at      <span class="type">TIMESTAMPTZ</span>  <span class="comment">-- soft delete</span>
+);
+
+<span class="keyword">CREATE INDEX</span> idx_contracts_status <span class="keyword">ON</span> contracts(status);
+<span class="keyword">CREATE INDEX</span> idx_contracts_expiry <span class="keyword">ON</span> contracts(expiry_date)
+    <span class="keyword">WHERE</span> deleted_at <span class="keyword">IS NULL</span>;
+<span class="keyword">CREATE INDEX</span> idx_contracts_type <span class="keyword">ON</span> contracts(contract_type);
+
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="comment">-- Clauses (extracted by LLM)</span>
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">clauses</span> (
+    id              UUID <span class="keyword">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    contract_id     UUID <span class="keyword">NOT NULL REFERENCES</span> contracts(id),
+    clause_type     <span class="type">VARCHAR</span>(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,
+    section_ref     <span class="type">VARCHAR</span>(<span class="number">20</span>),
+    text            <span class="type">TEXT</span> <span class="keyword">NOT NULL</span>,
+    page_number     <span class="type">INTEGER</span>,
+    risk_indicators <span class="type">JSONB</span> <span class="keyword">DEFAULT</span> <span class="string">'[]'</span>,
+    key_dates       <span class="type">JSONB</span> <span class="keyword">DEFAULT</span> <span class="string">'[]'</span>,
+    monetary_values <span class="type">JSONB</span> <span class="keyword">DEFAULT</span> <span class="string">'[]'</span>,
+    created_at      <span class="type">TIMESTAMPTZ</span> <span class="keyword">DEFAULT</span> now()
+);
+
+<span class="keyword">CREATE INDEX</span> idx_clauses_contract <span class="keyword">ON</span> clauses(contract_id);
+<span class="keyword">CREATE INDEX</span> idx_clauses_type <span class="keyword">ON</span> clauses(clause_type);
+
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="comment">-- Clause Embeddings (pgvector)</span>
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">clause_embeddings</span> (
+    id              UUID <span class="keyword">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    clause_id       UUID <span class="keyword">NOT NULL REFERENCES</span> clauses(id),
+    contract_id     UUID <span class="keyword">NOT NULL REFERENCES</span> contracts(id),
+    clause_type     <span class="type">VARCHAR</span>(<span class="number">50</span>),
+    text            <span class="type">TEXT</span> <span class="keyword">NOT NULL</span>,
+    embedding       vector(<span class="number">1536</span>) <span class="keyword">NOT NULL</span>,
+    created_at      <span class="type">TIMESTAMPTZ</span> <span class="keyword">DEFAULT</span> now()
+);
+
+<span class="comment">-- HNSW index for fast approximate nearest neighbor</span>
+<span class="keyword">CREATE INDEX</span> idx_clause_embeddings_hnsw
+    <span class="keyword">ON</span> clause_embeddings
+    <span class="keyword">USING</span> hnsw (embedding vector_cosine_ops)
+    <span class="keyword">WITH</span> (m = <span class="number">16</span>, ef_construction = <span class="number">200</span>);
+
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="comment">-- Obligations</span>
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">obligations</span> (
+    id              UUID <span class="keyword">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    contract_id     UUID <span class="keyword">NOT NULL REFERENCES</span> contracts(id),
+    clause_id       UUID <span class="keyword">REFERENCES</span> clauses(id),
+    description     <span class="type">TEXT</span> <span class="keyword">NOT NULL</span>,
+    obligated_party <span class="type">VARCHAR</span>(<span class="number">200</span>),
+    due_date        <span class="type">DATE</span>,
+    recurring       <span class="type">BOOLEAN</span> <span class="keyword">DEFAULT</span> <span class="keyword">FALSE</span>,
+    recurrence_rule <span class="type">VARCHAR</span>(<span class="number">100</span>),  <span class="comment">-- RRULE format</span>
+    status          <span class="type">VARCHAR</span>(<span class="number">20</span>) <span class="keyword">DEFAULT</span> <span class="string">'pending'</span>,
+    assigned_to     UUID,
+    completed_at    <span class="type">TIMESTAMPTZ</span>,
+    created_at      <span class="type">TIMESTAMPTZ</span> <span class="keyword">DEFAULT</span> now()
+);
+
+<span class="keyword">CREATE INDEX</span> idx_obligations_due <span class="keyword">ON</span> obligations(due_date)
+    <span class="keyword">WHERE</span> status = <span class="string">'pending'</span>;
+
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="comment">-- Compliance Checks</span>
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">compliance_checks</span> (
+    id              UUID <span class="keyword">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    contract_id     UUID <span class="keyword">NOT NULL REFERENCES</span> contracts(id),
+    framework       <span class="type">VARCHAR</span>(<span class="number">20</span>) <span class="keyword">NOT NULL</span>,  <span class="comment">-- GDPR, SOX, HIPAA</span>
+    rule_id         <span class="type">VARCHAR</span>(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,
+    passed          <span class="type">BOOLEAN</span> <span class="keyword">NOT NULL</span>,
+    confidence      <span class="type">DECIMAL</span>(<span class="number">3</span>,<span class="number">2</span>),
+    source          <span class="type">VARCHAR</span>(<span class="number">20</span>),  <span class="comment">-- rule_engine | llm | hybrid</span>
+    details         <span class="type">TEXT</span>,
+    clause_ref      <span class="type">VARCHAR</span>(<span class="number">20</span>),
+    reviewed_by     UUID,
+    reviewed_at     <span class="type">TIMESTAMPTZ</span>,
+    created_at      <span class="type">TIMESTAMPTZ</span> <span class="keyword">DEFAULT</span> now()
+);
+
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="comment">-- Risk Scores</span>
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">risk_scores</span> (
+    id              UUID <span class="keyword">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    contract_id     UUID <span class="keyword">NOT NULL REFERENCES</span> contracts(id),
+    overall_score   <span class="type">DECIMAL</span>(<span class="number">4</span>,<span class="number">3</span>) <span class="keyword">NOT NULL</span>,
+    category_scores <span class="type">JSONB</span> <span class="keyword">NOT NULL</span>,
+    high_risk_clauses <span class="type">JSONB</span>,
+    missing_protections <span class="type">JSONB</span>,
+    recommendations <span class="type">JSONB</span>,
+    assessed_by     <span class="type">VARCHAR</span>(<span class="number">20</span>) <span class="keyword">DEFAULT</span> <span class="string">'system'</span>,
+    created_at      <span class="type">TIMESTAMPTZ</span> <span class="keyword">DEFAULT</span> now()
+);
+
+<span class="keyword">CREATE INDEX</span> idx_risk_scores_contract <span class="keyword">ON</span> risk_scores(contract_id);
+<span class="keyword">CREATE INDEX</span> idx_risk_scores_high <span class="keyword">ON</span> risk_scores(overall_score)
+    <span class="keyword">WHERE</span> overall_score > <span class="number">0.7</span>;
+
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="comment">-- Audit Logs (immutable, append-only)</span>
+<span class="comment">-- ═══════════════════════════════════════════════</span>
+<span class="keyword">CREATE TABLE</span> <span class="type">audit_logs</span> (
+    id              BIGSERIAL <span class="keyword">PRIMARY KEY</span>,
+    contract_id     UUID <span class="keyword">REFERENCES</span> contracts(id),
+    actor_id        UUID,
+    actor_type      <span class="type">VARCHAR</span>(<span class="number">20</span>),  <span class="comment">-- user | system | agent</span>
+    action          <span class="type">VARCHAR</span>(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,
+    details         <span class="type">JSONB</span>,
+    ip_address      <span class="type">INET</span>,
+    created_at      <span class="type">TIMESTAMPTZ</span> <span class="keyword">DEFAULT</span> now()
+);
+
+<span class="comment">-- Partition audit logs by month for performance</span>
+<span class="keyword">CREATE INDEX</span> idx_audit_contract <span class="keyword">ON</span> audit_logs(contract_id);
+<span class="keyword">CREATE INDEX</span> idx_audit_created <span class="keyword">ON</span> audit_logs(created_at);</code></pre>
+      </div>
+    </div>
+
+    <!-- 10. PERFORMANCE METRICS -->
+    <div class="article-section" id="metrics">
+      <h2><span class="step-badge">10</span> Performance Metrics</h2>
+
+      <p>Key performance indicators measured in production across an enterprise platform processing contracts for a Fortune 500 tech company.</p>
+
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-value">95%</div>
+          <div class="metric-label">Clause Extraction Accuracy</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">80%</div>
+          <div class="metric-label">Review Time Reduction</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">99.9%</div>
+          <div class="metric-label">System Uptime</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">10K</div>
+          <div class="metric-label">Contracts Processed / Day</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">92%</div>
+          <div class="metric-label">Compliance Detection Rate</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">&lt;3s</div>
+          <div class="metric-label">Avg. Analysis Latency</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">2M+</div>
+          <div class="metric-label">Clause Embeddings Indexed</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">45ms</div>
+          <div class="metric-label">Vector Search P95 Latency</div>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <h4>How We Measure Extraction Accuracy</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">A rotating panel of legal analysts manually reviews a random 5% sample of AI-extracted clauses weekly. Each extraction is scored on: (1) correct clause type classification, (2) complete text extraction (no truncation), (3) accurate obligation identification, and (4) correct date/value extraction. The 95% figure is the weighted average across all four dimensions.</p>
+      </div>
+    </div>
+
+    <!-- 11. SECURITY & ACCESS CONTROL -->
+    <div class="article-section" id="security">
+      <h2><span class="step-badge">11</span> Security & Access Control</h2>
+
+      <p>Contracts contain the most sensitive information in any enterprise — pricing, IP terms, liability caps. The system implements <strong style="color:#e8e8f0;">defense in depth</strong> with multiple overlapping security layers.</p>
+
+      <h3>Role-Based Access Control (RBAC)</h3>
+      <table>
+        <thead>
+          <tr><th>Role</th><th>View</th><th>Create</th><th>Approve</th><th>Admin</th><th>Audit Access</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Viewer</td><td>Own dept only</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+          <tr><td>Analyst</td><td>Own dept</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+          <tr><td>Senior Counsel</td><td>All</td><td>Yes</td><td>Up to $1M</td><td>No</td><td>Yes</td></tr>
+          <tr><td>Legal Director</td><td>All</td><td>Yes</td><td>Up to $10M</td><td>No</td><td>Yes</td></tr>
+          <tr><td>VP Legal / GC</td><td>All</td><td>Yes</td><td>Unlimited</td><td>Yes</td><td>Yes</td></tr>
+          <tr><td>System Admin</td><td>Metadata only</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Security Layers</h3>
+      <ul>
+        <li><strong>Encryption at rest</strong> — AES-256 for all stored contract documents; database-level TDE (Transparent Data Encryption)</li>
+        <li><strong>Encryption in transit</strong> — TLS 1.3 for all API communication; mTLS between internal microservices</li>
+        <li><strong>Field-level encryption</strong> — Sensitive fields (contract_value, parties) encrypted with application-level keys; key rotation every 90 days</li>
+        <li><strong>Audit logging</strong> — Every read, write, and delete is logged with actor, timestamp, IP, and user agent; logs are immutable (append-only table)</li>
+        <li><strong>Data residency</strong> — Contracts stored in region-specific database instances (US, EU, APAC) to comply with data sovereignty requirements</li>
+        <li><strong>LLM data handling</strong> — Contract text sent to LLM APIs is stripped of PII before transmission; results are re-associated on return. Enterprise API agreements ensure no training on customer data</li>
+        <li><strong>Rate limiting</strong> — Redis-based rate limiting per user, per API key, and per IP; prevents bulk exfiltration</li>
+        <li><strong>Session management</strong> — JWT tokens with 15-minute expiry; refresh tokens stored in HttpOnly cookies; forced re-auth for approval actions</li>
+      </ul>
+
+      <div class="warn-box">
+        <p><strong style="color:#ef4444;">PII Stripping Before LLM Calls:</strong> Before sending any contract text to Claude or GPT, the system runs a PII detection pass that replaces names, addresses, SSNs, and account numbers with placeholder tokens (e.g., [PARTY_A], [ADDRESS_1]). The mapping is stored locally and re-applied to the LLM response. This ensures no PII leaves the enterprise boundary.</p>
+      </div>
+    </div>
+
+    <!-- 12. DESIGN DECISIONS & TRADE-OFFS -->
+    <div class="article-section" id="decisions">
+      <h2><span class="step-badge">12</span> Design Decisions & Trade-offs</h2>
+
+      <table>
+        <thead>
+          <tr><th>Decision</th><th>Chosen</th><th>Alternative</th><th>Rationale</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Vector Database</td>
+            <td><strong style="color:#e8e8f0;">pgvector (PostgreSQL)</strong></td>
+            <td>Pinecone, Weaviate</td>
+            <td>Same transactional boundary as contract data; hybrid SQL+vector queries; no additional infrastructure</td>
+          </tr>
+          <tr>
+            <td>LLM Provider</td>
+            <td><strong style="color:#e8e8f0;">Claude (primary) + GPT-4 (fallback)</strong></td>
+            <td>Single provider</td>
+            <td>Claude excels at structured extraction; GPT-4 fallback ensures availability; provider diversity reduces single-point-of-failure risk</td>
+          </tr>
+          <tr>
+            <td>Agent Orchestration</td>
+            <td><strong style="color:#e8e8f0;">Custom state machine</strong></td>
+            <td>LangGraph, CrewAI</td>
+            <td>Full control over state transitions, retry logic, and audit logging; frameworks add abstraction without proportional value at this complexity level</td>
+          </tr>
+          <tr>
+            <td>Compliance Engine</td>
+            <td><strong style="color:#e8e8f0;">Hybrid (Rules + LLM)</strong></td>
+            <td>Pure LLM / Pure Rules</td>
+            <td>Rules guarantee coverage of known requirements (auditable); LLM catches nuanced/novel violations rules miss; combined detection rate 92% vs. 67% rules-only</td>
+          </tr>
+          <tr>
+            <td>Message Queue</td>
+            <td><strong style="color:#e8e8f0;">Kafka</strong></td>
+            <td>RabbitMQ, SQS</td>
+            <td>Event replay for audit; partitioned by contract_id for ordering guarantees; proven at enterprise scale</td>
+          </tr>
+          <tr>
+            <td>Chunking Strategy</td>
+            <td><strong style="color:#e8e8f0;">Structure-aware (clause boundaries)</strong></td>
+            <td>Fixed-window (500 tokens)</td>
+            <td>Legal clauses must be complete units for accurate analysis; splitting mid-clause destroys legal context and reduces extraction accuracy by 23%</td>
+          </tr>
+          <tr>
+            <td>Embedding Model</td>
+            <td><strong style="color:#e8e8f0;">text-embedding-3-small (1536d)</strong></td>
+            <td>text-embedding-3-large (3072d)</td>
+            <td>3072d showed only 2% retrieval improvement on legal text but doubled storage and index build time; 1536d is the better cost/performance trade-off</td>
+          </tr>
+          <tr>
+            <td>Contract Storage</td>
+            <td><strong style="color:#e8e8f0;">PostgreSQL + S3 for files</strong></td>
+            <td>MongoDB</td>
+            <td>ACID transactions are non-negotiable for audit trails; relational schema enforces data integrity across contracts, clauses, and compliance records</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 13. INTERVIEW CHEAT SHEET -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">13</span> Interview Cheat Sheet</h2>
+
+      <p>Staff-level system design interview preparation — 15+ questions with battle-tested answers drawing from real enterprise experience building AI-powered document processing systems.</p>
+
+      <h3>Architecture & System Design</h3>
+
+      <div class="highlight-box">
+        <h4>Q: How would you design an AI-powered contract analysis system from scratch?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "I'd break it into four layers: <br><br>
+          <strong style="color:#e8e8f0;">(1) Ingestion Layer:</strong> Format-aware parsers (PDF, DOCX, OCR for scans) that produce clean text. Structure-aware chunking by clause boundaries — not arbitrary windows — because legal clauses are atomic units of meaning. <br>
+          <strong style="color:#e8e8f0;">(2) Intelligence Layer:</strong> Multi-agent pipeline with specialized agents for extraction, risk scoring, and compliance checking. State machine orchestrator manages the flow with retry logic and audit logging. <br>
+          <strong style="color:#e8e8f0;">(3) RAG Layer:</strong> Vector embeddings (pgvector) of all clause chunks enable precedent matching — comparing new clauses against the entire corpus to detect deviations from standard language. <br>
+          <strong style="color:#e8e8f0;">(4) Application Layer:</strong> Lifecycle management, approval workflows, real-time alerts for expiring contracts and obligation deadlines. <br><br>
+          The key architectural insight is the hybrid compliance engine: deterministic rules handle known regulatory requirements (auditable, version-controlled), while LLMs catch nuanced violations that pattern matching misses."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: Why a multi-agent architecture instead of a single LLM call?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Three reasons: <br><br>
+          <strong style="color:#e8e8f0;">(1) Separation of concerns:</strong> Each agent has a focused prompt and domain expertise. The extraction agent doesn't need to think about compliance, and the compliance agent doesn't need to extract clauses. This makes each agent's task simpler and more reliable. <br>
+          <strong style="color:#e8e8f0;">(2) Independent scaling and failure isolation:</strong> If the compliance agent fails, extraction results are preserved. Each agent can be retried independently without re-running the entire pipeline. <br>
+          <strong style="color:#e8e8f0;">(3) Auditability:</strong> In legal tech, you need to explain every decision. With separate agents, you have a clear audit trail: 'The extraction agent identified clause 4.2 as an indemnification clause, the risk agent scored it 0.73, and the compliance agent flagged it for missing a liability cap.' A single monolithic LLM call makes this forensic analysis impossible."
+        </p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q: How do you handle LLM hallucinations in a legal context?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "This is the number one concern in legal AI. Our approach: <br><br>
+          <strong style="color:#e8e8f0;">(1) Grounded generation:</strong> Every LLM response must reference specific clause text from the document. We use RAG to provide the exact contract text in the prompt — the LLM extracts and interprets, it doesn't generate from scratch. <br>
+          <strong style="color:#e8e8f0;">(2) Structured output:</strong> We force JSON schema responses with Pydantic validation. If the LLM returns a clause_type that doesn't match our enum, it's rejected and retried. <br>
+          <strong style="color:#e8e8f0;">(3) Cross-validation:</strong> The compliance engine uses both deterministic rules AND LLM checks. If they disagree, the contract is flagged for human review. <br>
+          <strong style="color:#e8e8f0;">(4) Human-in-the-loop:</strong> No contract is auto-approved. The AI provides analysis and recommendations; a human legal reviewer makes the final decision. The system reduces review time by 80%, but it never removes the human entirely."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How do you scale the system to handle 10,000+ contracts per day?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Three scaling strategies: <br><br>
+          <strong style="color:#e8e8f0;">(1) Async processing with Kafka:</strong> Contracts enter a Kafka topic and are consumed by worker pools. Each contract is independent, so we can scale consumers horizontally. Kafka's partitioning by contract_id ensures ordering per contract. <br>
+          <strong style="color:#e8e8f0;">(2) LLM call batching and caching:</strong> Redis caches LLM responses for identical clause patterns (same text = same extraction). For similar contracts (e.g., standard NDAs from the same template), we use the cached extraction as a baseline and only re-analyze clauses that differ. <br>
+          <strong style="color:#e8e8f0;">(3) Tiered processing:</strong> Contracts are classified by complexity at ingestion. Standard templates (60% of volume) go through a fast path with cached models. Complex or non-standard contracts get full multi-agent analysis. This lets us handle 10K/day with reasonable LLM costs."
+        </p>
+      </div>
+
+      <h3>RAG & Vector Search</h3>
+
+      <div class="highlight-box">
+        <h4>Q: Why pgvector instead of a purpose-built vector database like Pinecone?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "At our scale (2M embeddings), pgvector with HNSW indexing performs comparably to dedicated vector DBs. But the real reason is operational: <br><br>
+          <strong style="color:#e8e8f0;">(1) Transactional consistency:</strong> When we insert a new contract, its clauses and embeddings are in the same transaction. With Pinecone, you'd need distributed transactions or eventual consistency — neither is acceptable for legal data. <br>
+          <strong style="color:#e8e8f0;">(2) Hybrid queries:</strong> Our most common query is 'find similar indemnification clauses in MSA contracts from California jurisdiction.' That's vector similarity + two SQL filters. In pgvector, it's one query. With Pinecone, you'd need metadata filtering with limited SQL expressiveness. <br>
+          <strong style="color:#e8e8f0;">(3) Operational simplicity:</strong> One database to back up, monitor, and secure. Legal teams already have PostgreSQL compliance certifications — adding a new data store would require a new security audit."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How does structure-aware chunking differ from naive chunking, and why does it matter?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Naive chunking splits text every N tokens regardless of content. Structure-aware chunking splits at clause boundaries. <br><br>
+          Consider this: 'The Vendor shall indemnify the Company against all claims arising from...' If you split at 500 tokens, you might cut this sentence in half. Now the embedding represents half a thought, and when you search for 'indemnification clauses,' this truncated chunk scores poorly. <br><br>
+          Our structure-aware chunker uses regex patterns to detect section headers (e.g., '3.2.1 Indemnification') and splits at those boundaries. Small chunks (under 64 tokens) are merged with their neighbors. The result: each chunk is a complete legal provision. This improved our retrieval precision by 23% compared to fixed-window chunking."
+        </p>
+      </div>
+
+      <h3>Compliance & Security</h3>
+
+      <div class="highlight-box">
+        <h4>Q: How do you ensure the system itself is compliant (SOX, GDPR)?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Four pillars: <br><br>
+          <strong style="color:#e8e8f0;">(1) Immutable audit trail:</strong> Every action (view, edit, approve, AI analysis) is logged in an append-only table. No DELETE permissions on audit_logs — not even for DBAs. <br>
+          <strong style="color:#e8e8f0;">(2) PII isolation:</strong> Before any contract text reaches an LLM API, a PII detector strips names, addresses, and account numbers. Placeholders are used during analysis and re-mapped on return. <br>
+          <strong style="color:#e8e8f0;">(3) Data residency:</strong> EU contracts stay in EU database instances. Region-aware routing ensures GDPR data sovereignty. <br>
+          <strong style="color:#e8e8f0;">(4) Access controls:</strong> RBAC with principle of least privilege. Legal analysts see their department's contracts; cross-department access requires Director-level approval."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: What happens when the LLM provider is down?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "We designed for this explicitly: <br><br>
+          <strong style="color:#e8e8f0;">(1) Multi-provider fallback:</strong> Claude is primary, GPT-4 is secondary. If Claude returns 5xx errors for 3 consecutive requests, the circuit breaker switches to GPT-4 automatically. <br>
+          <strong style="color:#e8e8f0;">(2) Graceful degradation:</strong> The rule-engine portion of compliance checking works without any LLM. During an outage, users get rule-based results (67% detection rate) with a banner indicating 'enhanced AI analysis temporarily unavailable.' <br>
+          <strong style="color:#e8e8f0;">(3) Queue buffering:</strong> Kafka absorbs incoming contracts during outages. When the LLM comes back, the backlog is processed automatically. No contracts are lost."
+        </p>
+      </div>
+
+      <h3>Data & Performance</h3>
+
+      <div class="highlight-box">
+        <h4>Q: How do you measure and improve extraction accuracy over time?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "We built a continuous improvement loop: <br><br>
+          <strong style="color:#e8e8f0;">(1) Human review sampling:</strong> 5% of AI extractions are randomly selected for human review weekly. Reviewers score each extraction on clause type accuracy, text completeness, obligation identification, and date/value extraction. <br>
+          <strong style="color:#e8e8f0;">(2) Feedback loop:</strong> When a human corrects an AI extraction, the correction is stored as a training example. We periodically use these examples to refine our extraction prompts via few-shot learning. <br>
+          <strong style="color:#e8e8f0;">(3) A/B testing:</strong> When we update an extraction prompt, we run both old and new versions in parallel for a week. If the new version scores higher on human review, we promote it. <br>
+          <strong style="color:#e8e8f0;">(4) Drift detection:</strong> If extraction accuracy drops below 90% for any clause type in a given week, an alert fires and the team investigates — usually it's a new contract template we haven't seen before."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How do you handle contract templates vs. bespoke contracts?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Template detection is our biggest performance optimization. About 60% of incoming contracts match one of ~50 standard templates (company NDA, standard MSA, etc.). <br><br>
+          At ingestion, we compute a document fingerprint (MinHash of clause embeddings). If it matches a known template with >95% similarity, we use cached extraction results as a baseline and only run the LLM on clauses that differ. This reduces LLM costs by 60% and processing time from 45 seconds to 8 seconds for template contracts."
+        </p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q: Walk me through a contract's journey from upload to approval.</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "End-to-end in production: <br><br>
+          <strong style="color:#e8e8f0;">T+0s:</strong> Counterparty emails a signed PDF. The intake system uploads it to S3 and publishes a CONTRACT_RECEIVED event to Kafka. <br>
+          <strong style="color:#e8e8f0;">T+2s:</strong> Ingestion worker picks it up. PyMuPDF extracts text (or Tesseract for scans). Structure-aware chunker produces 40-80 clause chunks. Embeddings generated and stored in pgvector. <br>
+          <strong style="color:#e8e8f0;">T+15s:</strong> Orchestrator starts the agent pipeline: Extraction Agent identifies 12 key clauses, parties, and defined terms. <br>
+          <strong style="color:#e8e8f0;">T+25s:</strong> Risk Agent scores overall risk at 0.45 (medium). Flags one indemnification clause as non-standard (similarity to approved clauses is 0.72). <br>
+          <strong style="color:#e8e8f0;">T+35s:</strong> Compliance Agent runs GDPR + SOX checks. 14 of 15 rules pass; one GDPR data retention clause needs clarification. <br>
+          <strong style="color:#e8e8f0;">T+40s:</strong> Summary Agent generates executive brief with key terms, risk highlights, and recommended actions. <br>
+          <strong style="color:#e8e8f0;">T+40s:</strong> Dashboard notification sent to assigned legal analyst. They see the AI summary, risk highlights, and can click through to any flagged clause. <br>
+          <strong style="color:#e8e8f0;">T+hours:</strong> Analyst reviews, negotiates the data retention clause with counterparty, and approves. Contract moves to EXECUTED."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How would you explain this system to a non-technical executive?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Imagine you hire four specialist paralegals who never sleep: <br><br>
+          <strong style="color:#e8e8f0;">The Reader</strong> takes any contract — PDF, scanned document, Word file — and breaks it into individual clauses, like a paralegal highlighting sections with colored tabs. <br>
+          <strong style="color:#e8e8f0;">The Analyst</strong> reads each clause and checks it against every contract your company has ever signed. If something looks unusual — say, an indemnification clause that's different from your standard — they flag it for your lawyers. <br>
+          <strong style="color:#e8e8f0;">The Compliance Officer</strong> checks every contract against your regulatory requirements — GDPR, SOX, whatever applies — and highlights anything that might put you at risk. <br>
+          <strong style="color:#e8e8f0;">The Organizer</strong> writes an executive summary, sets up reminders for expiring contracts and upcoming deadlines, and makes sure nothing falls through the cracks. <br><br>
+          The result: your legal team spends 80% less time on routine contract review and can focus on negotiation and strategy — the work that actually requires human judgment."
+        </p>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Q: What's the most challenging technical problem you solved?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Handling scanned, low-quality PDFs at scale. About 15% of incoming contracts are scanned images — some from fax machines with poor resolution. <br><br>
+          The challenge: Tesseract OCR accuracy drops to 70% on low-quality scans, and errors propagate through the entire pipeline — garbage in, garbage out. <br><br>
+          Our solution: a three-stage approach. (1) Pre-processing with OpenCV to enhance contrast, deskew, and denoise. (2) Multi-engine OCR — run both Tesseract and a cloud OCR service, take the higher-confidence result. (3) LLM-based error correction — feed the OCR output to Claude with the instruction 'fix obvious OCR errors in this legal text while preserving exact legal terminology.' This brought our effective accuracy on scanned documents from 70% to 93%."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How do you handle multi-language contracts?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Enterprise platform processes contracts in 12 languages. Our approach: <br><br>
+          <strong style="color:#e8e8f0;">(1) Language detection</strong> at ingestion using fastText — determines which OCR model and LLM prompts to use. <br>
+          <strong style="color:#e8e8f0;">(2) Multilingual embeddings</strong> — we use OpenAI's embedding model which handles multilingual text natively. A German indemnification clause and its English equivalent have high cosine similarity. <br>
+          <strong style="color:#e8e8f0;">(3) Localized compliance rules</strong> — the rule engine maintains separate rule sets per jurisdiction (EU GDPR rules vs. California CCPA rules vs. Brazil LGPD rules). <br>
+          <strong style="color:#e8e8f0;">(4) Translation fallback</strong> — for languages where extraction accuracy drops below 85%, we first translate to English, run the extraction pipeline, then map results back to the original text positions."
+        </p>
+      </div>
+    </div>
+
+    <!-- NAV -->
+    <div class="nav-bottom">
+      <a href="agentic-ai.html">&larr; All Designs</a>
+      <a href="index.html">Home &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
