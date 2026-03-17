@@ -1,0 +1,2250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise LLM Gateway — Smart Multi-Provider Router</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .article-container { max-width: 960px; margin: 0 auto; padding: 100px 24px 60px; }
+    .article-header { margin-bottom: 48px; }
+    .article-header h1 { font-size: 2.6rem; font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .article-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .meta-tag { padding: 4px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .meta-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .meta-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .meta-green { background: rgba(16,185,129,0.15); color: #10b981; }
+    .meta-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .meta-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .meta-cyan { background: rgba(6,182,212,0.15); color: #06b6d4; }
+    .article-section { margin-bottom: 48px; }
+    .article-section h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    .article-section h3 { font-size: 1.25rem; font-weight: 700; margin: 28px 0 12px; color: #818cf8; }
+    .article-section h4 { font-size: 1.05rem; font-weight: 600; margin: 20px 0 8px; color: #a78bfa; }
+    .article-section p, .article-section li { font-size: 0.95rem; color: #a0a0b8; line-height: 1.8; }
+    .article-section ul { list-style: none; padding: 0; }
+    .article-section > ul > li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+    .article-section > ul > li::before { content: '\2192'; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+    .article-section > ul > li strong { color: #e8e8f0; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #6366f1; color: white; border-radius: 50%; font-weight: 800; font-size: 1rem; margin-right: 10px; vertical-align: middle; }
+    .toc { background: #16213e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #818cf8; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #a0a0b8; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: #818cf8; }
+    .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .highlight-box h4 { color: #818cf8; margin-top: 0; }
+    .warn-box { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
+    .warn-box p { font-size: 0.95rem; }
+    .success-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .success-box h4 { color: #10b981; margin-top: 0; }
+    .purple-box { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .purple-box h4 { color: #8b5cf6; margin-top: 0; }
+    .orange-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .orange-box h4 { color: #f59e0b; margin-top: 0; }
+    .cyan-box { background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.2); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .cyan-box h4 { color: #06b6d4; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(255,255,255,0.06); }
+    tbody td { padding: 10px 14px; font-size: 0.9rem; color: #a0a0b8; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    tbody td:first-child { color: #e8e8f0; font-weight: 500; }
+    .nav-bottom { display: flex; justify-content: space-between; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 48px; }
+    .nav-bottom a { color: #818cf8; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .diagram-box { background: #0d1224; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .architecture-diagram { color: #818cf8; font-family: 'Courier New', monospace; font-size: 0.78rem; line-height: 1.6; white-space: pre; }
+    .code-block { background: #0d1224; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; margin: 16px 0; overflow: hidden; }
+    .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .code-lang { font-size: 0.75rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; }
+    .code-file { font-size: 0.72rem; color: #6b7280; font-family: 'Courier New', monospace; }
+    .code-block pre { margin: 0; padding: 16px; overflow-x: auto; }
+    .code-block code { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; color: #e8e8f0; white-space: pre; }
+    .code-block .comment { color: #6b7280; }
+    .code-block .keyword { color: #c084fc; }
+    .code-block .string { color: #34d399; }
+    .code-block .function { color: #60a5fa; }
+    .code-block .type { color: #f59e0b; }
+    .code-block .number { color: #fb923c; }
+    .code-block .decorator { color: #f472b6; }
+    .flow-step { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: rgba(255,255,255,0.02); border-radius: 12px; margin: 12px 0; border: 1px solid rgba(255,255,255,0.04); }
+    .flow-step:hover { background: rgba(99,102,241,0.05); border-color: rgba(99,102,241,0.15); }
+    .flow-num { width: 40px; height: 40px; border-radius: 50%; background: #6366f1; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0; }
+    .flow-content h4 { margin: 0 0 4px; color: #e8e8f0; font-size: 1rem; }
+    .flow-content p { margin: 0; font-size: 0.88rem; color: #a0a0b8; }
+    .flow-arrow { text-align: center; color: #6366f1; font-size: 1.5rem; margin: 4px 0; }
+    .tech-badge { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 600; margin: 2px 4px; }
+    .tech-ts { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .tech-py { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .tech-db { background: rgba(16,185,129,0.15); color: #10b981; }
+    .tech-ai { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .tech-infra { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+    .metric-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; text-align: center; }
+    .metric-value { font-size: 2rem; font-weight: 900; color: #818cf8; }
+    .metric-label { font-size: 0.82rem; color: #6b7280; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span class="logo-icon">&#x1F9E0;</span><span class="logo-text">chinnam<span class="logo-highlight">.AI</span></span></a>
+      <div class="nav-links" id="navLinks">
+        <a href="agentic-ai.html">&larr; All Designs</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#smart-router">Smart Router</a>
+        <a href="#circuit-breaker">Circuit Breaker</a>
+        <a href="#cache">Cache</a>
+        <a href="#cheatsheet">Cheat Sheet</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#x1F319;</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menu">&#x2630;</button>
+    </div>
+  </nav>
+
+  <div class="article-container">
+    <!-- HEADER -->
+    <div class="article-header">
+      <h1>Enterprise LLM Gateway — Smart Multi-Provider Router</h1>
+      <div class="article-meta">
+        <span class="meta-tag meta-red">PRODUCTION SYSTEM</span>
+        <span class="meta-tag meta-purple">Multi-Provider LLM</span>
+        <span class="meta-tag meta-blue">Smart Routing</span>
+        <span class="meta-tag meta-orange">Circuit Breaker</span>
+        <span class="meta-tag meta-cyan">50K+ RPS</span>
+        <span class="meta-tag meta-green">99.99% Availability</span>
+      </div>
+      <p style="font-size:1.05rem; color:#a0a0b8; line-height:1.8;">
+        <strong style="color:#e8e8f0;">A unified LLM gateway that intelligently routes requests across multiple providers (OpenAI, Azure OpenAI, Anthropic Claude, Google Gemini) with weighted scoring, circuit breakers, sliding-window rate limiting, semantic caching, and SLA-based priority queues.</strong>
+        Designed for enterprise-scale platforms where dozens of internal services with different SLAs share a common LLM infrastructure, achieving sub-millisecond routing decisions and 99.99% availability through smart failover.
+      </p>
+    </div>
+
+    <!-- TOC -->
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#architecture">Architecture Overview & Tech Stack</a></li>
+        <li><a href="#schema">Unified Request/Response Schema</a></li>
+        <li><a href="#smart-router">Smart Router — Weighted Endpoint Scoring</a></li>
+        <li><a href="#circuit-breaker">Circuit Breaker Per Endpoint</a></li>
+        <li><a href="#rate-limiter">Sliding Window Rate Limiter</a></li>
+        <li><a href="#request-handler">Request Handler with Retry & Fallback</a></li>
+        <li><a href="#cache">Semantic Cache</a></li>
+        <li><a href="#adapters">Provider Adapter Pattern</a></li>
+        <li><a href="#priority-queues">SLA-Based Priority Queues</a></li>
+        <li><a href="#metrics">Performance Metrics</a></li>
+        <li><a href="#decisions">Design Decisions & Trade-offs</a></li>
+        <li><a href="#edge-cases">Edge Case Handling</a></li>
+        <li><a href="#scaling">Scaling Strategy</a></li>
+        <li><a href="#cheatsheet">Interview Cheat Sheet</a></li>
+      </ol>
+    </div>
+
+    <!-- 1. ARCHITECTURE OVERVIEW -->
+    <div class="article-section" id="architecture">
+      <h2><span class="step-badge">1</span> Architecture Overview & Tech Stack</h2>
+
+      <p>The LLM Gateway sits between all internal services and external LLM providers, providing a <strong style="color:#e8e8f0;">single unified API</strong> that abstracts provider differences, manages rate limits, handles failover, and optimizes costs. Internal services never talk to LLM providers directly — they submit requests with SLA requirements and the gateway handles the rest.</p>
+
+      <div class="diagram-box">
+        <div class="architecture-diagram">
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                        Enterprise LLM Gateway Architecture                           │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+  INTERNAL SERVICES (Different SLAs)          LLM GATEWAY                LLM PROVIDERS
+ ┌─────────────────────────────┐     ┌──────────────────────────┐
+ │                             │     │                          │
+ │  ┌───────────────────────┐  │     │   ┌──────────────────┐   │    ┌───────────────────┐
+ │  │ Chat Service          │  │     │   │  Unified API     │   │    │ OpenAI            │
+ │  │ SLA: 200ms (CRITICAL) │──┼────▶│   │  /v1/completions │   │───▶│ gpt-4o, gpt-4    │
+ │  └───────────────────────┘  │     │   └────────┬─────────┘   │    └───────────────────┘
+ │                             │     │            │              │
+ │  ┌───────────────────────┐  │     │   ┌────────▼─────────┐   │    ┌───────────────────┐
+ │  │ Search Service        │  │     │   │ Semantic Cache   │   │    │ Azure OpenAI      │
+ │  │ SLA: 1s (HIGH)        │──┼────▶│   │ (Redis)          │   │    │ East US endpoint  │
+ │  └───────────────────────┘  │     │   └────────┬─────────┘   │───▶│ West US endpoint  │
+ │                             │     │            │              │    │ EU West endpoint  │
+ │  ┌───────────────────────┐  │     │   ┌────────▼─────────┐   │    └───────────────────┘
+ │  │ Content Generation    │  │     │   │ Priority Queue   │   │
+ │  │ SLA: 5s (MEDIUM)      │──┼────▶│   │ (Kafka)          │   │    ┌───────────────────┐
+ │  └───────────────────────┘  │     │   └────────┬─────────┘   │    │ Anthropic Claude  │
+ │                             │     │            │              │───▶│ claude-sonnet     │
+ │  ┌───────────────────────┐  │     │   ┌────────▼─────────┐   │    │ claude-haiku      │
+ │  │ Batch Analytics       │  │     │   │ Smart Router     │   │    └───────────────────┘
+ │  │ SLA: 30s (LOW)        │──┼────▶│   │ (Weighted Score) │   │
+ │  └───────────────────────┘  │     │   └────────┬─────────┘   │    ┌───────────────────┐
+ │                             │     │            │              │───▶│ Google Gemini     │
+ └─────────────────────────────┘     │   ┌────────▼─────────┐   │    │ gemini-pro        │
+                                     │   │ Provider Adapters│   │    └───────────────────┘
+  OBSERVABILITY                      │   │ ┌──────────────┐ │   │
+ ┌─────────────────────────────┐     │   │ │ OpenAI       │ │   │
+ │ Prometheus ─▶ Grafana       │     │   │ │ Azure OpenAI │ │   │
+ │ Request latency, error rate │◀────│   │ │ Anthropic    │ │   │
+ │ Cache hit rate, cost/req    │     │   │ │ Google       │ │   │
+ └─────────────────────────────┘     │   │ └──────────────┘ │   │
+                                     │   └──────────────────┘   │
+  RESILIENCE (per endpoint)          │                          │
+ ┌─────────────────────────────┐     │   ┌──────────────────┐   │
+ │ Circuit Breaker             │◀────│   │ Rate Limiter     │   │
+ │ Rate Limiter                │     │   │ (Sliding Window) │   │
+ │ Retry + Exponential Backoff │     │   └──────────────────┘   │
+ └─────────────────────────────┘     │                          │
+                                     └──────────────────────────┘</div>
+      </div>
+
+      <h3>Tech Stack</h3>
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Gateway Core</td><td><span class="tech-badge tech-py">Python 3.12</span> <span class="tech-badge tech-py">asyncio</span> <span class="tech-badge tech-py">aiohttp</span></td><td>Async request routing, provider communication</td></tr>
+          <tr><td>Caching</td><td><span class="tech-badge tech-db">Redis Cluster</span> <span class="tech-badge tech-db">Redis Streams</span></td><td>Semantic cache, rate limit counters, circuit breaker state</td></tr>
+          <tr><td>Message Queue</td><td><span class="tech-badge tech-infra">Kafka</span></td><td>Priority-partitioned request queues, async batch processing</td></tr>
+          <tr><td>Database</td><td><span class="tech-badge tech-db">PostgreSQL</span></td><td>Request audit log, cost tracking, provider config</td></tr>
+          <tr><td>Monitoring</td><td><span class="tech-badge tech-infra">Prometheus</span> <span class="tech-badge tech-infra">Grafana</span></td><td>Real-time metrics, alerting, SLA dashboards</td></tr>
+          <tr><td>Container</td><td><span class="tech-badge tech-infra">Docker</span> <span class="tech-badge tech-infra">Kubernetes</span></td><td>Horizontal scaling, rolling deploys, health checks</td></tr>
+          <tr><td>LLM Providers</td><td><span class="tech-badge tech-ai">OpenAI</span> <span class="tech-badge tech-ai">Azure OpenAI</span> <span class="tech-badge tech-ai">Anthropic</span> <span class="tech-badge tech-ai">Google Gemini</span></td><td>Multi-provider redundancy with 6+ endpoints</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 2. UNIFIED REQUEST/RESPONSE SCHEMA -->
+    <div class="article-section" id="schema">
+      <h2><span class="step-badge">2</span> Unified Request/Response Schema</h2>
+
+      <p>All internal services use a single request format regardless of which LLM provider ultimately serves the request. The gateway translates this into provider-specific formats via adapters.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/schemas.py</span>
+        </div>
+        <pre><code><span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field
+<span class="keyword">from</span> typing <span class="keyword">import</span> Optional, List, Dict
+<span class="keyword">from</span> enum <span class="keyword">import</span> Enum
+<span class="keyword">import</span> uuid
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+
+<span class="keyword">class</span> <span class="type">Priority</span>(str, Enum):
+    <span class="string">"""SLA-based priority levels for request routing."""</span>
+    CRITICAL = <span class="string">"critical"</span>   <span class="comment"># &lt;200ms  — real-time chat, user-facing</span>
+    HIGH = <span class="string">"high"</span>           <span class="comment"># &lt;1s    — search, autocomplete</span>
+    MEDIUM = <span class="string">"medium"</span>       <span class="comment"># &lt;5s    — content generation</span>
+    LOW = <span class="string">"low"</span>             <span class="comment"># &lt;30s   — batch analytics, summarization</span>
+
+
+<span class="keyword">class</span> <span class="type">Message</span>(BaseModel):
+    <span class="string">"""OpenAI-compatible message format."""</span>
+    role: str = Field(..., description=<span class="string">"system | user | assistant"</span>)
+    content: str = Field(..., description=<span class="string">"Message content"</span>)
+
+
+<span class="keyword">class</span> <span class="type">LLMRequest</span>(BaseModel):
+    <span class="string">"""Unified request schema for all LLM calls through the gateway.
+
+    Internal services submit this format regardless of target provider.
+    The gateway handles provider-specific translation via adapters.
+    """</span>
+    request_id: str = Field(
+        default_factory=<span class="keyword">lambda</span>: str(uuid.uuid4()),
+        description=<span class="string">"Unique request identifier for tracing"</span>
+    )
+    service_id: str = Field(
+        ..., description=<span class="string">"Calling service identifier (e.g., 'chat-service', 'search-api')"</span>
+    )
+    model: str = Field(
+        ..., description=<span class="string">"Requested model (e.g., 'gpt-4o', 'claude-sonnet-4-20250514')"</span>
+    )
+    messages: List[Message] = Field(
+        ..., description=<span class="string">"Conversation messages in OpenAI format"</span>
+    )
+    max_tokens: int = Field(
+        default=<span class="number">1024</span>,
+        ge=<span class="number">1</span>,
+        le=<span class="number">128000</span>,
+        description=<span class="string">"Maximum tokens in response"</span>
+    )
+    temperature: float = Field(
+        default=<span class="number">0.7</span>,
+        ge=<span class="number">0.0</span>,
+        le=<span class="number">2.0</span>,
+        description=<span class="string">"Sampling temperature"</span>
+    )
+    priority: Priority = Field(
+        default=Priority.MEDIUM,
+        description=<span class="string">"Request priority determines SLA and routing preference"</span>
+    )
+    sla_ms: int = Field(
+        default=<span class="number">5000</span>,
+        description=<span class="string">"Maximum acceptable latency in milliseconds"</span>
+    )
+    preferred_provider: Optional[str] = Field(
+        default=<span class="keyword">None</span>,
+        description=<span class="string">"Preferred provider hint (e.g., 'azure', 'openai')"</span>
+    )
+    fallback_models: List[str] = Field(
+        default_factory=list,
+        description=<span class="string">"Ordered list of fallback models if primary is unavailable"</span>
+    )
+    stream: bool = Field(
+        default=<span class="keyword">False</span>,
+        description=<span class="string">"Whether to stream the response"</span>
+    )
+    metadata: Dict[str, str] = Field(
+        default_factory=dict,
+        description=<span class="string">"Arbitrary metadata for logging and tracing"</span>
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+<span class="keyword">class</span> <span class="type">LLMResponse</span>(BaseModel):
+    <span class="string">"""Unified response schema returned to all internal services.
+
+    Includes provider metadata, cost tracking, and cache status
+    regardless of which provider actually served the request.
+    """</span>
+    request_id: str = Field(
+        ..., description=<span class="string">"Matches the original request ID for correlation"</span>
+    )
+    provider: str = Field(
+        ..., description=<span class="string">"Provider that served the request (e.g., 'azure-openai')"</span>
+    )
+    endpoint: str = Field(
+        ..., description=<span class="string">"Specific endpoint used (e.g., 'azure-eastus', 'openai-primary')"</span>
+    )
+    model: str = Field(
+        ..., description=<span class="string">"Actual model used (may differ from requested if fallback)"</span>
+    )
+    content: str = Field(
+        ..., description=<span class="string">"Generated text content"</span>
+    )
+    usage: Dict[str, int] = Field(
+        default_factory=dict,
+        description=<span class="string">"Token usage: {'prompt_tokens': N, 'completion_tokens': N, 'total_tokens': N}"</span>
+    )
+    latency_ms: float = Field(
+        ..., description=<span class="string">"End-to-end latency including routing overhead"</span>
+    )
+    cost_usd: float = Field(
+        default=<span class="number">0.0</span>,
+        description=<span class="string">"Estimated cost in USD for this request"</span>
+    )
+    cached: bool = Field(
+        default=<span class="keyword">False</span>,
+        description=<span class="string">"Whether response was served from semantic cache"</span>
+    )
+    fallback_used: bool = Field(
+        default=<span class="keyword">False</span>,
+        description=<span class="string">"Whether a fallback model/endpoint was used"</span>
+    )
+    attempts: int = Field(
+        default=<span class="number">1</span>,
+        description=<span class="string">"Number of provider attempts before success"</span>
+    )</code></pre>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Why OpenAI-compatible format?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">The messages format follows OpenAI's chat completions API because it has become the de facto standard. Anthropic and Google use different formats, but the gateway's adapter layer handles translation. This means internal services only learn one API, and adding new providers requires zero changes to callers.</p>
+      </div>
+    </div>
+
+    <!-- 3. SMART ROUTER -->
+    <div class="article-section" id="smart-router">
+      <h2><span class="step-badge">3</span> Smart Router — Weighted Endpoint Scoring</h2>
+
+      <p>The Smart Router evaluates all available endpoints for a given model and selects the best one using a <strong style="color:#e8e8f0;">weighted scoring algorithm</strong>. Each endpoint is scored on four dimensions: health (40%), latency (30%), capacity (20%), and cost (10%). Endpoints that are unhealthy, circuit-open, rate-limited, or cannot meet the request's SLA are disqualified entirely.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/router.py</span>
+        </div>
+        <pre><code><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> typing <span class="keyword">import</span> List, Optional, Dict
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime, timedelta
+<span class="keyword">import</span> time
+<span class="keyword">import</span> logging
+
+logger = logging.getLogger(__name__)
+
+
+<span class="decorator">@dataclass</span>
+<span class="keyword">class</span> <span class="type">EndpointState</span>:
+    <span class="string">"""Tracks real-time health and performance metrics for a single LLM endpoint.
+
+    Each provider endpoint (e.g., azure-eastus, openai-primary) maintains
+    its own state, updated after every request.
+    """</span>
+    endpoint_id: str                          <span class="comment"># e.g., "azure-eastus", "openai-primary"</span>
+    provider: str                             <span class="comment"># e.g., "azure-openai", "openai", "anthropic"</span>
+    model: str                                <span class="comment"># e.g., "gpt-4o", "claude-sonnet-4-20250514"</span>
+    base_url: str                             <span class="comment"># API endpoint URL</span>
+
+    <span class="comment"># Health metrics</span>
+    is_healthy: bool = <span class="keyword">True</span>
+    success_rate: float = <span class="number">1.0</span>               <span class="comment"># Rolling 5-minute success rate</span>
+    total_requests: int = <span class="number">0</span>
+    failed_requests: int = <span class="number">0</span>
+    consecutive_failures: int = <span class="number">0</span>
+
+    <span class="comment"># Latency tracking (exponential moving average)</span>
+    avg_latency_ms: float = <span class="number">500.0</span>           <span class="comment"># EMA of response latency</span>
+    p99_latency_ms: float = <span class="number">2000.0</span>          <span class="comment"># 99th percentile latency</span>
+
+    <span class="comment"># Rate limit tracking</span>
+    rpm_limit: int = <span class="number">10000</span>                  <span class="comment"># Requests per minute limit</span>
+    rpm_current: int = <span class="number">0</span>                    <span class="comment"># Current RPM usage</span>
+    tpm_limit: int = <span class="number">2000000</span>                <span class="comment"># Tokens per minute limit</span>
+    tpm_current: int = <span class="number">0</span>                    <span class="comment"># Current TPM usage</span>
+    concurrent_limit: int = <span class="number">200</span>             <span class="comment"># Max concurrent requests</span>
+    concurrent_current: int = <span class="number">0</span>             <span class="comment"># Current in-flight requests</span>
+
+    <span class="comment"># Circuit breaker state</span>
+    circuit_state: str = <span class="string">"closed"</span>           <span class="comment"># closed | open | half_open</span>
+    circuit_opened_at: Optional[datetime] = <span class="keyword">None</span>
+    circuit_cooldown_sec: float = <span class="number">30.0</span>     <span class="comment"># Time before half-open retry</span>
+
+    <span class="comment"># Cost per 1K tokens (input/output)</span>
+    cost_per_1k_input: float = <span class="number">0.005</span>
+    cost_per_1k_output: float = <span class="number">0.015</span>
+
+    <span class="comment"># Priority/preference</span>
+    priority_weight: float = <span class="number">1.0</span>           <span class="comment"># Manual weight (e.g., prefer cheaper endpoints)</span>
+    last_used: Optional[datetime] = <span class="keyword">None</span>
+    last_error: Optional[str] = <span class="keyword">None</span>
+
+    <span class="keyword">def</span> <span class="function">rpm_headroom</span>(self) -> float:
+        <span class="string">"""Fraction of RPM capacity remaining (0.0 to 1.0)."""</span>
+        <span class="keyword">if</span> self.rpm_limit == <span class="number">0</span>:
+            <span class="keyword">return</span> <span class="number">0.0</span>
+        <span class="keyword">return</span> max(<span class="number">0.0</span>, (self.rpm_limit - self.rpm_current) / self.rpm_limit)
+
+    <span class="keyword">def</span> <span class="function">tpm_headroom</span>(self) -> float:
+        <span class="string">"""Fraction of TPM capacity remaining (0.0 to 1.0)."""</span>
+        <span class="keyword">if</span> self.tpm_limit == <span class="number">0</span>:
+            <span class="keyword">return</span> <span class="number">0.0</span>
+        <span class="keyword">return</span> max(<span class="number">0.0</span>, (self.tpm_limit - self.tpm_current) / self.tpm_limit)
+
+
+<span class="keyword">class</span> <span class="type">SmartRouter</span>:
+    <span class="string">"""Routes LLM requests to the optimal endpoint using weighted scoring.
+
+    Scoring weights:
+      - Health:   40%  (success rate, consecutive failures)
+      - Latency:  30%  (can it meet the SLA?)
+      - Capacity: 20%  (rate limit headroom)
+      - Cost:     10%  (prefer cheaper endpoints)
+
+    Disqualifiers (score = -1, endpoint skipped):
+      - Endpoint is unhealthy (success_rate < 0.5)
+      - Circuit breaker is OPEN
+      - Rate limit exhausted (< 10% headroom)
+      - P99 latency exceeds request SLA
+    """</span>
+
+    WEIGHT_HEALTH = <span class="number">0.40</span>
+    WEIGHT_LATENCY = <span class="number">0.30</span>
+    WEIGHT_CAPACITY = <span class="number">0.20</span>
+    WEIGHT_COST = <span class="number">0.10</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, endpoints: List[EndpointState]):
+        self.endpoints: Dict[str, EndpointState] = {
+            ep.endpoint_id: ep <span class="keyword">for</span> ep <span class="keyword">in</span> endpoints
+        }
+
+    <span class="keyword">def</span> <span class="function">route</span>(self, model: str, sla_ms: int,
+              preferred_provider: Optional[str] = <span class="keyword">None</span>,
+              estimated_tokens: int = <span class="number">1000</span>) -> List[EndpointState]:
+        <span class="string">"""Return endpoints ranked by score for the given model and SLA.
+
+        Args:
+            model: Requested model name (e.g., "gpt-4o")
+            sla_ms: Maximum acceptable latency in milliseconds
+            preferred_provider: Optional provider preference hint
+            estimated_tokens: Estimated total tokens for capacity check
+
+        Returns:
+            List of EndpointState sorted by descending score.
+            Empty list if no endpoints can serve the request.
+        """</span>
+        candidates = [
+            ep <span class="keyword">for</span> ep <span class="keyword">in</span> self.endpoints.values()
+            <span class="keyword">if</span> ep.model == model <span class="keyword">or</span> self._is_compatible_model(ep.model, model)
+        ]
+
+        <span class="keyword">if not</span> candidates:
+            logger.warning(f<span class="string">"No endpoints found for model={model}"</span>)
+            <span class="keyword">return</span> []
+
+        scored = []
+        <span class="keyword">for</span> ep <span class="keyword">in</span> candidates:
+            score = self._score_endpoint(ep, sla_ms, preferred_provider, estimated_tokens)
+            <span class="keyword">if</span> score >= <span class="number">0</span>:
+                scored.append((score, ep))
+
+        <span class="comment"># Sort by score descending, break ties by latency</span>
+        scored.sort(key=<span class="keyword">lambda</span> x: (-x[<span class="number">0</span>], x[<span class="number">1</span>].avg_latency_ms))
+
+        ranked = [ep <span class="keyword">for</span> _, ep <span class="keyword">in</span> scored]
+        logger.info(
+            f<span class="string">"Routing model={model} sla={sla_ms}ms: "</span>
+            f<span class="string">"{len(ranked)}/{len(candidates)} endpoints qualified"</span>
+        )
+        <span class="keyword">return</span> ranked
+
+    <span class="keyword">def</span> <span class="function">_score_endpoint</span>(self, ep: EndpointState, sla_ms: int,
+                        preferred_provider: Optional[str],
+                        estimated_tokens: int) -> float:
+        <span class="string">"""Score an endpoint from 0.0 to 1.0, or -1 if disqualified.
+
+        Disqualifiers (return -1):
+          1. Endpoint is unhealthy (success_rate < 0.5)
+          2. Circuit breaker is OPEN (not in half_open)
+          3. Rate limit headroom < 10%
+          4. P99 latency > SLA (can't meet deadline)
+        """</span>
+        <span class="comment"># === DISQUALIFIERS ===</span>
+        <span class="keyword">if not</span> ep.is_healthy <span class="keyword">or</span> ep.success_rate < <span class="number">0.5</span>:
+            logger.debug(f<span class="string">"Disqualified {ep.endpoint_id}: unhealthy"</span>)
+            <span class="keyword">return</span> -<span class="number">1</span>
+
+        <span class="keyword">if</span> ep.circuit_state == <span class="string">"open"</span>:
+            logger.debug(f<span class="string">"Disqualified {ep.endpoint_id}: circuit open"</span>)
+            <span class="keyword">return</span> -<span class="number">1</span>
+
+        <span class="keyword">if</span> ep.rpm_headroom() < <span class="number">0.10</span> <span class="keyword">or</span> ep.tpm_headroom() < <span class="number">0.10</span>:
+            logger.debug(f<span class="string">"Disqualified {ep.endpoint_id}: rate limit exhausted"</span>)
+            <span class="keyword">return</span> -<span class="number">1</span>
+
+        <span class="keyword">if</span> ep.p99_latency_ms > sla_ms:
+            logger.debug(f<span class="string">"Disqualified {ep.endpoint_id}: p99={ep.p99_latency_ms}ms > sla={sla_ms}ms"</span>)
+            <span class="keyword">return</span> -<span class="number">1</span>
+
+        <span class="comment"># === HEALTH SCORE (0-1) ===</span>
+        health_score = ep.success_rate  <span class="comment"># Already 0.0 to 1.0</span>
+
+        <span class="comment"># === LATENCY SCORE (0-1) ===</span>
+        <span class="comment"># Lower latency = higher score. Normalized against SLA.</span>
+        latency_ratio = ep.avg_latency_ms / sla_ms
+        latency_score = max(<span class="number">0.0</span>, <span class="number">1.0</span> - latency_ratio)
+
+        <span class="comment"># === CAPACITY SCORE (0-1) ===</span>
+        <span class="comment"># Average of RPM and TPM headroom</span>
+        capacity_score = (ep.rpm_headroom() + ep.tpm_headroom()) / <span class="number">2.0</span>
+
+        <span class="comment"># === COST SCORE (0-1) ===</span>
+        <span class="comment"># Normalize cost: lower cost = higher score</span>
+        <span class="comment"># Assume max cost is $0.06/1K tokens</span>
+        avg_cost = (ep.cost_per_1k_input + ep.cost_per_1k_output) / <span class="number">2</span>
+        cost_score = max(<span class="number">0.0</span>, <span class="number">1.0</span> - (avg_cost / <span class="number">0.06</span>))
+
+        <span class="comment"># === WEIGHTED TOTAL ===</span>
+        total = (
+            self.WEIGHT_HEALTH * health_score +
+            self.WEIGHT_LATENCY * latency_score +
+            self.WEIGHT_CAPACITY * capacity_score +
+            self.WEIGHT_COST * cost_score
+        )
+
+        <span class="comment"># Boost preferred provider by 10%</span>
+        <span class="keyword">if</span> preferred_provider <span class="keyword">and</span> ep.provider == preferred_provider:
+            total = min(<span class="number">1.0</span>, total * <span class="number">1.10</span>)
+
+        <span class="comment"># Slight boost for half_open (allow probe requests)</span>
+        <span class="keyword">if</span> ep.circuit_state == <span class="string">"half_open"</span>:
+            total *= <span class="number">0.5</span>  <span class="comment"># Allow but de-prioritize</span>
+
+        logger.debug(
+            f<span class="string">"Score {ep.endpoint_id}: health={health_score:.2f} "</span>
+            f<span class="string">"latency={latency_score:.2f} capacity={capacity_score:.2f} "</span>
+            f<span class="string">"cost={cost_score:.2f} → total={total:.3f}"</span>
+        )
+        <span class="keyword">return</span> total
+
+    <span class="keyword">def</span> <span class="function">_is_compatible_model</span>(self, endpoint_model: str, requested_model: str) -> bool:
+        <span class="string">"""Check if an endpoint's model is compatible with the request.
+
+        E.g., 'gpt-4o' on Azure is compatible with 'gpt-4o' on OpenAI.
+        """</span>
+        <span class="comment"># Normalize model names (strip provider prefixes)</span>
+        normalize = <span class="keyword">lambda</span> m: m.split(<span class="string">"/"</span>)[-<span class="number">1</span>].lower().strip()
+        <span class="keyword">return</span> normalize(endpoint_model) == normalize(requested_model)
+
+    <span class="keyword">def</span> <span class="function">update_endpoint</span>(self, endpoint_id: str, **kwargs) -> <span class="keyword">None</span>:
+        <span class="string">"""Update endpoint state after a request completes."""</span>
+        <span class="keyword">if</span> endpoint_id <span class="keyword">in</span> self.endpoints:
+            ep = self.endpoints[endpoint_id]
+            <span class="keyword">for</span> key, value <span class="keyword">in</span> kwargs.items():
+                <span class="keyword">if</span> hasattr(ep, key):
+                    setattr(ep, key, value)</code></pre>
+      </div>
+
+      <div class="success-box">
+        <h4>Scoring Example</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">
+          For a CRITICAL request (SLA=200ms), an Azure East US endpoint with 98% success rate, 120ms avg latency, 70% RPM headroom, and $0.005/1K cost would score:<br>
+          <strong style="color:#e8e8f0;">0.40 * 0.98 + 0.30 * 0.40 + 0.20 * 0.70 + 0.10 * 0.92 = 0.392 + 0.120 + 0.140 + 0.092 = 0.744</strong><br>
+          A competing OpenAI endpoint with 95% success rate, 180ms latency, 30% headroom would score lower and serve as fallback.
+        </p>
+      </div>
+    </div>
+
+    <!-- 4. CIRCUIT BREAKER -->
+    <div class="article-section" id="circuit-breaker">
+      <h2><span class="step-badge">4</span> Circuit Breaker Per Endpoint</h2>
+
+      <p>Each LLM endpoint has its own circuit breaker that prevents cascading failures. The breaker uses a <strong style="color:#e8e8f0;">three-state model</strong> (CLOSED, OPEN, HALF_OPEN) with special handling for rate limit errors (429s) — these trigger immediate OPEN with a 3x extended cooldown since they indicate provider-side throttling.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/circuit_breaker.py</span>
+        </div>
+        <pre><code><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> enum <span class="keyword">import</span> Enum
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime, timedelta
+<span class="keyword">from</span> typing <span class="keyword">import</span> Optional
+<span class="keyword">import</span> time
+<span class="keyword">import</span> logging
+
+logger = logging.getLogger(__name__)
+
+
+<span class="keyword">class</span> <span class="type">CircuitState</span>(str, Enum):
+    CLOSED = <span class="string">"closed"</span>       <span class="comment"># Normal operation — requests flow through</span>
+    OPEN = <span class="string">"open"</span>           <span class="comment"># Tripped — all requests rejected immediately</span>
+    HALF_OPEN = <span class="string">"half_open"</span> <span class="comment"># Probing — allow 1 request to test recovery</span>
+
+
+<span class="keyword">class</span> <span class="type">EndpointCircuitBreaker</span>:
+    <span class="string">"""Circuit breaker for a single LLM provider endpoint.
+
+    State transitions:
+      CLOSED  → OPEN       : failure_count >= failure_threshold
+      OPEN    → HALF_OPEN  : cooldown_sec elapsed
+      HALF_OPEN → CLOSED   : probe request succeeds
+      HALF_OPEN → OPEN     : probe request fails (reset cooldown)
+
+    Special behaviors:
+      - Rate limit errors (HTTP 429) → immediate OPEN with 3x cooldown
+      - Slow calls (> slow_call_threshold_ms) counted as half-failures
+      - Success in HALF_OPEN resets all counters
+    """</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(
+        self,
+        endpoint_id: str,
+        failure_threshold: int = <span class="number">5</span>,
+        cooldown_sec: float = <span class="number">30.0</span>,
+        success_threshold: int = <span class="number">3</span>,
+        slow_call_threshold_ms: float = <span class="number">10000.0</span>,
+        slow_call_rate_threshold: float = <span class="number">0.5</span>,
+        window_size_sec: float = <span class="number">60.0</span>,
+    ):
+        self.endpoint_id = endpoint_id
+        self.failure_threshold = failure_threshold
+        self.cooldown_sec = cooldown_sec
+        self.success_threshold = success_threshold
+        self.slow_call_threshold_ms = slow_call_threshold_ms
+        self.slow_call_rate_threshold = slow_call_rate_threshold
+        self.window_size_sec = window_size_sec
+
+        <span class="comment"># State</span>
+        self.state: CircuitState = CircuitState.CLOSED
+        self.failure_count: int = <span class="number">0</span>
+        self.success_count: int = <span class="number">0</span>
+        self.half_open_successes: int = <span class="number">0</span>
+        self.opened_at: Optional[float] = <span class="keyword">None</span>
+        self.last_failure_time: Optional[float] = <span class="keyword">None</span>
+
+        <span class="comment"># Slow call tracking</span>
+        self.slow_call_count: int = <span class="number">0</span>
+        self.total_call_count: int = <span class="number">0</span>
+        self.window_start: float = time.monotonic()
+
+        <span class="comment"># Rate limit specific</span>
+        self.rate_limit_cooldown_multiplier: float = <span class="number">3.0</span>
+
+    <span class="keyword">def</span> <span class="function">can_execute</span>(self) -> bool:
+        <span class="string">"""Check if a request can be sent through this circuit.
+
+        Returns:
+            True if the circuit allows the request.
+            False if the circuit is OPEN and cooldown hasn't elapsed.
+        """</span>
+        <span class="keyword">if</span> self.state == CircuitState.CLOSED:
+            <span class="keyword">return</span> <span class="keyword">True</span>
+
+        <span class="keyword">if</span> self.state == CircuitState.OPEN:
+            <span class="comment"># Check if cooldown has elapsed → transition to HALF_OPEN</span>
+            elapsed = time.monotonic() - (self.opened_at <span class="keyword">or</span> <span class="number">0</span>)
+            <span class="keyword">if</span> elapsed >= self.cooldown_sec:
+                self.state = CircuitState.HALF_OPEN
+                self.half_open_successes = <span class="number">0</span>
+                logger.info(
+                    f<span class="string">"Circuit {self.endpoint_id}: OPEN → HALF_OPEN "</span>
+                    f<span class="string">"(after {elapsed:.1f}s cooldown)"</span>
+                )
+                <span class="keyword">return</span> <span class="keyword">True</span>
+            <span class="keyword">return</span> <span class="keyword">False</span>
+
+        <span class="keyword">if</span> self.state == CircuitState.HALF_OPEN:
+            <span class="comment"># Allow limited probe requests</span>
+            <span class="keyword">return</span> <span class="keyword">True</span>
+
+        <span class="keyword">return</span> <span class="keyword">False</span>
+
+    <span class="keyword">def</span> <span class="function">record_success</span>(self, latency_ms: float = <span class="number">0</span>) -> <span class="keyword">None</span>:
+        <span class="string">"""Record a successful request.
+
+        In HALF_OPEN state, accumulate successes until threshold
+        is met, then transition back to CLOSED.
+        """</span>
+        self.total_call_count += <span class="number">1</span>
+
+        <span class="comment"># Track slow calls even on success</span>
+        <span class="keyword">if</span> latency_ms > self.slow_call_threshold_ms:
+            self.slow_call_count += <span class="number">1</span>
+            self._check_slow_call_rate()
+
+        <span class="keyword">if</span> self.state == CircuitState.HALF_OPEN:
+            self.half_open_successes += <span class="number">1</span>
+            <span class="keyword">if</span> self.half_open_successes >= self.success_threshold:
+                self._close()
+                logger.info(
+                    f<span class="string">"Circuit {self.endpoint_id}: HALF_OPEN → CLOSED "</span>
+                    f<span class="string">"({self.success_threshold} consecutive successes)"</span>
+                )
+        <span class="keyword">elif</span> self.state == CircuitState.CLOSED:
+            <span class="comment"># Reset failure count on success (sliding window)</span>
+            self.failure_count = max(<span class="number">0</span>, self.failure_count - <span class="number">1</span>)
+            self.success_count += <span class="number">1</span>
+
+    <span class="keyword">def</span> <span class="function">record_failure</span>(self, error: Optional[Exception] = <span class="keyword">None</span>,
+                       is_rate_limit: bool = <span class="keyword">False</span>) -> <span class="keyword">None</span>:
+        <span class="string">"""Record a failed request.
+
+        Args:
+            error: The exception that caused the failure
+            is_rate_limit: If True, immediately open with extended cooldown
+        """</span>
+        self.failure_count += <span class="number">1</span>
+        self.last_failure_time = time.monotonic()
+        self.total_call_count += <span class="number">1</span>
+
+        <span class="keyword">if</span> is_rate_limit:
+            <span class="comment"># Rate limit errors → immediate OPEN with extended cooldown</span>
+            self._trip(
+                reason=<span class="string">"rate_limit_429"</span>,
+                cooldown_override=self.cooldown_sec * self.rate_limit_cooldown_multiplier
+            )
+            logger.warning(
+                f<span class="string">"Circuit {self.endpoint_id}: RATE LIMITED → OPEN "</span>
+                f<span class="string">"(cooldown={self.cooldown_sec * self.rate_limit_cooldown_multiplier}s)"</span>
+            )
+            <span class="keyword">return</span>
+
+        <span class="keyword">if</span> self.state == CircuitState.HALF_OPEN:
+            <span class="comment"># Any failure in HALF_OPEN → back to OPEN</span>
+            self._trip(reason=<span class="string">"half_open_probe_failed"</span>)
+            logger.warning(
+                f<span class="string">"Circuit {self.endpoint_id}: HALF_OPEN → OPEN (probe failed)"</span>
+            )
+            <span class="keyword">return</span>
+
+        <span class="keyword">if</span> self.state == CircuitState.CLOSED:
+            <span class="keyword">if</span> self.failure_count >= self.failure_threshold:
+                self._trip(reason=f<span class="string">"failures={self.failure_count}/{self.failure_threshold}"</span>)
+                logger.warning(
+                    f<span class="string">"Circuit {self.endpoint_id}: CLOSED → OPEN "</span>
+                    f<span class="string">"({self.failure_count} failures in window)"</span>
+                )
+
+    <span class="keyword">def</span> <span class="function">_trip</span>(self, reason: str, cooldown_override: Optional[float] = <span class="keyword">None</span>) -> <span class="keyword">None</span>:
+        <span class="string">"""Open the circuit breaker.
+
+        Args:
+            reason: Why the circuit was tripped (for logging)
+            cooldown_override: Override default cooldown (used for rate limits)
+        """</span>
+        self.state = CircuitState.OPEN
+        self.opened_at = time.monotonic()
+        <span class="keyword">if</span> cooldown_override:
+            self.cooldown_sec = cooldown_override
+        logger.info(
+            f<span class="string">"Circuit {self.endpoint_id} TRIPPED: reason={reason} "</span>
+            f<span class="string">"cooldown={self.cooldown_sec}s"</span>
+        )
+
+    <span class="keyword">def</span> <span class="function">_close</span>(self) -> <span class="keyword">None</span>:
+        <span class="string">"""Reset circuit to CLOSED state with clean counters."""</span>
+        self.state = CircuitState.CLOSED
+        self.failure_count = <span class="number">0</span>
+        self.success_count = <span class="number">0</span>
+        self.half_open_successes = <span class="number">0</span>
+        self.opened_at = <span class="keyword">None</span>
+        self.slow_call_count = <span class="number">0</span>
+        self.total_call_count = <span class="number">0</span>
+        self.window_start = time.monotonic()
+
+    <span class="keyword">def</span> <span class="function">_check_slow_call_rate</span>(self) -> <span class="keyword">None</span>:
+        <span class="string">"""Trip circuit if too many calls are slow (even if they succeed)."""</span>
+        <span class="keyword">if</span> self.total_call_count < <span class="number">10</span>:
+            <span class="keyword">return</span>  <span class="comment"># Need minimum sample size</span>
+
+        slow_rate = self.slow_call_count / self.total_call_count
+        <span class="keyword">if</span> slow_rate > self.slow_call_rate_threshold:
+            self._trip(reason=f<span class="string">"slow_call_rate={slow_rate:.2f}"</span>)
+            logger.warning(
+                f<span class="string">"Circuit {self.endpoint_id}: TRIPPED due to slow calls "</span>
+                f<span class="string">"({self.slow_call_count}/{self.total_call_count} > "</span>
+                f<span class="string">"{self.slow_call_rate_threshold})"</span>
+            )
+
+    <span class="keyword">def</span> <span class="function">_maybe_reset_window</span>(self) -> <span class="keyword">None</span>:
+        <span class="string">"""Reset counters if the sliding window has elapsed."""</span>
+        elapsed = time.monotonic() - self.window_start
+        <span class="keyword">if</span> elapsed >= self.window_size_sec:
+            self.slow_call_count = <span class="number">0</span>
+            self.total_call_count = <span class="number">0</span>
+            self.failure_count = <span class="number">0</span>
+            self.window_start = time.monotonic()</code></pre>
+      </div>
+
+      <div class="warn-box">
+        <p><strong style="color:#ef4444;">Rate Limit (429) ≠ Normal Error:</strong> Rate limits mean the provider is actively throttling. Opening the circuit immediately with 3x cooldown (90 seconds instead of 30) prevents wasting requests against a throttled endpoint. The gateway routes to other endpoints while the rate limit window resets.</p>
+      </div>
+    </div>
+
+    <!-- 5. SLIDING WINDOW RATE LIMITER -->
+    <div class="article-section" id="rate-limiter">
+      <h2><span class="step-badge">5</span> Sliding Window Rate Limiter</h2>
+
+      <p>Each endpoint tracks rate limits across four dimensions: <strong style="color:#e8e8f0;">requests per minute (RPM)</strong>, <strong style="color:#e8e8f0;">tokens per minute (TPM)</strong>, <strong style="color:#e8e8f0;">requests per second (RPS)</strong>, and <strong style="color:#e8e8f0;">concurrent requests</strong>. The limiter proactively rejects requests when capacity drops below 10% headroom to avoid hitting provider-side 429 errors.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/rate_limiter.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> time
+<span class="keyword">from</span> collections <span class="keyword">import</span> deque
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> typing <span class="keyword">import</span> Deque, Optional
+<span class="keyword">import</span> threading
+<span class="keyword">import</span> logging
+
+logger = logging.getLogger(__name__)
+
+<span class="comment"># 10% headroom to avoid hitting provider-side limits</span>
+HEADROOM_FRACTION = <span class="number">0.10</span>
+
+
+<span class="keyword">class</span> <span class="type">SlidingWindowRateLimiter</span>:
+    <span class="string">"""Sliding window rate limiter tracking RPM, TPM, RPS, and concurrency.
+
+    Uses a deque-based sliding window for accurate rate counting.
+    Maintains 10% headroom below provider limits to avoid 429 errors.
+
+    Each LLM endpoint gets its own rate limiter instance configured
+    with that endpoint's specific limits from provider documentation.
+    """</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(
+        self,
+        endpoint_id: str,
+        rpm_limit: int = <span class="number">10000</span>,
+        tpm_limit: int = <span class="number">2000000</span>,
+        rps_limit: int = <span class="number">500</span>,
+        concurrent_limit: int = <span class="number">200</span>,
+    ):
+        self.endpoint_id = endpoint_id
+        self.rpm_limit = rpm_limit
+        self.tpm_limit = tpm_limit
+        self.rps_limit = rps_limit
+        self.concurrent_limit = concurrent_limit
+
+        <span class="comment"># Effective limits with headroom</span>
+        self.effective_rpm = int(rpm_limit * (<span class="number">1</span> - HEADROOM_FRACTION))
+        self.effective_tpm = int(tpm_limit * (<span class="number">1</span> - HEADROOM_FRACTION))
+        self.effective_rps = int(rps_limit * (<span class="number">1</span> - HEADROOM_FRACTION))
+        self.effective_concurrent = int(concurrent_limit * (<span class="number">1</span> - HEADROOM_FRACTION))
+
+        <span class="comment"># Sliding windows: deque of (timestamp, token_count) tuples</span>
+        self._rpm_window: Deque[float] = deque()              <span class="comment"># 60s window</span>
+        self._tpm_window: Deque[tuple[float, int]] = deque()  <span class="comment"># 60s window</span>
+        self._rps_window: Deque[float] = deque()              <span class="comment"># 1s window</span>
+
+        <span class="comment"># Concurrent request counter</span>
+        self._concurrent: int = <span class="number">0</span>
+
+        <span class="comment"># Thread safety</span>
+        self._lock = threading.Lock()
+
+    <span class="keyword">def</span> <span class="function">can_accept</span>(self, estimated_tokens: int = <span class="number">1000</span>) -> bool:
+        <span class="string">"""Check if the endpoint can accept a new request.
+
+        Args:
+            estimated_tokens: Estimated total tokens (prompt + completion)
+
+        Returns:
+            True if all rate limits have sufficient headroom.
+        """</span>
+        <span class="keyword">with</span> self._lock:
+            now = time.monotonic()
+            self._cleanup_windows(now)
+
+            <span class="comment"># Check RPM</span>
+            <span class="keyword">if</span> len(self._rpm_window) >= self.effective_rpm:
+                logger.debug(f<span class="string">"{self.endpoint_id}: RPM limit reached ({len(self._rpm_window)}/{self.effective_rpm})"</span>)
+                <span class="keyword">return</span> <span class="keyword">False</span>
+
+            <span class="comment"># Check TPM</span>
+            current_tpm = sum(tokens <span class="keyword">for</span> _, tokens <span class="keyword">in</span> self._tpm_window)
+            <span class="keyword">if</span> current_tpm + estimated_tokens > self.effective_tpm:
+                logger.debug(f<span class="string">"{self.endpoint_id}: TPM limit reached ({current_tpm}/{self.effective_tpm})"</span>)
+                <span class="keyword">return</span> <span class="keyword">False</span>
+
+            <span class="comment"># Check RPS</span>
+            <span class="keyword">if</span> len(self._rps_window) >= self.effective_rps:
+                logger.debug(f<span class="string">"{self.endpoint_id}: RPS limit reached ({len(self._rps_window)}/{self.effective_rps})"</span>)
+                <span class="keyword">return</span> <span class="keyword">False</span>
+
+            <span class="comment"># Check concurrent</span>
+            <span class="keyword">if</span> self._concurrent >= self.effective_concurrent:
+                logger.debug(f<span class="string">"{self.endpoint_id}: Concurrent limit reached ({self._concurrent}/{self.effective_concurrent})"</span>)
+                <span class="keyword">return</span> <span class="keyword">False</span>
+
+            <span class="keyword">return</span> <span class="keyword">True</span>
+
+    <span class="keyword">def</span> <span class="function">record_request</span>(self, estimated_tokens: int = <span class="number">1000</span>) -> <span class="keyword">None</span>:
+        <span class="string">"""Record an outgoing request against all rate limit windows.
+
+        Called when a request is dispatched to the provider.
+        Must be paired with record_completion() when the request finishes.
+        """</span>
+        <span class="keyword">with</span> self._lock:
+            now = time.monotonic()
+            self._rpm_window.append(now)
+            self._tpm_window.append((now, estimated_tokens))
+            self._rps_window.append(now)
+            self._concurrent += <span class="number">1</span>
+
+    <span class="keyword">def</span> <span class="function">record_completion</span>(self, actual_tokens: int = <span class="number">0</span>) -> <span class="keyword">None</span>:
+        <span class="string">"""Record request completion, decrement concurrent counter.
+
+        Args:
+            actual_tokens: Actual tokens used (for adjusting TPM tracking)
+        """</span>
+        <span class="keyword">with</span> self._lock:
+            self._concurrent = max(<span class="number">0</span>, self._concurrent - <span class="number">1</span>)
+
+    <span class="keyword">def</span> <span class="function">headroom_pct</span>(self) -> Dict[str, float]:
+        <span class="string">"""Return remaining headroom percentage for each limit dimension.
+
+        Returns:
+            Dict with rpm, tpm, rps, concurrent headroom as 0.0-1.0 floats.
+        """</span>
+        <span class="keyword">with</span> self._lock:
+            now = time.monotonic()
+            self._cleanup_windows(now)
+
+            current_tpm = sum(tokens <span class="keyword">for</span> _, tokens <span class="keyword">in</span> self._tpm_window)
+
+            <span class="keyword">return</span> {
+                <span class="string">"rpm"</span>: max(<span class="number">0.0</span>, <span class="number">1.0</span> - len(self._rpm_window) / self.rpm_limit) <span class="keyword">if</span> self.rpm_limit > <span class="number">0</span> <span class="keyword">else</span> <span class="number">0.0</span>,
+                <span class="string">"tpm"</span>: max(<span class="number">0.0</span>, <span class="number">1.0</span> - current_tpm / self.tpm_limit) <span class="keyword">if</span> self.tpm_limit > <span class="number">0</span> <span class="keyword">else</span> <span class="number">0.0</span>,
+                <span class="string">"rps"</span>: max(<span class="number">0.0</span>, <span class="number">1.0</span> - len(self._rps_window) / self.rps_limit) <span class="keyword">if</span> self.rps_limit > <span class="number">0</span> <span class="keyword">else</span> <span class="number">0.0</span>,
+                <span class="string">"concurrent"</span>: max(<span class="number">0.0</span>, <span class="number">1.0</span> - self._concurrent / self.concurrent_limit) <span class="keyword">if</span> self.concurrent_limit > <span class="number">0</span> <span class="keyword">else</span> <span class="number">0.0</span>,
+            }
+
+    <span class="keyword">def</span> <span class="function">_cleanup_windows</span>(self, now: float) -> <span class="keyword">None</span>:
+        <span class="string">"""Remove expired entries from sliding windows."""</span>
+        <span class="comment"># RPM window: 60 seconds</span>
+        cutoff_60s = now - <span class="number">60.0</span>
+        <span class="keyword">while</span> self._rpm_window <span class="keyword">and</span> self._rpm_window[<span class="number">0</span>] < cutoff_60s:
+            self._rpm_window.popleft()
+
+        <span class="comment"># TPM window: 60 seconds</span>
+        <span class="keyword">while</span> self._tpm_window <span class="keyword">and</span> self._tpm_window[<span class="number">0</span>][<span class="number">0</span>] < cutoff_60s:
+            self._tpm_window.popleft()
+
+        <span class="comment"># RPS window: 1 second</span>
+        cutoff_1s = now - <span class="number">1.0</span>
+        <span class="keyword">while</span> self._rps_window <span class="keyword">and</span> self._rps_window[<span class="number">0</span>] < cutoff_1s:
+            self._rps_window.popleft()</code></pre>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Why 10% Headroom?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">Provider rate limit responses (429s) are expensive: they waste a network round-trip, count against your error budget, and can trigger circuit breakers. By proactively stopping at 90% utilization, we trade 10% throughput for dramatically fewer 429 errors. In practice, this headroom absorbs traffic bursts and reduces 429 error rates by 95%+.</p>
+      </div>
+    </div>
+
+    <!-- 6. REQUEST HANDLER WITH RETRY & FALLBACK -->
+    <div class="article-section" id="request-handler">
+      <h2><span class="step-badge">6</span> Request Handler with Retry & Fallback</h2>
+
+      <p>The central <strong style="color:#e8e8f0;">LLMGateway</strong> class orchestrates the full request lifecycle: semantic cache check, endpoint ranking, circuit breaker validation, rate limit enforcement, SLA timeout, and multi-endpoint fallback.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/handler.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> asyncio
+<span class="keyword">import</span> time
+<span class="keyword">import</span> logging
+<span class="keyword">from</span> typing <span class="keyword">import</span> Optional, Dict
+<span class="keyword">from</span> gateway.schemas <span class="keyword">import</span> LLMRequest, LLMResponse
+<span class="keyword">from</span> gateway.router <span class="keyword">import</span> SmartRouter, EndpointState
+<span class="keyword">from</span> gateway.circuit_breaker <span class="keyword">import</span> EndpointCircuitBreaker
+<span class="keyword">from</span> gateway.rate_limiter <span class="keyword">import</span> SlidingWindowRateLimiter
+<span class="keyword">from</span> gateway.cache <span class="keyword">import</span> SemanticCache
+<span class="keyword">from</span> gateway.adapters <span class="keyword">import</span> get_adapter
+<span class="keyword">from</span> gateway.metrics <span class="keyword">import</span> MetricsCollector
+
+logger = logging.getLogger(__name__)
+
+
+<span class="keyword">class</span> <span class="type">LLMGateway</span>:
+    <span class="string">"""Central request handler for the LLM Gateway.
+
+    Request lifecycle:
+      1. Check semantic cache → return cached response if hit
+      2. Get ranked endpoints from SmartRouter
+      3. For each endpoint (in score order):
+         a. Check circuit breaker → skip if open
+         b. Check rate limiter → skip if exhausted
+         c. Send request with SLA timeout via asyncio.wait_for
+         d. On success → record metrics, update state, cache response
+         e. On failure → record failure, try next endpoint
+      4. If all endpoints fail → return error response
+    """</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(
+        self,
+        router: SmartRouter,
+        cache: SemanticCache,
+        circuit_breakers: Dict[str, EndpointCircuitBreaker],
+        rate_limiters: Dict[str, SlidingWindowRateLimiter],
+        metrics: MetricsCollector,
+    ):
+        self.router = router
+        self.cache = cache
+        self.circuit_breakers = circuit_breakers
+        self.rate_limiters = rate_limiters
+        self.metrics = metrics
+
+    <span class="keyword">async def</span> <span class="function">handle</span>(self, request: LLMRequest) -> LLMResponse:
+        <span class="string">"""Handle an LLM request with full retry and fallback logic.
+
+        Args:
+            request: Unified LLM request from internal service
+
+        Returns:
+            LLMResponse with provider metadata, cost, and latency
+        """</span>
+        start_time = time.monotonic()
+
+        <span class="comment"># ── Step 1: Check Semantic Cache ──</span>
+        cached_response = <span class="keyword">await</span> self.cache.get(request)
+        <span class="keyword">if</span> cached_response:
+            cached_response.latency_ms = (time.monotonic() - start_time) * <span class="number">1000</span>
+            self.metrics.record_cache_hit(request.service_id)
+            logger.info(f<span class="string">"Cache HIT for request={request.request_id}"</span>)
+            <span class="keyword">return</span> cached_response
+
+        self.metrics.record_cache_miss(request.service_id)
+
+        <span class="comment"># ── Step 2: Get Ranked Endpoints ──</span>
+        <span class="comment"># Try primary model first, then fallbacks</span>
+        models_to_try = [request.model] + request.fallback_models
+        last_error: Optional[Exception] = <span class="keyword">None</span>
+        attempts = <span class="number">0</span>
+
+        <span class="keyword">for</span> model <span class="keyword">in</span> models_to_try:
+            endpoints = self.router.route(
+                model=model,
+                sla_ms=request.sla_ms,
+                preferred_provider=request.preferred_provider,
+                estimated_tokens=request.max_tokens,
+            )
+
+            <span class="keyword">if not</span> endpoints:
+                logger.warning(f<span class="string">"No endpoints available for model={model}"</span>)
+                <span class="keyword">continue</span>
+
+            <span class="comment"># ── Step 3: Try Endpoints in Score Order ──</span>
+            <span class="keyword">for</span> endpoint <span class="keyword">in</span> endpoints:
+                attempts += <span class="number">1</span>
+                ep_id = endpoint.endpoint_id
+
+                <span class="comment"># Step 3a: Check Circuit Breaker</span>
+                cb = self.circuit_breakers.get(ep_id)
+                <span class="keyword">if</span> cb <span class="keyword">and not</span> cb.can_execute():
+                    logger.debug(f<span class="string">"Skipping {ep_id}: circuit breaker open"</span>)
+                    <span class="keyword">continue</span>
+
+                <span class="comment"># Step 3b: Check Rate Limiter</span>
+                rl = self.rate_limiters.get(ep_id)
+                <span class="keyword">if</span> rl <span class="keyword">and not</span> rl.can_accept(estimated_tokens=request.max_tokens):
+                    logger.debug(f<span class="string">"Skipping {ep_id}: rate limit exhausted"</span>)
+                    <span class="keyword">continue</span>
+
+                <span class="comment"># Record rate limit usage</span>
+                <span class="keyword">if</span> rl:
+                    rl.record_request(estimated_tokens=request.max_tokens)
+
+                <span class="keyword">try</span>:
+                    <span class="comment"># Step 3c: Send Request with SLA Timeout</span>
+                    remaining_sla_ms = request.sla_ms - (time.monotonic() - start_time) * <span class="number">1000</span>
+                    <span class="keyword">if</span> remaining_sla_ms <= <span class="number">0</span>:
+                        logger.warning(f<span class="string">"SLA budget exhausted before attempting {ep_id}"</span>)
+                        <span class="keyword">break</span>
+
+                    timeout_sec = remaining_sla_ms / <span class="number">1000.0</span>
+                    adapter = get_adapter(endpoint.provider)
+
+                    response = <span class="keyword">await</span> asyncio.wait_for(
+                        adapter.send(request, endpoint),
+                        timeout=timeout_sec,
+                    )
+
+                    <span class="comment"># Step 3d: Success — record metrics</span>
+                    latency_ms = (time.monotonic() - start_time) * <span class="number">1000</span>
+                    response.latency_ms = latency_ms
+                    response.attempts = attempts
+                    response.fallback_used = (model != request.model)
+
+                    <span class="comment"># Update circuit breaker</span>
+                    <span class="keyword">if</span> cb:
+                        cb.record_success(latency_ms=latency_ms)
+
+                    <span class="comment"># Release rate limiter slot</span>
+                    <span class="keyword">if</span> rl:
+                        actual_tokens = response.usage.get(<span class="string">"total_tokens"</span>, <span class="number">0</span>)
+                        rl.record_completion(actual_tokens=actual_tokens)
+
+                    <span class="comment"># Update router state</span>
+                    self.router.update_endpoint(
+                        ep_id,
+                        avg_latency_ms=latency_ms,
+                        last_used=time.time(),
+                        success_rate=self._calc_success_rate(ep_id),
+                    )
+
+                    <span class="comment"># Cache the response (if eligible)</span>
+                    <span class="keyword">await</span> self.cache.set(request, response)
+
+                    <span class="comment"># Record metrics</span>
+                    self.metrics.record_request(
+                        service_id=request.service_id,
+                        endpoint_id=ep_id,
+                        model=model,
+                        latency_ms=latency_ms,
+                        cost_usd=response.cost_usd,
+                        success=<span class="keyword">True</span>,
+                    )
+
+                    logger.info(
+                        f<span class="string">"Request {request.request_id} served by {ep_id} "</span>
+                        f<span class="string">"in {latency_ms:.1f}ms (attempts={attempts})"</span>
+                    )
+                    <span class="keyword">return</span> response
+
+                <span class="keyword">except</span> asyncio.TimeoutError:
+                    <span class="comment"># Step 3e: SLA timeout — try next endpoint</span>
+                    last_error = asyncio.TimeoutError(
+                        f<span class="string">"Timeout after {remaining_sla_ms:.0f}ms on {ep_id}"</span>
+                    )
+                    logger.warning(f<span class="string">"Timeout on {ep_id}: {remaining_sla_ms:.0f}ms"</span>)
+                    <span class="keyword">if</span> cb:
+                        cb.record_failure(error=last_error)
+                    <span class="keyword">if</span> rl:
+                        rl.record_completion()
+
+                <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+                    <span class="comment"># Step 3e: Provider error — try next endpoint</span>
+                    last_error = e
+                    is_rate_limit = <span class="string">"429"</span> <span class="keyword">in</span> str(e) <span class="keyword">or</span> <span class="string">"rate_limit"</span> <span class="keyword">in</span> str(e).lower()
+                    logger.warning(f<span class="string">"Error on {ep_id}: {e}"</span>)
+
+                    <span class="keyword">if</span> cb:
+                        cb.record_failure(error=e, is_rate_limit=is_rate_limit)
+                    <span class="keyword">if</span> rl:
+                        rl.record_completion()
+
+                    self.metrics.record_request(
+                        service_id=request.service_id,
+                        endpoint_id=ep_id,
+                        model=model,
+                        latency_ms=(time.monotonic() - start_time) * <span class="number">1000</span>,
+                        cost_usd=<span class="number">0</span>,
+                        success=<span class="keyword">False</span>,
+                    )
+
+        <span class="comment"># ── Step 4: All Endpoints Failed ──</span>
+        latency_ms = (time.monotonic() - start_time) * <span class="number">1000</span>
+        logger.error(
+            f<span class="string">"All endpoints failed for request={request.request_id} "</span>
+            f<span class="string">"after {attempts} attempts in {latency_ms:.1f}ms"</span>
+        )
+        self.metrics.record_total_failure(request.service_id)
+
+        <span class="keyword">return</span> LLMResponse(
+            request_id=request.request_id,
+            provider=<span class="string">"none"</span>,
+            endpoint=<span class="string">"none"</span>,
+            model=request.model,
+            content=f<span class="string">"Error: All endpoints unavailable. Last error: {last_error}"</span>,
+            latency_ms=latency_ms,
+            attempts=attempts,
+        )
+
+    <span class="keyword">def</span> <span class="function">_calc_success_rate</span>(self, endpoint_id: str) -> float:
+        <span class="string">"""Calculate rolling success rate from metrics."""</span>
+        stats = self.metrics.get_endpoint_stats(endpoint_id, window_sec=<span class="number">300</span>)
+        <span class="keyword">if</span> stats[<span class="string">"total"</span>] == <span class="number">0</span>:
+            <span class="keyword">return</span> <span class="number">1.0</span>
+        <span class="keyword">return</span> stats[<span class="string">"successes"</span>] / stats[<span class="string">"total"</span>]</code></pre>
+      </div>
+    </div>
+
+    <!-- 7. SEMANTIC CACHE -->
+    <div class="article-section" id="cache">
+      <h2><span class="step-badge">7</span> Semantic Cache</h2>
+
+      <p>The semantic cache uses <strong style="color:#e8e8f0;">Redis</strong> to store LLM responses keyed by a SHA-256 hash of the request parameters. Only <strong style="color:#e8e8f0;">temperature=0</strong> requests are cached (deterministic outputs). Cache hits return in under 5ms vs. 500ms+ for provider calls, achieving 30-40% hit rates for repetitive enterprise workloads.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/cache.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> hashlib
+<span class="keyword">import</span> json
+<span class="keyword">import</span> logging
+<span class="keyword">from</span> typing <span class="keyword">import</span> Optional
+<span class="keyword">import</span> redis.asyncio <span class="keyword">as</span> redis
+<span class="keyword">from</span> gateway.schemas <span class="keyword">import</span> LLMRequest, LLMResponse
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_TTL_SECONDS = <span class="number">3600</span>  <span class="comment"># 1 hour</span>
+
+
+<span class="keyword">class</span> <span class="type">SemanticCache</span>:
+    <span class="string">"""Redis-backed semantic cache for LLM responses.
+
+    Cache key = SHA256(model + messages + temperature + max_tokens)
+
+    Rules:
+      - Only cache temperature=0 requests (deterministic output)
+      - TTL: 1 hour (configurable per model)
+      - Returns cached=True flag so callers know it was a cache hit
+      - Cache misses add < 1ms overhead (single Redis GET)
+
+    Cache hit rates in production:
+      - Customer support bots: ~45% (many repeated questions)
+      - Code generation: ~15% (unique prompts)
+      - Search augmentation: ~35% (similar queries)
+      - Average across all services: 30-40%
+    """</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(
+        self,
+        redis_client: redis.Redis,
+        ttl_seconds: int = DEFAULT_TTL_SECONDS,
+        enabled: bool = <span class="keyword">True</span>,
+        max_tokens_for_cache: int = <span class="number">4096</span>,
+    ):
+        self.redis = redis_client
+        self.ttl_seconds = ttl_seconds
+        self.enabled = enabled
+        self.max_tokens_for_cache = max_tokens_for_cache
+
+    <span class="keyword">def</span> <span class="function">_cache_key</span>(self, request: LLMRequest) -> str:
+        <span class="string">"""Generate deterministic cache key from request parameters.
+
+        Key components:
+          - model: Different models produce different outputs
+          - messages: The actual conversation (content + roles)
+          - temperature: Only 0 is cached, but included for safety
+          - max_tokens: Affects output length/truncation
+        """</span>
+        key_data = {
+            <span class="string">"model"</span>: request.model,
+            <span class="string">"messages"</span>: [
+                {<span class="string">"role"</span>: m.role, <span class="string">"content"</span>: m.content}
+                <span class="keyword">for</span> m <span class="keyword">in</span> request.messages
+            ],
+            <span class="string">"temperature"</span>: request.temperature,
+            <span class="string">"max_tokens"</span>: request.max_tokens,
+        }
+        key_json = json.dumps(key_data, sort_keys=<span class="keyword">True</span>, ensure_ascii=<span class="keyword">True</span>)
+        key_hash = hashlib.sha256(key_json.encode()).hexdigest()
+        <span class="keyword">return</span> f<span class="string">"llm_cache:{key_hash}"</span>
+
+    <span class="keyword">def</span> <span class="function">_is_cacheable</span>(self, request: LLMRequest) -> bool:
+        <span class="string">"""Determine if a request is eligible for caching.
+
+        Only cache when:
+          1. Caching is enabled
+          2. Temperature is exactly 0 (deterministic)
+          3. Not a streaming request
+          4. Max tokens is within cache limit
+        """</span>
+        <span class="keyword">if not</span> self.enabled:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        <span class="keyword">if</span> request.temperature != <span class="number">0.0</span>:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        <span class="keyword">if</span> request.stream:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        <span class="keyword">if</span> request.max_tokens > self.max_tokens_for_cache:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        <span class="keyword">return</span> <span class="keyword">True</span>
+
+    <span class="keyword">async def</span> <span class="function">get</span>(self, request: LLMRequest) -> Optional[LLMResponse]:
+        <span class="string">"""Look up cached response for this request.
+
+        Returns:
+            LLMResponse with cached=True if found, None otherwise.
+        """</span>
+        <span class="keyword">if not</span> self._is_cacheable(request):
+            <span class="keyword">return</span> <span class="keyword">None</span>
+
+        <span class="keyword">try</span>:
+            key = self._cache_key(request)
+            cached_data = <span class="keyword">await</span> self.redis.get(key)
+
+            <span class="keyword">if</span> cached_data <span class="keyword">is</span> <span class="keyword">None</span>:
+                <span class="keyword">return</span> <span class="keyword">None</span>
+
+            data = json.loads(cached_data)
+            response = LLMResponse(
+                request_id=request.request_id,
+                provider=data[<span class="string">"provider"</span>],
+                endpoint=data[<span class="string">"endpoint"</span>],
+                model=data[<span class="string">"model"</span>],
+                content=data[<span class="string">"content"</span>],
+                usage=data[<span class="string">"usage"</span>],
+                latency_ms=<span class="number">0</span>,  <span class="comment"># Will be set by caller</span>
+                cost_usd=<span class="number">0.0</span>,   <span class="comment"># Cached = free</span>
+                cached=<span class="keyword">True</span>,
+            )
+            logger.debug(f<span class="string">"Cache HIT: key={key[:16]}..."</span>)
+            <span class="keyword">return</span> response
+
+        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+            <span class="comment"># Cache failures should never block requests</span>
+            logger.warning(f<span class="string">"Cache GET error: {e}"</span>)
+            <span class="keyword">return</span> <span class="keyword">None</span>
+
+    <span class="keyword">async def</span> <span class="function">set</span>(self, request: LLMRequest, response: LLMResponse) -> <span class="keyword">None</span>:
+        <span class="string">"""Cache a response for future identical requests.
+
+        Only caches if the request is eligible (temperature=0, non-streaming).
+        Cache failures are logged but never raise exceptions.
+        """</span>
+        <span class="keyword">if not</span> self._is_cacheable(request):
+            <span class="keyword">return</span>
+
+        <span class="keyword">try</span>:
+            key = self._cache_key(request)
+            cache_data = json.dumps({
+                <span class="string">"provider"</span>: response.provider,
+                <span class="string">"endpoint"</span>: response.endpoint,
+                <span class="string">"model"</span>: response.model,
+                <span class="string">"content"</span>: response.content,
+                <span class="string">"usage"</span>: response.usage,
+            })
+            <span class="keyword">await</span> self.redis.setex(key, self.ttl_seconds, cache_data)
+            logger.debug(f<span class="string">"Cache SET: key={key[:16]}... ttl={self.ttl_seconds}s"</span>)
+
+        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+            <span class="comment"># Cache failures should never block requests</span>
+            logger.warning(f<span class="string">"Cache SET error: {e}"</span>)</code></pre>
+      </div>
+    </div>
+
+    <!-- 8. PROVIDER ADAPTER PATTERN -->
+    <div class="article-section" id="adapters">
+      <h2><span class="step-badge">8</span> Provider Adapter Pattern</h2>
+
+      <p>Each LLM provider has a different API format, authentication method, and response structure. The <strong style="color:#e8e8f0;">Adapter Pattern</strong> provides a uniform interface so the gateway core never deals with provider-specific details. Adding a new provider requires only implementing the abstract base class.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/adapters/base.py</span>
+        </div>
+        <pre><code><span class="keyword">from</span> abc <span class="keyword">import</span> ABC, abstractmethod
+<span class="keyword">from</span> typing <span class="keyword">import</span> Dict, Any
+<span class="keyword">import</span> aiohttp
+<span class="keyword">from</span> gateway.schemas <span class="keyword">import</span> LLMRequest, LLMResponse
+<span class="keyword">from</span> gateway.router <span class="keyword">import</span> EndpointState
+
+
+<span class="keyword">class</span> <span class="type">LLMProviderAdapter</span>(ABC):
+    <span class="string">"""Abstract base class for LLM provider adapters.
+
+    Each adapter translates between the gateway's unified format
+    and the provider's native API format. Responsible for:
+      - Building provider-specific HTTP requests
+      - Parsing provider-specific responses
+      - Calculating cost based on token usage
+      - Handling provider-specific error codes
+    """</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, api_key: str, session: aiohttp.ClientSession):
+        self.api_key = api_key
+        self.session = session
+
+    <span class="decorator">@abstractmethod</span>
+    <span class="keyword">def</span> <span class="function">build_request</span>(self, request: LLMRequest, endpoint: EndpointState) -> Dict[str, Any]:
+        <span class="string">"""Transform unified request into provider-specific format."""</span>
+        ...
+
+    <span class="decorator">@abstractmethod</span>
+    <span class="keyword">def</span> <span class="function">parse_response</span>(self, raw_response: Dict[str, Any], request: LLMRequest,
+                       endpoint: EndpointState) -> LLMResponse:
+        <span class="string">"""Transform provider response into unified format."""</span>
+        ...
+
+    <span class="decorator">@abstractmethod</span>
+    <span class="keyword">def</span> <span class="function">calculate_cost</span>(self, usage: Dict[str, int], endpoint: EndpointState) -> float:
+        <span class="string">"""Calculate cost in USD based on token usage."""</span>
+        ...
+
+    <span class="keyword">async def</span> <span class="function">send</span>(self, request: LLMRequest, endpoint: EndpointState) -> LLMResponse:
+        <span class="string">"""Send request to provider and return unified response."""</span>
+        provider_request = self.build_request(request, endpoint)
+
+        <span class="keyword">async with</span> self.session.post(
+            provider_request[<span class="string">"url"</span>],
+            headers=provider_request[<span class="string">"headers"</span>],
+            json=provider_request[<span class="string">"body"</span>],
+        ) <span class="keyword">as</span> resp:
+            <span class="keyword">if</span> resp.status == <span class="number">429</span>:
+                <span class="keyword">raise</span> RateLimitError(f<span class="string">"429 Rate limit from {endpoint.endpoint_id}"</span>)
+            <span class="keyword">if</span> resp.status >= <span class="number">400</span>:
+                body = <span class="keyword">await</span> resp.text()
+                <span class="keyword">raise</span> ProviderError(f<span class="string">"HTTP {resp.status} from {endpoint.endpoint_id}: {body}"</span>)
+
+            raw = <span class="keyword">await</span> resp.json()
+            <span class="keyword">return</span> self.parse_response(raw, request, endpoint)
+
+
+<span class="keyword">class</span> <span class="type">RateLimitError</span>(Exception):
+    <span class="string">"""Raised when provider returns HTTP 429."""</span>
+    <span class="keyword">pass</span>
+
+<span class="keyword">class</span> <span class="type">ProviderError</span>(Exception):
+    <span class="string">"""Raised when provider returns a non-429 error."""</span>
+    <span class="keyword">pass</span></code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/adapters/anthropic_adapter.py</span>
+        </div>
+        <pre><code><span class="keyword">from</span> typing <span class="keyword">import</span> Dict, Any
+<span class="keyword">from</span> gateway.adapters.base <span class="keyword">import</span> LLMProviderAdapter
+<span class="keyword">from</span> gateway.schemas <span class="keyword">import</span> LLMRequest, LLMResponse
+<span class="keyword">from</span> gateway.router <span class="keyword">import</span> EndpointState
+
+
+<span class="keyword">class</span> <span class="type">AnthropicAdapter</span>(LLMProviderAdapter):
+    <span class="string">"""Adapter for Anthropic's Messages API.
+
+    Translates OpenAI-style messages format to Anthropic's format:
+      - Separates system message from conversation
+      - Uses 'x-api-key' header instead of 'Authorization: Bearer'
+      - Maps response format: content[0].text → content
+      - Handles Anthropic-specific usage fields
+    """</span>
+
+    API_VERSION = <span class="string">"2024-01-01"</span>
+
+    <span class="keyword">def</span> <span class="function">build_request</span>(self, request: LLMRequest, endpoint: EndpointState) -> Dict[str, Any]:
+        <span class="string">"""Transform unified request to Anthropic Messages API format."""</span>
+        <span class="comment"># Separate system message from conversation messages</span>
+        system_msg = <span class="keyword">None</span>
+        messages = []
+        <span class="keyword">for</span> msg <span class="keyword">in</span> request.messages:
+            <span class="keyword">if</span> msg.role == <span class="string">"system"</span>:
+                system_msg = msg.content
+            <span class="keyword">else</span>:
+                messages.append({<span class="string">"role"</span>: msg.role, <span class="string">"content"</span>: msg.content})
+
+        body = {
+            <span class="string">"model"</span>: request.model,
+            <span class="string">"messages"</span>: messages,
+            <span class="string">"max_tokens"</span>: request.max_tokens,
+            <span class="string">"temperature"</span>: request.temperature,
+        }
+        <span class="keyword">if</span> system_msg:
+            body[<span class="string">"system"</span>] = system_msg
+
+        <span class="keyword">return</span> {
+            <span class="string">"url"</span>: f<span class="string">"{endpoint.base_url}/v1/messages"</span>,
+            <span class="string">"headers"</span>: {
+                <span class="string">"x-api-key"</span>: self.api_key,
+                <span class="string">"anthropic-version"</span>: self.API_VERSION,
+                <span class="string">"content-type"</span>: <span class="string">"application/json"</span>,
+            },
+            <span class="string">"body"</span>: body,
+        }
+
+    <span class="keyword">def</span> <span class="function">parse_response</span>(self, raw: Dict[str, Any], request: LLMRequest,
+                       endpoint: EndpointState) -> LLMResponse:
+        <span class="string">"""Transform Anthropic response to unified format."""</span>
+        content = raw[<span class="string">"content"</span>][<span class="number">0</span>][<span class="string">"text"</span>] <span class="keyword">if</span> raw.get(<span class="string">"content"</span>) <span class="keyword">else</span> <span class="string">""</span>
+        usage = {
+            <span class="string">"prompt_tokens"</span>: raw.get(<span class="string">"usage"</span>, {}).get(<span class="string">"input_tokens"</span>, <span class="number">0</span>),
+            <span class="string">"completion_tokens"</span>: raw.get(<span class="string">"usage"</span>, {}).get(<span class="string">"output_tokens"</span>, <span class="number">0</span>),
+            <span class="string">"total_tokens"</span>: (
+                raw.get(<span class="string">"usage"</span>, {}).get(<span class="string">"input_tokens"</span>, <span class="number">0</span>) +
+                raw.get(<span class="string">"usage"</span>, {}).get(<span class="string">"output_tokens"</span>, <span class="number">0</span>)
+            ),
+        }
+
+        <span class="keyword">return</span> LLMResponse(
+            request_id=request.request_id,
+            provider=<span class="string">"anthropic"</span>,
+            endpoint=endpoint.endpoint_id,
+            model=raw.get(<span class="string">"model"</span>, request.model),
+            content=content,
+            usage=usage,
+            latency_ms=<span class="number">0</span>,  <span class="comment"># Set by caller</span>
+            cost_usd=self.calculate_cost(usage, endpoint),
+        )
+
+    <span class="keyword">def</span> <span class="function">calculate_cost</span>(self, usage: Dict[str, int], endpoint: EndpointState) -> float:
+        <span class="string">"""Calculate cost using Anthropic's pricing."""</span>
+        input_cost = (usage.get(<span class="string">"prompt_tokens"</span>, <span class="number">0</span>) / <span class="number">1000</span>) * endpoint.cost_per_1k_input
+        output_cost = (usage.get(<span class="string">"completion_tokens"</span>, <span class="number">0</span>) / <span class="number">1000</span>) * endpoint.cost_per_1k_output
+        <span class="keyword">return</span> round(input_cost + output_cost, <span class="number">6</span>)</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/adapters/azure_openai_adapter.py</span>
+        </div>
+        <pre><code><span class="keyword">from</span> typing <span class="keyword">import</span> Dict, Any
+<span class="keyword">from</span> gateway.adapters.base <span class="keyword">import</span> LLMProviderAdapter
+<span class="keyword">from</span> gateway.schemas <span class="keyword">import</span> LLMRequest, LLMResponse
+<span class="keyword">from</span> gateway.router <span class="keyword">import</span> EndpointState
+
+
+<span class="keyword">class</span> <span class="type">AzureOpenAIAdapter</span>(LLMProviderAdapter):
+    <span class="string">"""Adapter for Azure OpenAI Service endpoints.
+
+    Key differences from OpenAI direct:
+      - URL includes deployment name: /deployments/{model}/chat/completions
+      - Uses 'api-key' header instead of 'Authorization: Bearer'
+      - Requires api-version query parameter
+      - Each Azure region is a separate endpoint with its own rate limits
+    """</span>
+
+    API_VERSION = <span class="string">"2024-02-01"</span>
+
+    <span class="keyword">def</span> <span class="function">build_request</span>(self, request: LLMRequest, endpoint: EndpointState) -> Dict[str, Any]:
+        <span class="string">"""Transform unified request to Azure OpenAI format."""</span>
+        messages = [{<span class="string">"role"</span>: m.role, <span class="string">"content"</span>: m.content} <span class="keyword">for</span> m <span class="keyword">in</span> request.messages]
+
+        <span class="comment"># Azure uses deployment name in URL path</span>
+        deployment = request.model.replace(<span class="string">"."</span>, <span class="string">""</span>)
+        url = (
+            f<span class="string">"{endpoint.base_url}/openai/deployments/{deployment}"</span>
+            f<span class="string">"/chat/completions?api-version={self.API_VERSION}"</span>
+        )
+
+        <span class="keyword">return</span> {
+            <span class="string">"url"</span>: url,
+            <span class="string">"headers"</span>: {
+                <span class="string">"api-key"</span>: self.api_key,
+                <span class="string">"content-type"</span>: <span class="string">"application/json"</span>,
+            },
+            <span class="string">"body"</span>: {
+                <span class="string">"messages"</span>: messages,
+                <span class="string">"max_tokens"</span>: request.max_tokens,
+                <span class="string">"temperature"</span>: request.temperature,
+            },
+        }
+
+    <span class="keyword">def</span> <span class="function">parse_response</span>(self, raw: Dict[str, Any], request: LLMRequest,
+                       endpoint: EndpointState) -> LLMResponse:
+        <span class="string">"""Transform Azure OpenAI response to unified format."""</span>
+        choice = raw.get(<span class="string">"choices"</span>, [{}])[<span class="number">0</span>]
+        content = choice.get(<span class="string">"message"</span>, {}).get(<span class="string">"content"</span>, <span class="string">""</span>)
+        raw_usage = raw.get(<span class="string">"usage"</span>, {})
+
+        usage = {
+            <span class="string">"prompt_tokens"</span>: raw_usage.get(<span class="string">"prompt_tokens"</span>, <span class="number">0</span>),
+            <span class="string">"completion_tokens"</span>: raw_usage.get(<span class="string">"completion_tokens"</span>, <span class="number">0</span>),
+            <span class="string">"total_tokens"</span>: raw_usage.get(<span class="string">"total_tokens"</span>, <span class="number">0</span>),
+        }
+
+        <span class="keyword">return</span> LLMResponse(
+            request_id=request.request_id,
+            provider=<span class="string">"azure-openai"</span>,
+            endpoint=endpoint.endpoint_id,
+            model=raw.get(<span class="string">"model"</span>, request.model),
+            content=content,
+            usage=usage,
+            latency_ms=<span class="number">0</span>,
+            cost_usd=self.calculate_cost(usage, endpoint),
+        )
+
+    <span class="keyword">def</span> <span class="function">calculate_cost</span>(self, usage: Dict[str, int], endpoint: EndpointState) -> float:
+        <span class="string">"""Calculate cost using Azure OpenAI pricing (same as OpenAI)."""</span>
+        input_cost = (usage.get(<span class="string">"prompt_tokens"</span>, <span class="number">0</span>) / <span class="number">1000</span>) * endpoint.cost_per_1k_input
+        output_cost = (usage.get(<span class="string">"completion_tokens"</span>, <span class="number">0</span>) / <span class="number">1000</span>) * endpoint.cost_per_1k_output
+        <span class="keyword">return</span> round(input_cost + output_cost, <span class="number">6</span>)
+
+
+<span class="keyword">def</span> <span class="function">get_adapter</span>(provider: str) -> LLMProviderAdapter:
+    <span class="string">"""Factory function to get the appropriate adapter for a provider."""</span>
+    adapters = {
+        <span class="string">"openai"</span>: OpenAIAdapter,
+        <span class="string">"azure-openai"</span>: AzureOpenAIAdapter,
+        <span class="string">"anthropic"</span>: AnthropicAdapter,
+        <span class="string">"google"</span>: GoogleGeminiAdapter,
+    }
+    adapter_class = adapters.get(provider)
+    <span class="keyword">if not</span> adapter_class:
+        <span class="keyword">raise</span> ValueError(f<span class="string">"Unknown provider: {provider}"</span>)
+    <span class="keyword">return</span> adapter_class()</code></pre>
+      </div>
+    </div>
+
+    <!-- 9. SLA-BASED PRIORITY QUEUES -->
+    <div class="article-section" id="priority-queues">
+      <h2><span class="step-badge">9</span> SLA-Based Priority Queues</h2>
+
+      <p>When the gateway is under load, requests are prioritized by their SLA tier. <strong style="color:#e8e8f0;">CRITICAL</strong> requests (real-time chat) are never queued — they either get served immediately or fail fast. Lower-priority requests are queued in Kafka partitions with different consumer priorities.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/priority_queue.py</span>
+        </div>
+        <pre><code><span class="keyword">import</span> asyncio
+<span class="keyword">import</span> time
+<span class="keyword">from</span> enum <span class="keyword">import</span> IntEnum
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> typing <span class="keyword">import</span> Optional, List
+<span class="keyword">import</span> heapq
+<span class="keyword">import</span> logging
+
+logger = logging.getLogger(__name__)
+
+
+<span class="keyword">class</span> <span class="type">PriorityLevel</span>(IntEnum):
+    <span class="string">"""Lower number = higher priority (for min-heap)."""</span>
+    CRITICAL = <span class="number">0</span>   <span class="comment"># SLA &lt;200ms  — never queued, fail fast</span>
+    HIGH = <span class="number">1</span>       <span class="comment"># SLA &lt;1s     — minimal queueing</span>
+    MEDIUM = <span class="number">2</span>     <span class="comment"># SLA &lt;5s     — can wait in queue</span>
+    LOW = <span class="number">3</span>        <span class="comment"># SLA &lt;30s    — batch processing, longest wait</span>
+
+
+SLA_DEADLINES = {
+    PriorityLevel.CRITICAL: <span class="number">200</span>,    <span class="comment"># ms</span>
+    PriorityLevel.HIGH: <span class="number">1000</span>,       <span class="comment"># ms</span>
+    PriorityLevel.MEDIUM: <span class="number">5000</span>,     <span class="comment"># ms</span>
+    PriorityLevel.LOW: <span class="number">30000</span>,       <span class="comment"># ms</span>
+}
+
+
+<span class="decorator">@dataclass</span>(order=<span class="keyword">True</span>)
+<span class="keyword">class</span> <span class="type">PrioritizedRequest</span>:
+    <span class="string">"""Wrapper for heap-based priority queue ordering."""</span>
+    priority: int                           <span class="comment"># PriorityLevel value (0-3)</span>
+    enqueued_at: float                      <span class="comment"># time.monotonic() timestamp</span>
+    request_id: str = field(compare=<span class="keyword">False</span>) <span class="comment"># For dedup and logging</span>
+    request: object = field(compare=<span class="keyword">False</span>) <span class="comment"># The actual LLMRequest</span>
+    sla_deadline_ms: int = field(compare=<span class="keyword">False</span>, default=<span class="number">5000</span>)
+
+    <span class="keyword">def</span> <span class="function">is_expired</span>(self) -> bool:
+        <span class="string">"""Check if this request has exceeded its SLA deadline."""</span>
+        elapsed_ms = (time.monotonic() - self.enqueued_at) * <span class="number">1000</span>
+        <span class="keyword">return</span> elapsed_ms > self.sla_deadline_ms
+
+
+<span class="keyword">class</span> <span class="type">SLAPriorityQueue</span>:
+    <span class="string">"""Priority queue that respects SLA deadlines.
+
+    Behavior by priority:
+      CRITICAL: Bypass queue entirely. If no endpoint available, fail immediately.
+      HIGH:     Queue for max 500ms. Dequeue first when capacity frees up.
+      MEDIUM:   Queue for max 4s. Standard processing.
+      LOW:      Queue for max 25s. Processed when higher priorities are clear.
+
+    Expired requests are dropped when dequeued (not before, to avoid O(n) scans).
+    """</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, max_queue_size: int = <span class="number">10000</span>):
+        self._heap: List[PrioritizedRequest] = []
+        self._max_size = max_queue_size
+        self._lock = asyncio.Lock()
+        self._not_empty = asyncio.Event()
+        self._dropped_count = <span class="number">0</span>
+
+    <span class="keyword">async def</span> <span class="function">enqueue</span>(self, request, priority: PriorityLevel) -> bool:
+        <span class="string">"""Add request to priority queue.
+
+        Args:
+            request: LLMRequest to enqueue
+            priority: SLA-based priority level
+
+        Returns:
+            True if enqueued, False if queue is full or CRITICAL priority
+        """</span>
+        <span class="comment"># CRITICAL requests never queue — they must be served immediately</span>
+        <span class="keyword">if</span> priority == PriorityLevel.CRITICAL:
+            logger.debug(f<span class="string">"CRITICAL request {request.request_id} — bypassing queue"</span>)
+            <span class="keyword">return</span> <span class="keyword">False</span>  <span class="comment"># Signal caller to handle immediately</span>
+
+        <span class="keyword">async with</span> self._lock:
+            <span class="keyword">if</span> len(self._heap) >= self._max_size:
+                <span class="comment"># Queue full — drop lowest priority request</span>
+                <span class="keyword">if</span> self._heap <span class="keyword">and</span> self._heap[-<span class="number">1</span>].priority > priority.value:
+                    dropped = heapq.heappushpop(
+                        self._heap,
+                        PrioritizedRequest(
+                            priority=priority.value,
+                            enqueued_at=time.monotonic(),
+                            request_id=request.request_id,
+                            request=request,
+                            sla_deadline_ms=SLA_DEADLINES[priority],
+                        )
+                    )
+                    self._dropped_count += <span class="number">1</span>
+                    logger.warning(f<span class="string">"Queue full: dropped {dropped.request_id} (pri={dropped.priority})"</span>)
+                    <span class="keyword">return</span> <span class="keyword">True</span>
+                <span class="keyword">else</span>:
+                    logger.warning(f<span class="string">"Queue full: rejecting {request.request_id}"</span>)
+                    <span class="keyword">return</span> <span class="keyword">False</span>
+
+            heapq.heappush(
+                self._heap,
+                PrioritizedRequest(
+                    priority=priority.value,
+                    enqueued_at=time.monotonic(),
+                    request_id=request.request_id,
+                    request=request,
+                    sla_deadline_ms=SLA_DEADLINES[priority],
+                )
+            )
+            self._not_empty.set()
+            <span class="keyword">return</span> <span class="keyword">True</span>
+
+    <span class="keyword">async def</span> <span class="function">dequeue</span>(self, timeout_sec: float = <span class="number">1.0</span>) -> Optional[PrioritizedRequest]:
+        <span class="string">"""Dequeue the highest-priority non-expired request.
+
+        Skips expired requests (they've already breached SLA).
+        """</span>
+        <span class="keyword">try</span>:
+            <span class="keyword">await</span> asyncio.wait_for(self._not_empty.wait(), timeout=timeout_sec)
+        <span class="keyword">except</span> asyncio.TimeoutError:
+            <span class="keyword">return</span> <span class="keyword">None</span>
+
+        <span class="keyword">async with</span> self._lock:
+            <span class="keyword">while</span> self._heap:
+                item = heapq.heappop(self._heap)
+                <span class="keyword">if not</span> item.is_expired():
+                    <span class="keyword">if not</span> self._heap:
+                        self._not_empty.clear()
+                    <span class="keyword">return</span> item
+                <span class="keyword">else</span>:
+                    self._dropped_count += <span class="number">1</span>
+                    logger.debug(f<span class="string">"Dropping expired request {item.request_id}"</span>)
+
+            self._not_empty.clear()
+            <span class="keyword">return</span> <span class="keyword">None</span>
+
+    <span class="decorator">@property</span>
+    <span class="keyword">def</span> <span class="function">size</span>(self) -> int:
+        <span class="keyword">return</span> len(self._heap)
+
+    <span class="decorator">@property</span>
+    <span class="keyword">def</span> <span class="function">dropped</span>(self) -> int:
+        <span class="keyword">return</span> self._dropped_count</code></pre>
+      </div>
+
+      <div class="orange-box">
+        <h4>CRITICAL Requests Never Queue</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">With a 200ms SLA, queueing is pointless — the overhead of enqueue + dequeue + processing would exceed the deadline. CRITICAL requests either get an immediately available endpoint or fail fast with a clear error, allowing the caller to implement their own degraded experience (e.g., showing cached results instead of live AI responses).</p>
+      </div>
+    </div>
+
+    <!-- 10. PERFORMANCE METRICS -->
+    <div class="article-section" id="metrics">
+      <h2><span class="step-badge">10</span> Performance Metrics</h2>
+
+      <p>Key performance indicators for the LLM Gateway in production, measured across all endpoints and internal service consumers.</p>
+
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-value">&lt;1ms</div>
+          <div class="metric-label">Routing Overhead</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">&lt;5ms</div>
+          <div class="metric-label">Cache Hit Response</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">30-40%</div>
+          <div class="metric-label">Cache Hit Rate</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">99.99%</div>
+          <div class="metric-label">Gateway Availability</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">&lt;100ms</div>
+          <div class="metric-label">Failover Latency</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">50K+</div>
+          <div class="metric-label">Requests/sec Capacity</div>
+        </div>
+      </div>
+
+      <h3>Prometheus Metrics Exported</h3>
+      <table>
+        <thead>
+          <tr><th>Metric</th><th>Type</th><th>Labels</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>llm_request_duration_ms</td><td>Histogram</td><td>service, endpoint, model</td><td>End-to-end request latency</td></tr>
+          <tr><td>llm_request_total</td><td>Counter</td><td>service, endpoint, status</td><td>Total requests (success/failure)</td></tr>
+          <tr><td>llm_cache_hit_total</td><td>Counter</td><td>service</td><td>Semantic cache hits</td></tr>
+          <tr><td>llm_cache_miss_total</td><td>Counter</td><td>service</td><td>Semantic cache misses</td></tr>
+          <tr><td>llm_circuit_breaker_state</td><td>Gauge</td><td>endpoint</td><td>0=closed, 1=open, 2=half_open</td></tr>
+          <tr><td>llm_rate_limit_headroom</td><td>Gauge</td><td>endpoint, dimension</td><td>RPM/TPM/RPS headroom (0-1)</td></tr>
+          <tr><td>llm_cost_usd_total</td><td>Counter</td><td>service, provider, model</td><td>Accumulated cost in USD</td></tr>
+          <tr><td>llm_fallback_total</td><td>Counter</td><td>service, from_model, to_model</td><td>Fallback events</td></tr>
+          <tr><td>llm_queue_depth</td><td>Gauge</td><td>priority</td><td>Current queue depth per priority</td></tr>
+          <tr><td>llm_endpoint_score</td><td>Gauge</td><td>endpoint</td><td>Current routing score (0-1)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 11. DESIGN DECISIONS & TRADE-OFFS -->
+    <div class="article-section" id="decisions">
+      <h2><span class="step-badge">11</span> Design Decisions & Trade-offs</h2>
+
+      <table>
+        <thead>
+          <tr><th>Decision</th><th>Chosen</th><th>Alternative</th><th>Rationale</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Routing Algorithm</td>
+            <td><strong style="color:#10b981;">Weighted Scoring</strong></td>
+            <td>Round-robin, Random, Least-connections</td>
+            <td>Multi-dimensional scoring (health, latency, capacity, cost) adapts to real-time conditions. Round-robin ignores endpoint health; random ignores capacity.</td>
+          </tr>
+          <tr>
+            <td>Rate Limiting</td>
+            <td><strong style="color:#10b981;">Sliding Window</strong></td>
+            <td>Fixed Window, Token Bucket, Leaky Bucket</td>
+            <td>Sliding window avoids the boundary burst problem of fixed windows. More accurate than token bucket for multi-dimensional limits (RPM + TPM + RPS).</td>
+          </tr>
+          <tr>
+            <td>Failure Handling</td>
+            <td><strong style="color:#10b981;">Circuit Breaker + Retry</strong></td>
+            <td>Retry-only, Bulkhead</td>
+            <td>Circuit breaker prevents thundering herd on failing endpoints. Retry-only wastes capacity when an endpoint is truly down. Breaker gives endpoints time to recover.</td>
+          </tr>
+          <tr>
+            <td>Caching Strategy</td>
+            <td><strong style="color:#10b981;">Semantic (hash-based)</strong></td>
+            <td>Exact match, Embedding similarity</td>
+            <td>SHA-256 hash is fast (&lt;0.1ms) and deterministic. Embedding similarity adds 50ms+ overhead and requires vector DB. Hash-based captures 90%+ of repeated queries.</td>
+          </tr>
+          <tr>
+            <td>Request Format</td>
+            <td><strong style="color:#10b981;">OpenAI-compatible</strong></td>
+            <td>Custom format, gRPC</td>
+            <td>OpenAI format is the de facto standard — engineers already know it. Custom format adds learning curve. Adapters handle provider-specific translation.</td>
+          </tr>
+          <tr>
+            <td>Queue Priority</td>
+            <td><strong style="color:#10b981;">SLA-based</strong></td>
+            <td>FIFO, Fair queuing</td>
+            <td>SLA-based ensures real-time services (chat) are never starved by batch jobs. FIFO treats all requests equally, which violates SLA contracts. Fair queuing is more complex without clear benefit.</td>
+          </tr>
+          <tr>
+            <td>State Storage</td>
+            <td><strong style="color:#10b981;">Redis (shared state)</strong></td>
+            <td>In-process, etcd, ZooKeeper</td>
+            <td>Redis provides sub-ms reads for circuit breaker/rate limiter state shared across gateway instances. In-process state doesn't work with horizontal scaling. etcd/ZooKeeper are over-engineered for this use case.</td>
+          </tr>
+          <tr>
+            <td>Provider Abstraction</td>
+            <td><strong style="color:#10b981;">Adapter Pattern</strong></td>
+            <td>Direct integration, SDK wrappers</td>
+            <td>Clean separation of concerns. Adding a new provider = one new adapter class. No changes to routing, caching, or rate limiting code.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 12. EDGE CASE HANDLING -->
+    <div class="article-section" id="edge-cases">
+      <h2><span class="step-badge">12</span> Edge Case Handling</h2>
+
+      <h3>Azure Region Outage</h3>
+      <div class="highlight-box">
+        <h4>Scenario: Azure East US goes down completely</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">
+          <strong style="color:#e8e8f0;">Detection:</strong> Circuit breaker trips after 5 consecutive failures (typically within 2-3 seconds).<br>
+          <strong style="color:#e8e8f0;">Response:</strong> Smart Router immediately disqualifies the endpoint (circuit=OPEN). Scoring algorithm routes to Azure West US or Azure EU West with no configuration change. Traffic shifts in under 100ms.<br>
+          <strong style="color:#e8e8f0;">Recovery:</strong> After 30s cooldown, circuit transitions to HALF_OPEN. One probe request tests the endpoint. If it succeeds 3 times consecutively, the circuit closes and the endpoint rejoins the routing pool at reduced score (fresh metrics).
+        </p>
+      </div>
+
+      <h3>Rate Limit Hit (429)</h3>
+      <div class="warn-box">
+        <p>
+          <strong style="color:#ef4444;">Scenario:</strong> OpenAI returns 429 Too Many Requests.<br>
+          <strong style="color:#e8e8f0;">Response:</strong> Circuit breaker immediately opens with 3x cooldown (90 seconds). The current request fails over to the next scored endpoint (e.g., Azure OpenAI with the same model). Rate limiter headroom for the throttled endpoint drops to 0%, ensuring no new requests are sent during cooldown. The Retry-After header value from the 429 response is used to set the exact cooldown duration if available.
+        </p>
+      </div>
+
+      <h3>SLA Breach (Slow Provider)</h3>
+      <div class="orange-box">
+        <h4>Scenario: Provider responds, but latency exceeds SLA</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">
+          <strong style="color:#e8e8f0;">Detection:</strong> asyncio.wait_for() raises TimeoutError after SLA deadline.<br>
+          <strong style="color:#e8e8f0;">Response:</strong> The slow request is abandoned (but the provider connection is closed to free resources). The gateway immediately tries the next ranked endpoint with the remaining SLA budget. If no SLA budget remains, the request fails with a clear timeout error.<br>
+          <strong style="color:#e8e8f0;">Prevention:</strong> Slow call detection in the circuit breaker tracks P99 latency. If >50% of calls are slow, the circuit trips proactively, routing away before SLA breaches accumulate.
+        </p>
+      </div>
+
+      <h3>Duplicate Requests</h3>
+      <div class="highlight-box">
+        <h4>Scenario: Client retries and sends the same request_id</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">
+          <strong style="color:#e8e8f0;">Detection:</strong> Redis stores in-flight request IDs with a short TTL (5 minutes).<br>
+          <strong style="color:#e8e8f0;">Response:</strong> If a request_id is already in-flight, the gateway returns a 409 Conflict. If the original request has completed and is cached, the cache hit serves the response. This prevents double-billing from provider APIs and ensures idempotency.<br>
+          <strong style="color:#e8e8f0;">Trade-off:</strong> Adds ~0.5ms per request for the Redis check, but prevents expensive duplicate LLM calls.
+        </p>
+      </div>
+
+      <h3>Provider Degradation (Not Down, Just Slow)</h3>
+      <div class="purple-box">
+        <h4>Scenario: Anthropic API latency increases from 200ms to 2000ms</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">
+          <strong style="color:#e8e8f0;">Detection:</strong> The exponential moving average (EMA) latency tracker picks up the trend within 5-10 requests. P99 latency spikes above SLA thresholds.<br>
+          <strong style="color:#e8e8f0;">Response:</strong> The Smart Router's latency score for this endpoint drops, naturally deprioritizing it. CRITICAL requests (SLA=200ms) are disqualified immediately (P99 > SLA). HIGH/MEDIUM requests may still route there but with a lower score.<br>
+          <strong style="color:#e8e8f0;">Key insight:</strong> This is a graceful degradation, not a hard cutoff. The endpoint isn't "down" — it's deprioritized proportionally to its degradation level.
+        </p>
+      </div>
+
+      <h3>Thundering Herd</h3>
+      <div class="cyan-box">
+        <h4>Scenario: Circuit breaker opens for a major endpoint, flooding remaining endpoints</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">
+          <strong style="color:#e8e8f0;">Problem:</strong> When Azure East US (handling 40% of traffic) goes down, its traffic shifts to 2-3 other endpoints, potentially overwhelming them.<br>
+          <strong style="color:#e8e8f0;">Mitigation 1:</strong> Rate limiters on each endpoint cap the influx regardless of routing decisions.<br>
+          <strong style="color:#e8e8f0;">Mitigation 2:</strong> The priority queue absorbs the spike — LOW and MEDIUM requests queue while CRITICAL/HIGH get priority on available capacity.<br>
+          <strong style="color:#e8e8f0;">Mitigation 3:</strong> Capacity score (20% of routing weight) naturally load-balances across endpoints. As one endpoint fills, its score drops, pushing traffic to less-loaded endpoints.<br>
+          <strong style="color:#e8e8f0;">Mitigation 4:</strong> HALF_OPEN circuit allows controlled probe traffic, preventing a full stampede when the failed endpoint recovers.
+        </p>
+      </div>
+    </div>
+
+    <!-- 13. SCALING STRATEGY -->
+    <div class="article-section" id="scaling">
+      <h2><span class="step-badge">13</span> Scaling Strategy</h2>
+
+      <h3>Horizontal Scaling</h3>
+      <p>The gateway is <strong style="color:#e8e8f0;">stateless by design</strong> — all state lives in Redis (circuit breakers, rate limiters, cache) and Kafka (priority queues). This allows horizontal scaling by adding more gateway pods in Kubernetes.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">YAML</span>
+          <span class="code-file">k8s/gateway-deployment.yaml</span>
+        </div>
+        <pre><code><span class="keyword">apiVersion</span>: apps/v1
+<span class="keyword">kind</span>: Deployment
+<span class="keyword">metadata</span>:
+  <span class="keyword">name</span>: llm-gateway
+<span class="keyword">spec</span>:
+  <span class="keyword">replicas</span>: <span class="number">12</span>
+  <span class="keyword">strategy</span>:
+    <span class="keyword">type</span>: RollingUpdate
+    <span class="keyword">rollingUpdate</span>:
+      <span class="keyword">maxUnavailable</span>: <span class="number">1</span>
+      <span class="keyword">maxSurge</span>: <span class="number">2</span>
+  <span class="keyword">template</span>:
+    <span class="keyword">spec</span>:
+      <span class="keyword">containers</span>:
+        - <span class="keyword">name</span>: gateway
+          <span class="keyword">image</span>: llm-gateway:<span class="number">latest</span>
+          <span class="keyword">resources</span>:
+            <span class="keyword">requests</span>:
+              <span class="keyword">cpu</span>: <span class="string">"2"</span>
+              <span class="keyword">memory</span>: <span class="string">"4Gi"</span>
+            <span class="keyword">limits</span>:
+              <span class="keyword">cpu</span>: <span class="string">"4"</span>
+              <span class="keyword">memory</span>: <span class="string">"8Gi"</span>
+          <span class="keyword">env</span>:
+            - <span class="keyword">name</span>: REDIS_CLUSTER_URL
+              <span class="keyword">valueFrom</span>:
+                <span class="keyword">secretKeyRef</span>:
+                  <span class="keyword">name</span>: gateway-secrets
+                  <span class="keyword">key</span>: redis-url
+            - <span class="keyword">name</span>: KAFKA_BROKERS
+              <span class="keyword">value</span>: <span class="string">"kafka-0:9092,kafka-1:9092,kafka-2:9092"</span>
+          <span class="keyword">readinessProbe</span>:
+            <span class="keyword">httpGet</span>:
+              <span class="keyword">path</span>: /health
+              <span class="keyword">port</span>: <span class="number">8080</span>
+            <span class="keyword">initialDelaySeconds</span>: <span class="number">5</span>
+            <span class="keyword">periodSeconds</span>: <span class="number">10</span>
+          <span class="keyword">livenessProbe</span>:
+            <span class="keyword">httpGet</span>:
+              <span class="keyword">path</span>: /health
+              <span class="keyword">port</span>: <span class="number">8080</span>
+            <span class="keyword">initialDelaySeconds</span>: <span class="number">15</span>
+            <span class="keyword">periodSeconds</span>: <span class="number">20</span>
+      <span class="keyword">topologySpreadConstraints</span>:
+        - <span class="keyword">maxSkew</span>: <span class="number">1</span>
+          <span class="keyword">topologyKey</span>: topology.kubernetes.io/zone
+          <span class="keyword">whenUnsatisfiable</span>: DoNotSchedule</code></pre>
+      </div>
+
+      <h3>Capacity Planning at 50K RPS</h3>
+      <table>
+        <thead>
+          <tr><th>Component</th><th>Configuration</th><th>Throughput</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Gateway Pods</td><td>12 pods x 4 CPU cores</td><td>~4,200 RPS per pod</td></tr>
+          <tr><td>Redis Cluster</td><td>6 nodes (3 primary + 3 replica)</td><td>100K+ ops/sec</td></tr>
+          <tr><td>Kafka</td><td>4 priority partitions x 3 brokers</td><td>200K+ msgs/sec</td></tr>
+          <tr><td>PostgreSQL</td><td>Primary + 2 read replicas</td><td>Audit log writes (async)</td></tr>
+          <tr><td>LLM Endpoints</td><td>3 Azure + 1 OpenAI + 1 Anthropic + 1 Gemini</td><td>Combined 60K+ RPM</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Kafka Priority Partitions</h3>
+      <p>Four Kafka partitions per topic, each dedicated to a priority level. Consumer groups process CRITICAL partitions first (though CRITICAL bypasses queuing in practice), then HIGH, MEDIUM, and LOW.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-file">gateway/kafka_config.py</span>
+        </div>
+        <pre><code><span class="comment"># Kafka topic configuration for priority-based partitioning</span>
+TOPIC_CONFIG = {
+    <span class="string">"topic"</span>: <span class="string">"llm-requests"</span>,
+    <span class="string">"partitions"</span>: <span class="number">4</span>,
+    <span class="string">"replication_factor"</span>: <span class="number">3</span>,
+    <span class="string">"partition_mapping"</span>: {
+        <span class="string">"critical"</span>: <span class="number">0</span>,  <span class="comment"># Partition 0 — highest consumer priority</span>
+        <span class="string">"high"</span>: <span class="number">1</span>,      <span class="comment"># Partition 1</span>
+        <span class="string">"medium"</span>: <span class="number">2</span>,    <span class="comment"># Partition 2</span>
+        <span class="string">"low"</span>: <span class="number">3</span>,       <span class="comment"># Partition 3 — lowest consumer priority</span>
+    },
+    <span class="string">"consumer_config"</span>: {
+        <span class="string">"max_poll_records"</span>: <span class="number">100</span>,
+        <span class="string">"fetch_max_wait_ms"</span>: <span class="number">50</span>,     <span class="comment"># Low latency for high-pri</span>
+        <span class="string">"session_timeout_ms"</span>: <span class="number">10000</span>,
+    },
+}
+
+<span class="comment"># Consumer group processes partitions in priority order:</span>
+<span class="comment"># 1. Poll partition 0 (CRITICAL) — always first</span>
+<span class="comment"># 2. Poll partition 1 (HIGH) — if critical is empty</span>
+<span class="comment"># 3. Poll partition 2 (MEDIUM) — if high is empty</span>
+<span class="comment"># 4. Poll partition 3 (LOW) — if medium is empty</span></code></pre>
+      </div>
+
+      <h3>Prometheus + Grafana Monitoring</h3>
+      <ul>
+        <li><strong>Dashboard 1: Gateway Overview</strong> — Request rate, error rate, P50/P99 latency, cache hit rate, active circuits</li>
+        <li><strong>Dashboard 2: Provider Health</strong> — Per-endpoint success rate, latency distribution, rate limit utilization, cost accumulation</li>
+        <li><strong>Dashboard 3: SLA Compliance</strong> — SLA breach rate by service/priority, queue depth over time, failover frequency</li>
+        <li><strong>Dashboard 4: Cost Analytics</strong> — Cost per service, cost per model, cost trend, cache savings estimate</li>
+      </ul>
+
+      <div class="success-box">
+        <h4>Auto-Scaling Trigger</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem;">Kubernetes HPA scales gateway pods based on two metrics: (1) average CPU utilization > 60%, and (2) P99 routing latency > 5ms. The second metric is critical — it catches the case where CPU looks fine but the event loop is saturated with async I/O waits. Min replicas: 6 (for zone redundancy). Max replicas: 24.</p>
+      </div>
+    </div>
+
+    <!-- 14. INTERVIEW CHEAT SHEET -->
+    <div class="article-section" id="cheatsheet">
+      <h2><span class="step-badge">14</span> Interview Cheat Sheet</h2>
+
+      <p>Prepared Q&A covering the most common system design interview questions about LLM infrastructure at enterprise scale.</p>
+
+      <div class="purple-box">
+        <h4>Q: How does the routing algorithm work?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "The Smart Router uses <strong style="color:#e8e8f0;">weighted scoring across four dimensions</strong>: Health (40%), Latency (30%), Capacity (20%), Cost (10%). Each endpoint gets a score from 0 to 1. Endpoints are disqualified if they're unhealthy, circuit-open, rate-limited, or can't meet the SLA. The highest-scoring endpoint serves the request, with lower-scored endpoints as automatic fallbacks. The 40% health weight ensures we never route to a degraded endpoint even if it's cheaper or has capacity."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: Why circuit breakers instead of just retries?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Retries alone create a <strong style="color:#e8e8f0;">thundering herd</strong> — if an endpoint is down, every request retries against it, wasting capacity and adding latency. Circuit breakers <strong style="color:#e8e8f0;">fail fast</strong>: once the breaker trips, requests immediately skip that endpoint. The HALF_OPEN state allows controlled recovery probing. We also handle 429 errors specially — they trigger immediate OPEN with 3x cooldown because rate limits are provider-enforced and retrying is wasteful."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How do you handle rate limiting across multiple gateway instances?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Rate limiter state lives in <strong style="color:#e8e8f0;">Redis</strong>, shared across all gateway pods. Each request does a Redis INCR on sliding window counters for RPM, TPM, and RPS. The overhead is ~0.5ms per request (one Redis round-trip). We maintain <strong style="color:#e8e8f0;">10% headroom</strong> below provider limits to absorb timing inconsistencies between gateway instances. In the rare case of a Redis outage, gateways fall back to in-process rate limiting with conservative limits."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: Why cache only temperature=0 requests?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Temperature=0 means <strong style="color:#e8e8f0;">deterministic output</strong> — the same input always produces the same output. Any temperature > 0 introduces randomness, making cached responses semantically wrong. We use <strong style="color:#e8e8f0;">SHA-256 hashing</strong> of model+messages+temperature+max_tokens as the cache key. This is a content-addressable cache — identical requests always hit the same key. Cache hit rates are 30-40% in production because enterprise workloads have high query repetition (e.g., support bots, code assistance)."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How does failover work when a provider goes down?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Failover is <strong style="color:#e8e8f0;">automatic and multi-layered</strong>:<br>
+          <strong>(1) Same model, different endpoint:</strong> If Azure East US fails, the router scores Azure West US and Azure EU West higher. Same model, different region. Failover in &lt;100ms.<br>
+          <strong>(2) Same model, different provider:</strong> If all Azure endpoints fail, OpenAI's gpt-4o endpoints are scored. Same model via different provider.<br>
+          <strong>(3) Fallback model:</strong> If the primary model is completely unavailable, the request's fallback_models list is tried (e.g., gpt-4o → claude-sonnet-4-20250514 → gemini-pro). The caller specifies acceptable alternatives.<br>
+          Each failover level adds latency but maintains availability. The SLA timeout ensures we don't spend too long on doomed attempts."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How do you manage different SLAs across services?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Each request carries a <strong style="color:#e8e8f0;">priority level and SLA deadline</strong>. CRITICAL requests (chat, 200ms SLA) bypass queueing entirely — they get immediate routing or fail fast. HIGH requests (search, 1s SLA) get priority in the queue. The Smart Router uses the SLA to disqualify slow endpoints (P99 > SLA). The priority queue drops expired requests on dequeue to avoid processing stale work. This means a batch analytics request (30s SLA) never blocks a real-time chat request (200ms SLA)."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How would you scale this to 100K+ requests per second?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "The gateway is <strong style="color:#e8e8f0;">stateless</strong> — all state lives in Redis and Kafka. Scaling steps:<br>
+          <strong>(1)</strong> Add more gateway pods (currently 12, each handles ~4.2K RPS).<br>
+          <strong>(2)</strong> Scale Redis Cluster to more shards (currently 6 nodes, each handles 100K+ ops/sec).<br>
+          <strong>(3)</strong> Add Kafka partitions if queue throughput bottlenecks (currently 200K+ msgs/sec).<br>
+          <strong>(4)</strong> The real bottleneck is LLM provider rate limits — to scale beyond provider limits, we'd add more provider accounts, negotiate higher limits, or increase cache hit rates."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How do you optimize costs across providers?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Cost optimization is built into the routing algorithm at <strong style="color:#e8e8f0;">10% weight</strong> — enough to prefer cheaper endpoints when health and latency are comparable, but not enough to override reliability. Additional strategies:<br>
+          <strong>(1) Caching:</strong> 30-40% cache hit rate means 30-40% fewer paid API calls.<br>
+          <strong>(2) Model downsizing:</strong> Services can specify fallback to cheaper models (gpt-4o → gpt-4o-mini) for non-critical requests.<br>
+          <strong>(3) Batch coalescing:</strong> LOW priority requests can be batched to use batch API pricing (50% cheaper).<br>
+          <strong>(4) Cost dashboards:</strong> Per-service cost tracking enables chargeback and identifies services with unexpectedly high costs."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: What happens if Redis goes down?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Redis outage is a <strong style="color:#e8e8f0;">graceful degradation</strong>, not a total failure:<br>
+          <strong>(1) Cache:</strong> All requests become cache misses — latency increases but nothing breaks.<br>
+          <strong>(2) Rate limiting:</strong> Falls back to in-process rate limiting with conservative limits (70% of normal). Less accurate across instances but prevents over-quota errors.<br>
+          <strong>(3) Circuit breaker state:</strong> In-process circuit breakers continue working per-instance. State diverges across instances but safety is maintained.<br>
+          <strong>(4) Dedup:</strong> Duplicate detection is disabled — acceptable for short Redis outages.<br>
+          The gateway continues serving requests with reduced optimization, not reduced availability."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How do you handle streaming responses?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Streaming requests (stream=true) bypass the semantic cache since partial responses can't be meaningfully cached. The gateway establishes a <strong style="color:#e8e8f0;">Server-Sent Events (SSE) connection</strong> to the provider and proxies chunks back to the caller. Rate limiting accounts for the full estimated token count upfront. Circuit breaker monitors the stream — if a stream stalls for >5 seconds, it's treated as a failure. Streaming requests can't fail over mid-stream, so endpoint selection is especially important."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How do you prevent a single noisy service from consuming all capacity?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Each internal service has a <strong style="color:#e8e8f0;">per-service quota</strong> enforced at the gateway level. This is separate from provider rate limits. Service quotas are configured based on business priority and budget. If a batch analytics service suddenly sends 10x normal traffic, its per-service rate limiter rejects excess requests before they compete with other services for provider capacity. Quota violations trigger alerts to the service owner via the Grafana dashboard."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: Why not use a single LLM provider?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Single-provider is a <strong style="color:#e8e8f0;">single point of failure</strong>. In practice:<br>
+          <strong>(1) Availability:</strong> Every major LLM provider has had multi-hour outages. Multi-provider gives us 99.99% availability vs. ~99.9% for any single provider.<br>
+          <strong>(2) Rate limits:</strong> Combined rate limits across providers are 3-5x higher than any single provider.<br>
+          <strong>(3) Cost optimization:</strong> Different providers have different pricing for different models. Routing optimizes cost without sacrificing quality.<br>
+          <strong>(4) Capability diversity:</strong> Some models are better at code (GPT-4o), some at analysis (Claude), some at multilingual tasks (Gemini). Multi-provider lets services pick the best tool.<br>
+          The Adapter Pattern makes multi-provider nearly zero overhead to maintain."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How do you test this system?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Testing is <strong style="color:#e8e8f0;">layered</strong>:<br>
+          <strong>(1) Unit tests:</strong> Each component (router, circuit breaker, rate limiter, cache) has isolated unit tests with mocked dependencies. The scoring algorithm is tested with parameterized inputs covering all disqualifier combinations.<br>
+          <strong>(2) Integration tests:</strong> End-to-end tests with mock LLM providers that simulate latency, errors, and rate limits. Tests verify failover chains, circuit breaker transitions, and cache behavior.<br>
+          <strong>(3) Chaos testing:</strong> Inject random failures (kill endpoints, introduce latency, simulate 429s) to verify resilience. Run monthly in staging.<br>
+          <strong>(4) Shadow traffic:</strong> New routing algorithm changes are tested with shadow traffic (duplicate production requests, compare routing decisions, don't serve shadow responses) before rollout."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: What's the most critical design decision in this system?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "The <strong style="color:#e8e8f0;">weighted scoring algorithm with hard disqualifiers</strong>. It's the single function that determines where every request goes. The key insight is separating 'can this endpoint serve the request at all?' (disqualifiers) from 'which endpoint is best?' (weighted score). Disqualifiers are boolean — if an endpoint is unhealthy or rate-limited, it doesn't matter how good its latency or cost is. The weights are then tuned for optimization, not correctness. This two-phase approach makes the routing both safe and efficient."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How would you add a new LLM provider (e.g., Mistral)?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Adding a new provider requires <strong style="color:#e8e8f0;">exactly three steps</strong>:<br>
+          <strong>(1)</strong> Implement the LLMProviderAdapter interface — build_request(), parse_response(), calculate_cost(). This is typically ~50 lines of code.<br>
+          <strong>(2)</strong> Register endpoint(s) in the configuration with model mappings, rate limits, and cost information.<br>
+          <strong>(3)</strong> Deploy. The Smart Router, circuit breaker, rate limiter, and cache all work automatically because they operate on the unified schema, not provider-specific formats. Zero changes to existing code."
+        </p>
+      </div>
+
+      <div class="purple-box">
+        <h4>Q: How do you handle model versioning when providers update models?</h4>
+        <p style="color:#a0a0b8; font-size:0.92rem; line-height:1.9;">
+          "Model versioning is handled at the <strong style="color:#e8e8f0;">endpoint configuration level</strong>. When a provider releases a new model version (e.g., gpt-4o-2024-08-06), we register it as a new endpoint with its own circuit breaker and rate limiter. The old version stays active. Services can pin to specific versions or request the 'latest' alias. We run quality regression tests on the new version with shadow traffic before promoting it to 'latest'. Deprecated versions are drained gradually by lowering their priority_weight over time."
+        </p>
+      </div>
+    </div>
+
+    <!-- NAV -->
+    <div class="nav-bottom">
+      <a href="agentic-ai.html">&larr; All Designs</a>
+      <a href="index.html">Home &rarr;</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
